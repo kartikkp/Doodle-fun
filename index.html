@@ -11,7 +11,7 @@
 body { background:#fff9f0; font-family:'Fredoka One',cursive; overflow:hidden; height:100dvh; display:flex; flex-direction:column; }
 
 /* ── MODE TABS ── */
-#mode-tabs { display:flex; background:#fff; border-bottom:2px solid #f0f0f0; flex-shrink:0; }
+#mode-tabs { display:flex; background:#fff; border-bottom:2px solid #f0f0f0; flex-shrink:0; z-index:5; }
 .mode-tab { flex:1; padding:10px 0 8px; font-size:1rem; border:none; background:none; cursor:pointer; color:#bbb; font-family:‘Fredoka One’,cursive; border-bottom:3px solid transparent; transition:color .15s,border-color .15s; }
 .mode-tab.on { color:#ff6fb7; border-bottom-color:#ff6fb7; }
 
@@ -21,10 +21,7 @@ body { background:#fff9f0; font-family:'Fredoka One',cursive; overflow:hidden; h
 .top-btns { display:flex; gap:8px; align-items:center; }
 .top-btn { width:50px; height:50px; border-radius:50%; border:none; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.2); transition:transform .12s; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .top-btn:active { transform:scale(.84); }
-#btn-undo      { background:#74c0fc; }
-#btn-templates { background:#da77f2; }
-#btn-clear     { background:#ff6b6b; }
-#btn-save      { background:#69db7c; }
+#btn-undo{background:#74c0fc;} #btn-templates{background:#da77f2;} #btn-clear{background:#ff6b6b;} #btn-save{background:#69db7c;}
 #pencil-badge { background:rgba(255,255,255,.22); border:2px solid rgba(255,255,255,.55); color:#fff; font-family:‘Nunito’,sans-serif; font-size:.72rem; font-weight:900; padding:4px 10px; border-radius:20px; white-space:nowrap; opacity:0; transition:opacity .35s; }
 #pencil-badge.on { opacity:1; }
 
@@ -41,92 +38,107 @@ canvas#drawCanvas { display:block; width:100%; height:100%; }
 .stamp-em { font-size:2rem; cursor:pointer; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:background .1s,transform .1s; }
 .stamp-em:active { background:#f0f0f0; transform:scale(.84); }
 
-/* ── BOTTOM PALETTE ── */
+/* ── PALETTE ── */
 #palette { display:flex; align-items:center; padding:10px 12px; background:#fff; box-shadow:0 -4px 16px rgba(0,0,0,.07); overflow-x:auto; flex-shrink:0; scrollbar-width:none; }
 #palette::-webkit-scrollbar { display:none; }
 .plabel { font-size:.6rem; color:#c0c0c0; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; margin:0 5px 0 3px; font-family:‘Nunito’,sans-serif; font-weight:900; }
 .psep { width:1.5px; height:38px; background:#f0f0f0; margin:0 8px; flex-shrink:0; }
 .cdot { width:44px; height:44px; border-radius:50%; cursor:pointer; border:3.5px solid transparent; flex-shrink:0; transition:transform .12s,border-color .12s; margin:0 4px; box-shadow:0 2px 7px rgba(0,0,0,.17); }
-.cdot:active { transform:scale(.82); } .cdot.on { border-color:#333; transform:scale(1.18); }
+.cdot:active{transform:scale(.82);} .cdot.on{border-color:#333;transform:scale(1.18);}
 .sbtn { width:44px; height:44px; border-radius:50%; border:3px solid #e8e8e8; background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin:0 4px; transition:transform .12s,border-color .12s; }
-.sbtn:active { transform:scale(.82); } .sbtn.on { border-color:#333; }
-.sdot { background:#333; border-radius:50%; }
+.sbtn:active{transform:scale(.82);} .sbtn.on{border-color:#333;}
+.sdot{background:#333;border-radius:50%;}
 .tbtn { width:52px; height:52px; border-radius:14px; border:3px solid #e8e8e8; background:#fff; cursor:pointer; font-size:1.45rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin:0 4px; transition:transform .12s,border-color .12s,background .12s; }
-.tbtn:active { transform:scale(.84); } .tbtn.on { border-color:#ff6fb7; background:#fff0f7; }
+.tbtn:active{transform:scale(.84);} .tbtn.on{border-color:#ff6fb7;background:#fff0f7;}
 
 /* ── TEMPLATE MODAL ── */
 #tmpl-modal { position:fixed; inset:0; background:rgba(0,0,0,.5); backdrop-filter:blur(8px); z-index:50; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s; }
-#tmpl-modal.open { opacity:1; pointer-events:all; }
+#tmpl-modal.open{opacity:1;pointer-events:all;}
 #tmpl-box { background:#fff; border-radius:28px; padding:22px 20px 18px; width:min(700px,94vw); max-height:82vh; overflow-y:auto; box-shadow:0 24px 60px rgba(0,0,0,.28); display:flex; flex-direction:column; gap:12px; }
-#tmpl-box h2 { font-size:1.7rem; color:#333; } #tmpl-box p { font-size:.84rem; color:#aaa; font-family:‘Nunito’,sans-serif; margin-top:-6px; }
+#tmpl-box h2{font-size:1.7rem;color:#333;} #tmpl-box p{font-size:.84rem;color:#aaa;font-family:‘Nunito’,sans-serif;margin-top:-6px;}
 #tmpl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(136px,1fr)); gap:12px; }
-.tcard { border-radius:16px; overflow:hidden; cursor:pointer; border:3.5px solid transparent; transition:border-color .15s,transform .12s; background:#fafafa; }
-.tcard:active { transform:scale(.93); } .tcard.on { border-color:#da77f2; }
-.tcard canvas { display:block; width:100%; aspect-ratio:1; }
-.tcard-lbl { text-align:center; font-size:.88rem; padding:6px 4px; color:#666; background:#fafafa; }
-#tmpl-acts { display:flex; gap:10px; }
-.tact { flex:1; padding:12px; border-radius:14px; border:none; font-family:‘Fredoka One’,cursive; font-size:1rem; cursor:pointer; transition:transform .12s; }
-.tact:active { transform:scale(.95); }
-#tact-ok { background:linear-gradient(135deg,#da77f2,#ff6fb7); color:#fff; }
-#tact-no { background:#f0f0f0; color:#666; }
+.tcard{border-radius:16px;overflow:hidden;cursor:pointer;border:3.5px solid transparent;transition:border-color .15s,transform .12s;background:#fafafa;}
+.tcard:active{transform:scale(.93);} .tcard.on{border-color:#da77f2;}
+.tcard canvas{display:block;width:100%;aspect-ratio:1;}
+.tcard-lbl{text-align:center;font-size:.88rem;padding:6px 4px;color:#666;background:#fafafa;}
+#tmpl-acts{display:flex;gap:10px;}
+.tact{flex:1;padding:12px;border-radius:14px;border:none;font-family:‘Fredoka One’,cursive;font-size:1rem;cursor:pointer;transition:transform .12s;}
+.tact:active{transform:scale(.95);}
+#tact-ok{background:linear-gradient(135deg,#da77f2,#ff6fb7);color:#fff;} #tact-no{background:#f0f0f0;color:#666;}
 
 /* ── LETTER SCREEN ── */
-#letter-screen { flex:1; display:none; flex-direction:column; overflow:hidden; background:#f0f8ff; }
-#letter-screen.on { display:flex; }
-
-/* Letter top bar */
+#letter-screen { flex:1; display:none; flex-direction:column; overflow:hidden; background:#f5f0ff; }
+#letter-screen.on{display:flex;}
 #letter-topbar { background:linear-gradient(135deg,#6c63ff,#da77f2); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-#letter-topbar h2 { color:#fff; font-size:1.3rem; text-shadow:1px 1px 0 rgba(0,0,0,.15); }
-#letter-mode-btns { display:flex; gap:8px; }
-.lmode-btn { padding:6px 14px; border-radius:20px; border:2px solid rgba(255,255,255,.5); background:rgba(255,255,255,.15); color:#fff; font-family:‘Fredoka One’,cursive; font-size:.85rem; cursor:pointer; transition:background .15s; }
-.lmode-btn.on { background:rgba(255,255,255,.35); border-color:#fff; }
+#letter-topbar h2{color:#fff;font-size:1.25rem;text-shadow:1px 1px 0 rgba(0,0,0,.15);}
+#letter-mode-btns{display:flex;gap:8px;}
+.lmode-btn{padding:6px 14px;border-radius:20px;border:2px solid rgba(255,255,255,.5);background:rgba(255,255,255,.15);color:#fff;font-family:‘Fredoka One’,cursive;font-size:.85rem;cursor:pointer;transition:background .15s;}
+.lmode-btn.on{background:rgba(255,255,255,.35);border-color:#fff;}
 
 /* Letter grid */
-#letter-grid-wrap { flex-shrink:0; background:#fff; padding:10px 12px; box-shadow:0 2px 10px rgba(0,0,0,.06); overflow-x:auto; scrollbar-width:none; }
-#letter-grid-wrap::-webkit-scrollbar { display:none; }
-#letter-grid { display:flex; gap:8px; }
-.lgrid-btn { width:48px; height:48px; border-radius:12px; border:2.5px solid #e8e8e8; background:#fafafa; font-size:1.3rem; cursor:pointer; font-family:‘Fredoka One’,cursive; color:#555; transition:all .12s; flex-shrink:0; display:flex; align-items:center; justify-content:center; position:relative; }
-.lgrid-btn:active { transform:scale(.88); }
-.lgrid-btn.on { border-color:#6c63ff; background:#f0eeff; color:#6c63ff; }
-.lgrid-btn .star-badge { position:absolute; top:-4px; right:-4px; font-size:.65rem; display:none; }
-.lgrid-btn.done .star-badge { display:block; }
+#letter-grid-wrap{flex-shrink:0;background:#fff;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow-x:auto;scrollbar-width:none;}
+#letter-grid-wrap::-webkit-scrollbar{display:none;}
+#letter-grid{display:flex;gap:8px;}
+.lgrid-btn{width:46px;height:46px;border-radius:12px;border:2.5px solid #e8e8e8;background:#fafafa;font-size:1.25rem;cursor:pointer;font-family:‘Fredoka One’,cursive;color:#555;transition:all .12s;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;}
+.lgrid-btn:active{transform:scale(.88);}
+.lgrid-btn.on{border-color:#6c63ff;background:#f0eeff;color:#6c63ff;}
+.lgrid-btn .star-badge{position:absolute;top:-5px;right:-5px;font-size:.6rem;display:none;}
+.lgrid-btn.done .star-badge{display:block;}
 
 /* Practice area */
-#letter-practice { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:14px 16px 10px; gap:10px; overflow:hidden; }
-#letter-hero { font-size:5rem; line-height:1; color:#6c63ff; text-shadow:3px 3px 0 rgba(108,99,255,.18); flex-shrink:0; }
-#letter-word { font-size:1.1rem; color:#999; font-family:‘Nunito’,sans-serif; font-weight:900; flex-shrink:0; letter-spacing:.5px; }
+#letter-practice{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 14px 6px;gap:6px;overflow:hidden;min-height:0;}
 
-/* Tracing canvas container */
-#trace-wrap { position:relative; flex:1; width:100%; max-width:560px; min-height:0; }
-#traceGuide  { position:absolute; inset:0; width:100%; height:100%; }
-#traceCanvas { position:absolute; inset:0; width:100%; height:100%; }
+/* Hero row */
+#hero-row{display:flex;align-items:center;gap:14px;flex-shrink:0;}
+#letter-hero{font-size:4.2rem;line-height:1;color:#6c63ff;text-shadow:3px 3px 0 rgba(108,99,255,.15);transition:transform .2s;}
+#letter-hero.bounce{animation:heroBounce .5s ease;}
+#hero-info{display:flex;flex-direction:column;gap:2px;}
+#letter-word{font-size:1rem;color:#888;font-family:‘Nunito’,sans-serif;font-weight:900;letter-spacing:.3px;}
+#stroke-counter{font-size:.78rem;color:#a090e8;font-family:‘Nunito’,sans-serif;font-weight:900;background:#eeeaff;padding:3px 10px;border-radius:20px;}
 
-/* Controls row */
-#letter-controls { display:flex; gap:10px; align-items:center; flex-shrink:0; width:100%; max-width:560px; }
-#btn-letter-clear { flex:1; padding:11px; border-radius:14px; border:none; background:#ff6b6b; color:#fff; font-family:‘Fredoka One’,cursive; font-size:1rem; cursor:pointer; }
-#btn-letter-clear:active { transform:scale(.95); }
-#btn-prev-letter, #btn-next-letter { width:50px; height:50px; border-radius:50%; border:none; font-size:1.4rem; cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,.15); flex-shrink:0; background:#fff; }
-#btn-prev-letter:active, #btn-next-letter:active { transform:scale(.88); }
+/* Trace area */
+#trace-wrap{position:relative;flex:1;width:100%;max-width:580px;min-height:80px;border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(108,99,255,.15);}
+#traceGuide{position:absolute;inset:0;width:100%;height:100%;}
+#traceCanvas{position:absolute;inset:0;width:100%;height:100%;}
+#trace-wrap.shake{animation:shake .35s ease;}
+#trace-wrap.flash::after{content:’’;position:absolute;inset:0;background:rgba(105,219,124,.35);pointer-events:none;animation:greenFlash .5s ease forwards;border-radius:18px;}
+
+/* Coach bar */
+#coach-bar{display:flex;align-items:center;gap:8px;width:100%;max-width:580px;flex-shrink:0;}
+#coach-face{font-size:2.2rem;flex-shrink:0;transition:transform .2s;}
+#coach-bubble{flex:1;padding:9px 14px;border-radius:18px 18px 18px 4px;font-family:‘Nunito’,sans-serif;font-size:.88rem;font-weight:900;line-height:1.35;transition:background .25s,color .25s;min-height:44px;display:flex;align-items:center;}
+#coach-bubble.tip   {background:#eeeaff;color:#5a50cc;}
+#coach-bubble.praise{background:#e6fdf0;color:#1d8348;}
+#coach-bubble.retry {background:#fff4e0;color:#b7620a;}
+#coach-bubble.watch {background:#f0f0ff;color:#6c63ff;}
+#coach-bubble.done  {background:linear-gradient(135deg,#fff4e8,#f0e8ff);color:#6c63ff;}
+#btn-watch{flex-shrink:0;padding:9px 12px;border-radius:14px;border:none;background:linear-gradient(135deg,#6c63ff,#da77f2);color:#fff;font-family:‘Fredoka One’,cursive;font-size:.85rem;cursor:pointer;box-shadow:0 3px 10px rgba(108,99,255,.3);transition:transform .12s;}
+#btn-watch:active{transform:scale(.88);}
+#btn-watch:disabled{opacity:.5;cursor:default;}
+
+/* Controls */
+#letter-controls{display:flex;gap:10px;align-items:center;flex-shrink:0;width:100%;max-width:580px;}
+#btn-letter-clear{flex:1;padding:10px;border-radius:14px;border:none;background:#ff6b6b;color:#fff;font-family:‘Fredoka One’,cursive;font-size:.95rem;cursor:pointer;transition:transform .12s;}
+#btn-letter-clear:active{transform:scale(.95);}
+#btn-prev-letter,#btn-next-letter{width:48px;height:48px;border-radius:50%;border:none;font-size:1.3rem;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.12);flex-shrink:0;background:#fff;transition:transform .12s;}
+#btn-prev-letter:active,#btn-next-letter:active{transform:scale(.88);}
 
 /* Progress dots */
-#progress-dots { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; flex-shrink:0; padding:0 4px; }
-.pdot { width:8px; height:8px; border-radius:50%; background:#ddd; transition:background .2s; }
-.pdot.done { background:#69db7c; }
-.pdot.cur  { background:#6c63ff; }
+#progress-dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;flex-shrink:0;}
+.pdot{width:9px;height:9px;border-radius:50%;background:#ddd;transition:background .2s;}
+.pdot.done{background:#69db7c;} .pdot.cur{background:#6c63ff;width:22px;border-radius:5px;}
 
-/* Star burst */
-@keyframes starBurst { 0%{transform:translate(-50%,-50%) scale(0) rotate(-20deg);opacity:1} 60%{transform:translate(-50%,-50%) scale(1.2) rotate(5deg);opacity:1} 100%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:0} }
-.star-burst { position:absolute; top:50%; left:50%; font-size:5rem; pointer-events:none; animation:starBurst .7s ease forwards; z-index:50; }
-
-@keyframes pop { 0%{transform:translate(-50%,-50%) scale(0);opacity:1} 60%{transform:translate(-50%,-50%) scale(1.3);opacity:1} 100%{transform:translate(-50%,-50%) scale(.9);opacity:0} }
-.spop { position:absolute; pointer-events:none; animation:pop .55s ease forwards; transform-origin:center; z-index:30; }
-@keyframes cfetti { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(80px) rotate(360deg);opacity:0} }
+/* Animations */
+@keyframes heroBounce{0%{transform:scale(1)}40%{transform:scale(1.22)}70%{transform:scale(.94)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes greenFlash{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+@keyframes pop{0%{transform:translate(-50%,-50%) scale(0);opacity:1}60%{transform:translate(-50%,-50%) scale(1.3);opacity:1}100%{transform:translate(-50%,-50%) scale(.9);opacity:0}}
+.spop{position:absolute;pointer-events:none;animation:pop .55s ease forwards;transform-origin:center;z-index:30;}
+@keyframes cfetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(80px) rotate(360deg);opacity:0}}
 </style>
 
 </head>
 <body>
-
-<!-- TOP BAR -->
 
 <div id="topbar">
   <h1>🎨 Doodle Fun!</h1>
@@ -139,11 +151,9 @@ canvas#drawCanvas { display:block; width:100%; height:100%; }
   </div>
 </div>
 
-<!-- MODE TABS -->
-
 <div id="mode-tabs">
   <button class="mode-tab on" data-mode="draw">🎨 Draw</button>
-  <button class="mode-tab"    data-mode="letters">🔤 Learn Letters</button>
+  <button class="mode-tab"   data-mode="letters">🔤 Learn Letters</button>
 </div>
 
 <!-- DRAW SCREEN -->
@@ -156,17 +166,15 @@ canvas#drawCanvas { display:block; width:100%; height:100%; }
     <div id="pressure-bar"><div id="pressure-fill" style="height:0%"></div></div>
   </div>
   <div id="palette">
-    <span class="plabel">Color</span>
-    <div id="color-row" style="display:flex;align-items:center;"></div>
+    <span class="plabel">Color</span><div id="color-row" style="display:flex;align-items:center;"></div>
     <div class="psep"></div>
-    <span class="plabel">Size</span>
-    <div id="brush-row" style="display:flex;align-items:center;"></div>
+    <span class="plabel">Size</span><div id="brush-row" style="display:flex;align-items:center;"></div>
     <div class="psep"></div>
     <span class="plabel">Tool</span>
     <button class="tbtn on" data-tool="pen">✏️</button>
-    <button class="tbtn"    data-tool="eraser">🧹</button>
-    <button class="tbtn"    data-tool="fill">🪣</button>
-    <button class="tbtn"    data-tool="stamp">⭐</button>
+    <button class="tbtn" data-tool="eraser">🧹</button>
+    <button class="tbtn" data-tool="fill">🪣</button>
+    <button class="tbtn" data-tool="stamp">⭐</button>
   </div>
 </div>
 
@@ -177,23 +185,27 @@ canvas#drawCanvas { display:block; width:100%; height:100%; }
     <h2>✏️ Learn to Write!</h2>
     <div id="letter-mode-btns">
       <button class="lmode-btn on" data-lmode="upper">ABC</button>
-      <button class="lmode-btn"    data-lmode="lower">abc</button>
-      <button class="lmode-btn"    data-lmode="nums">123</button>
+      <button class="lmode-btn"   data-lmode="lower">abc</button>
+      <button class="lmode-btn"   data-lmode="nums">123</button>
     </div>
   </div>
-
-  <!-- Letter grid -->
-
   <div id="letter-grid-wrap"><div id="letter-grid"></div></div>
-
-  <!-- Practice area -->
-
   <div id="letter-practice">
-    <div id="letter-hero">A</div>
-    <div id="letter-word">🍎 Apple</div>
+    <div id="hero-row">
+      <div id="letter-hero">A</div>
+      <div id="hero-info">
+        <div id="letter-word">🍎 Apple</div>
+        <div id="stroke-counter">Stroke 1 of 2</div>
+      </div>
+    </div>
     <div id="trace-wrap">
       <canvas id="traceGuide"></canvas>
       <canvas id="traceCanvas"></canvas>
+    </div>
+    <div id="coach-bar">
+      <div id="coach-face">🦉</div>
+      <div id="coach-bubble" class="tip">Start at dot ① and trace the path!</div>
+      <button id="btn-watch">👁️ Watch Me</button>
     </div>
     <div id="letter-controls">
       <button id="btn-prev-letter">◀</button>
@@ -219,182 +231,112 @@ canvas#drawCanvas { display:block; width:100%; height:100%; }
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// SHARED UTILS
-// ═══════════════════════════════════════════════════
-function celebrate() {
+// ═══════════════════════════════════════════════
+//  SHARED
+// ═══════════════════════════════════════════════
+function celebrate(){
   const ems=['🎉','⭐','🌈','🎊','✨','💥','🦄','🍭'];
   for(let i=0;i<16;i++) setTimeout(()=>{
-    const el=document.createElement('div'); el.textContent=ems[Math.floor(Math.random()*ems.length)];
+    const el=document.createElement('div');el.textContent=ems[Math.floor(Math.random()*ems.length)];
     el.style.cssText=`position:fixed;font-size:2rem;pointer-events:none;z-index:999;left:${Math.random()*90+5}%;top:${Math.random()*65+5}%;animation:cfetti .7s ease forwards;`;
-    document.body.appendChild(el); setTimeout(()=>el.remove(),750);
-  }, i*45);
+    document.body.appendChild(el);setTimeout(()=>el.remove(),750);
+  },i*45);
 }
 
-// ═══════════════════════════════════════════════════
-// MODE SWITCHING
-// ═══════════════════════════════════════════════════
-const drawScreen   = document.getElementById('draw-screen');
-const letterScreen = document.getElementById('letter-screen');
-const topBtns      = document.getElementById('btn-undo').parentElement;
-const btnUndo      = document.getElementById('btn-undo');
-const btnTemplates = document.getElementById('btn-templates');
-const btnClear     = document.getElementById('btn-clear');
-const btnSave      = document.getElementById('btn-save');
+// ═══════════════════════════════════════════════
+//  MODE TABS
+// ═══════════════════════════════════════════════
+const drawScreen=document.getElementById('draw-screen');
+const letterScreen=document.getElementById('letter-screen');
+const btnUndo=document.getElementById('btn-undo');
+const btnTemplates=document.getElementById('btn-templates');
+const btnClear=document.getElementById('btn-clear');
+const btnSave=document.getElementById('btn-save');
 
-document.querySelectorAll('.mode-tab').forEach(tab => {
-  tab.addEventListener('pointerdown', () => {
-    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('on'));
+document.querySelectorAll('.mode-tab').forEach(tab=>{
+  tab.addEventListener('pointerdown',()=>{
+    document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('on'));
     tab.classList.add('on');
-    const m = tab.dataset.mode;
-    if (m === 'draw') {
-      drawScreen.style.display = 'flex';
-      letterScreen.classList.remove('on');
-      [btnUndo,btnTemplates,btnClear,btnSave].forEach(b => b.style.display='flex');
+    if(tab.dataset.mode==='draw'){
+      drawScreen.style.display='flex'; letterScreen.classList.remove('on');
+      [btnUndo,btnTemplates,btnClear,btnSave].forEach(b=>b.style.display='flex');
     } else {
-      drawScreen.style.display = 'none';
-      letterScreen.classList.add('on');
-      [btnUndo,btnTemplates,btnClear,btnSave].forEach(b => b.style.display='none');
+      drawScreen.style.display='none'; letterScreen.classList.add('on');
+      [btnUndo,btnTemplates,btnClear,btnSave].forEach(b=>b.style.display='none');
       resizeTraceCanvas();
     }
   });
 });
 
-// ═══════════════════════════════════════════════════
-// APPLE PENCIL
-// ═══════════════════════════════════════════════════
-let pencilDown=false, pencilSeen=false, pencilTimer=null;
-const pencilBadge  = document.getElementById('pencil-badge');
-const pressureBar  = document.getElementById('pressure-bar');
-const pressureFill = document.getElementById('pressure-fill');
-function onPencilSeen() { if(!pencilSeen){pencilSeen=true;pencilBadge.classList.add('on');} }
-function showPressure(p){ pressureBar.classList.add('show'); pressureFill.style.height=Math.round(p*100)+'%'; }
-function hidePressure()  { pressureBar.classList.remove('show'); }
-function dynSize(e,base) { if(e.pointerType==='pen'&&e.pressure>0) return base*(0.25+e.pressure*1.75); return base; }
+// ═══════════════════════════════════════════════
+//  APPLE PENCIL
+// ═══════════════════════════════════════════════
+let pencilDown=false,pencilSeen=false,pencilTimer=null;
+const pencilBadge=document.getElementById('pencil-badge');
+const pressureBar=document.getElementById('pressure-bar');
+const pressureFill=document.getElementById('pressure-fill');
+function onPencilSeen(){if(!pencilSeen){pencilSeen=true;pencilBadge.classList.add('on');}}
+function showPressure(p){pressureBar.classList.add('show');pressureFill.style.height=Math.round(p*100)+'%';}
+function hidePressure(){pressureBar.classList.remove('show');}
+function dynSize(e,base){return(e.pointerType==='pen'&&e.pressure>0)?base*(0.25+e.pressure*1.75):base;}
 
-// ═══════════════════════════════════════════════════
-// DRAW MODE
-// ═══════════════════════════════════════════════════
-const canvas  = document.getElementById('drawCanvas');
-const ctx     = canvas.getContext('2d');
-const wrap    = document.getElementById('canvas-wrap');
-const sparkle = document.getElementById('sparkle');
-const stampPanel = document.getElementById('stamp-panel');
-canvas.width  = wrap.clientWidth;
-canvas.height = wrap.clientHeight;
-window.addEventListener('resize',()=>{
-  const snap=ctx.getImageData(0,0,canvas.width,canvas.height);
-  canvas.width=wrap.clientWidth; canvas.height=wrap.clientHeight; ctx.putImageData(snap,0,0);
-});
-
-let color='#FF6FB7', brushSize=18, tool='pen', stampEmoji='⭐';
-let drawing=false, lastX=0, lastY=0, history=[], selTmpl=null;
-
-function pos(e,cv){ const r=cv.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return[s.clientX-r.left,s.clientY-r.top]; }
-
+// ═══════════════════════════════════════════════
+//  DRAW MODE
+// ═══════════════════════════════════════════════
+const canvas=document.getElementById('drawCanvas');
+const ctx=canvas.getContext('2d');
+const wrap=document.getElementById('canvas-wrap');
+const sparkle=document.getElementById('sparkle');
+const stampPanel=document.getElementById('stamp-panel');
+canvas.width=wrap.clientWidth; canvas.height=wrap.clientHeight;
+window.addEventListener('resize',()=>{const s=ctx.getImageData(0,0,canvas.width,canvas.height);canvas.width=wrap.clientWidth;canvas.height=wrap.clientHeight;ctx.putImageData(s,0,0);});
+let color='#FF6FB7',brushSize=18,tool='pen',stampEmoji='⭐',drawing=false,lastX=0,lastY=0,history=[],selTmpl=null;
+function dpos(e){const r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];}
 function onDown(e){
   if(e.pointerType==='pen'){pencilDown=true;onPencilSeen();clearTimeout(pencilTimer);showPressure(e.pressure);}
-  else if(e.pointerType==='touch'&&pencilDown) return;
-  const[x,y]=pos(e,canvas);
+  else if(e.pointerType==='touch'&&pencilDown)return;
+  const[x,y]=dpos(e);
   if(tool==='fill'){floodFill(Math.round(x),Math.round(y),hexToRgba(color));saveState();return;}
   if(tool==='stamp'){placeStamp(x,y);return;}
-  saveState(); drawing=true; lastX=x; lastY=y;
+  saveState();drawing=true;lastX=x;lastY=y;
   const sz=dynSize(e,brushSize);
   ctx.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';
   ctx.beginPath();ctx.arc(x,y,(tool==='eraser'?sz*1.5:sz)/2,0,Math.PI*2);
-  ctx.fillStyle=tool==='eraser'?'rgba(0,0,0,1)':color;ctx.fill();
-  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle=tool==='eraser'?'rgba(0,0,0,1)':color;ctx.fill();ctx.globalCompositeOperation='source-over';
 }
 function onMove(e){
   if(e.pointerType==='pen'){pencilDown=true;showPressure(e.pressure);}
-  else if(e.pointerType==='touch'&&pencilDown) return;
-  showSparkle(e); if(!drawing) return;
-  const[x,y]=pos(e,canvas),sz=dynSize(e,brushSize);
+  else if(e.pointerType==='touch'&&pencilDown)return;
+  showSparkle(e);if(!drawing)return;
+  const[x,y]=dpos(e),sz=dynSize(e,brushSize);
   ctx.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';
-  ctx.strokeStyle=tool==='eraser'?'rgba(0,0,0,1)':color;
-  ctx.lineWidth=tool==='eraser'?sz*3:sz;ctx.lineCap='round';ctx.lineJoin='round';
-  ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();
-  ctx.globalCompositeOperation='source-over';lastX=x;lastY=y;
+  ctx.strokeStyle=tool==='eraser'?'rgba(0,0,0,1)':color;ctx.lineWidth=tool==='eraser'?sz*3:sz;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();ctx.globalCompositeOperation='source-over';lastX=x;lastY=y;
 }
-function onUp(e){
-  drawing=false;sparkle.style.opacity=0;
-  if(e&&e.pointerType==='pen'){pencilTimer=setTimeout(()=>{pencilDown=false;hidePressure();},300);}
-  else hidePressure();
-}
-canvas.addEventListener('pointerdown',onDown,{passive:false});
-canvas.addEventListener('pointermove',onMove,{passive:false});
-canvas.addEventListener('pointerup',onUp);
-canvas.addEventListener('pointerleave',onUp);
-canvas.addEventListener('pointercancel',onUp);
+function onUp(e){drawing=false;sparkle.style.opacity=0;if(e&&e.pointerType==='pen'){pencilTimer=setTimeout(()=>{pencilDown=false;hidePressure();},300);}else hidePressure();}
+canvas.addEventListener('pointerdown',onDown,{passive:false});canvas.addEventListener('pointermove',onMove,{passive:false});
+canvas.addEventListener('pointerup',onUp);canvas.addEventListener('pointerleave',onUp);canvas.addEventListener('pointercancel',onUp);
 ['touchstart','touchmove','touchend'].forEach(ev=>canvas.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
-
-function showSparkle(e){
-  if(tool==='eraser'){sparkle.style.opacity=0;return;}
-  const r=wrap.getBoundingClientRect(),s=e.touches?e.touches[0]:e;
-  sparkle.style.left=(s.clientX-r.left)+'px';sparkle.style.top=(s.clientY-r.top)+'px';
-  sparkle.style.opacity=drawing?'1':'0';
-}
+function showSparkle(e){if(tool==='eraser'){sparkle.style.opacity=0;return;}const r=wrap.getBoundingClientRect(),s=e.touches?e.touches[0]:e;sparkle.style.left=(s.clientX-r.left)+'px';sparkle.style.top=(s.clientY-r.top)+'px';sparkle.style.opacity=drawing?'1':'0';}
 function saveState(){if(history.length>40)history.shift();history.push(canvas.toDataURL());}
 saveState();
-document.getElementById('btn-undo').addEventListener('pointerdown',()=>{
-  if(history.length<=1)return;history.pop();
-  const img=new Image();img.src=history[history.length-1];
-  img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);};
-});
-document.getElementById('btn-clear').addEventListener('pointerdown',()=>{saveState();ctx.clearRect(0,0,canvas.width,canvas.height);saveState();celebrate();});
-document.getElementById('btn-save').addEventListener('pointerdown',()=>{const a=document.createElement('a');a.download='my-drawing.png';a.href=canvas.toDataURL();a.click();celebrate();});
-
-// Colors
+btnUndo.addEventListener('pointerdown',()=>{if(history.length<=1)return;history.pop();const img=new Image();img.src=history[history.length-1];img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);};});
+btnClear.addEventListener('pointerdown',()=>{saveState();ctx.clearRect(0,0,canvas.width,canvas.height);saveState();celebrate();});
+btnSave.addEventListener('pointerdown',()=>{const a=document.createElement('a');a.download='my-drawing.png';a.href=canvas.toDataURL();a.click();celebrate();});
 const COLORS=['#FF6FB7','#FF4136','#FF851B','#FFDC00','#2ECC40','#00B4D8','#6C63FF','#A05195','#FF69B4','#7FDBFF','#01FF70','#ffffff','#555555','#8B4513','#FF6B35'];
 const colorRow=document.getElementById('color-row');
-COLORS.forEach(c=>{
-  const d=document.createElement('div');d.className='cdot'+(c===color?' on':'');d.style.background=c;
-  if(c==='#ffffff')d.style.boxShadow='inset 0 0 0 2px #ddd,0 2px 7px rgba(0,0,0,.12)';
-  d.addEventListener('pointerdown',()=>{document.querySelectorAll('.cdot').forEach(x=>x.classList.remove('on'));d.classList.add('on');color=c;if(tool==='eraser')setTool('pen');});
-  colorRow.appendChild(d);
-});
-// Brush sizes
+COLORS.forEach(c=>{const d=document.createElement('div');d.className='cdot'+(c===color?' on':'');d.style.background=c;if(c==='#ffffff')d.style.boxShadow='inset 0 0 0 2px #ddd,0 2px 7px rgba(0,0,0,.12)';d.addEventListener('pointerdown',()=>{document.querySelectorAll('.cdot').forEach(x=>x.classList.remove('on'));d.classList.add('on');color=c;if(tool==='eraser')setTool('pen');});colorRow.appendChild(d);});
 const SIZES=[5,14,28,50];const brushRow=document.getElementById('brush-row');
-SIZES.forEach(s=>{
-  const btn=document.createElement('button');btn.className='sbtn'+(s===brushSize?' on':'');
-  const dot=document.createElement('div');dot.className='sdot';dot.style.width=dot.style.height=Math.max(5,s*.62)+'px';
-  btn.appendChild(dot);
-  btn.addEventListener('pointerdown',()=>{document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('on'));btn.classList.add('on');brushSize=s;});
-  brushRow.appendChild(btn);
-});
-// Tools
+SIZES.forEach(s=>{const btn=document.createElement('button');btn.className='sbtn'+(s===brushSize?' on':'');const dot=document.createElement('div');dot.className='sdot';dot.style.width=dot.style.height=Math.max(5,s*.62)+'px';btn.appendChild(dot);btn.addEventListener('pointerdown',()=>{document.querySelectorAll('.sbtn').forEach(x=>x.classList.remove('on'));btn.classList.add('on');brushSize=s;});brushRow.appendChild(btn);});
 function setTool(t){tool=t;document.querySelectorAll('.tbtn').forEach(b=>b.classList.toggle('on',b.dataset.tool===t));if(t!=='stamp')stampPanel.classList.remove('open');}
-document.querySelectorAll('.tbtn').forEach(btn=>{
-  btn.addEventListener('pointerdown',e=>{e.stopPropagation();if(btn.dataset.tool==='stamp'){stampPanel.classList.toggle('open');setTool('stamp');}else setTool(btn.dataset.tool);});
-});
-// Stamps
-['⭐','🌈','🦄','🐶','🐱','🦋','🌸','🍭','🍕','🎉','🚀','❤️','🌟','🔥','👾','🦊','🍦','🎸','🌊','🦁'].forEach(em=>{
-  const el=document.createElement('div');el.className='stamp-em';el.textContent=em;
-  el.addEventListener('pointerdown',e=>{e.stopPropagation();stampEmoji=em;stampPanel.classList.remove('open');setTool('stamp');});
-  stampPanel.appendChild(el);
-});
+document.querySelectorAll('.tbtn').forEach(btn=>{btn.addEventListener('pointerdown',e=>{e.stopPropagation();if(btn.dataset.tool==='stamp'){stampPanel.classList.toggle('open');setTool('stamp');}else setTool(btn.dataset.tool);});});
+['⭐','🌈','🦄','🐶','🐱','🦋','🌸','🍭','🍕','🎉','🚀','❤️','🌟','🔥','👾','🦊','🍦','🎸','🌊','🦁'].forEach(em=>{const el=document.createElement('div');el.className='stamp-em';el.textContent=em;el.addEventListener('pointerdown',e=>{e.stopPropagation();stampEmoji=em;stampPanel.classList.remove('open');setTool('stamp');});stampPanel.appendChild(el);});
 document.addEventListener('pointerdown',e=>{if(!stampPanel.contains(e.target)&&!e.target.matches('[data-tool="stamp"]'))stampPanel.classList.remove('open');});
-function placeStamp(x,y){
-  saveState();const sz=brushSize*2.5+20;ctx.font=sz+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(stampEmoji,x,y);
-  const pop=document.createElement('div');pop.className='spop';pop.textContent=stampEmoji;pop.style.cssText=`left:${x}px;top:${y}px;font-size:${sz*.6}px;`;
-  wrap.appendChild(pop);setTimeout(()=>pop.remove(),600);
-}
-// Flood fill
+function placeStamp(x,y){saveState();const sz=brushSize*2.5+20;ctx.font=sz+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(stampEmoji,x,y);const pop=document.createElement('div');pop.className='spop';pop.textContent=stampEmoji;pop.style.cssText=`left:${x}px;top:${y}px;font-size:${sz*.6}px;`;wrap.appendChild(pop);setTimeout(()=>pop.remove(),600);}
 function hexToRgba(hex){return[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16),255];}
-function floodFill(sx,sy,fill){
-  const d=ctx.getImageData(0,0,canvas.width,canvas.height),px=d.data,w=canvas.width,h=canvas.height;
-  const i0=(sy*w+sx)*4,[tr,tg,tb,ta]=[px[i0],px[i0+1],px[i0+2],px[i0+3]];
-  if(tr===fill[0]&&tg===fill[1]&&tb===fill[2]&&ta===fill[3])return;
-  const match=i=>px[i]===tr&&px[i+1]===tg&&px[i+2]===tb&&px[i+3]===ta;
-  const paint=i=>{px[i]=fill[0];px[i+1]=fill[1];px[i+2]=fill[2];px[i+3]=fill[3];};
-  const vis=new Uint8Array(w*h),stk=[[sx,sy]];
-  while(stk.length){const[cx,cy]=stk.pop();if(cx<0||cx>=w||cy<0||cy>=h)continue;const ci=(cy*w+cx)*4,vi=cy*w+cx;if(vis[vi]||!match(ci))continue;vis[vi]=1;paint(ci);stk.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);}
-  ctx.putImageData(d,0,0);
-}
+function floodFill(sx,sy,fill){const d=ctx.getImageData(0,0,canvas.width,canvas.height),px=d.data,w=canvas.width,h=canvas.height;const i0=(sy*w+sx)*4,[tr,tg,tb,ta]=[px[i0],px[i0+1],px[i0+2],px[i0+3]];if(tr===fill[0]&&tg===fill[1]&&tb===fill[2]&&ta===fill[3])return;const match=i=>px[i]===tr&&px[i+1]===tg&&px[i+2]===tb&&px[i+3]===ta;const paint=i=>{px[i]=fill[0];px[i+1]=fill[1];px[i+2]=fill[2];px[i+3]=fill[3];};const vis=new Uint8Array(w*h),stk=[[sx,sy]];while(stk.length){const[cx,cy]=stk.pop();if(cx<0||cx>=w||cy<0||cy>=h)continue;const ci=(cy*w+cx)*4,vi=cy*w+cx;if(vis[vi]||!match(ci))continue;vis[vi]=1;paint(ci);stk.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);}ctx.putImageData(d,0,0);}
 
-// ═══════════════════════════════════════════════════
-// TEMPLATE HELPERS + FUNCTIONS (same as before)
-// ═══════════════════════════════════════════════════
+// Templates (helpers + fns)
 function ol(c,w,h,lw){c.strokeStyle='#2e2e2e';c.lineWidth=lw??Math.min(w,h)*.024;c.lineCap='round';c.lineJoin='round';}
 function wf(c){c.fillStyle='#fff';}
 function cloud(c,cx,cy,r,lw){c.beginPath();c.arc(cx,cy,r*.70,0,Math.PI*2);c.arc(cx+r*.95,cy+r*.18,r*.55,0,Math.PI*2);c.arc(cx-r*.58,cy+r*.28,r*.50,0,Math.PI*2);c.arc(cx+r*1.56,cy+r*.32,r*.46,0,Math.PI*2);wf(c);c.fill();ol(c,1,1,lw);c.stroke();}
@@ -402,51 +344,26 @@ function star(c,cx,cy,r,lw){c.beginPath();for(let i=0;i<5;i++){const a=-Math.PI/
 function tSun(c,w,h){const s=Math.min(w,h),lw=s*.024,cx=w*.5,cy=h*.44,r=s*.2;ol(c,w,h,lw);for(let i=0;i<12;i++){const a=(i/12)*Math.PI*2,in_=r+lw*1.5,out=r+(i%2?lw*5.5:lw*9);c.beginPath();c.moveTo(cx+Math.cos(a)*in_,cy+Math.sin(a)*in_);c.lineTo(cx+Math.cos(a)*out,cy+Math.sin(a)*out);c.lineWidth=lw*1.1;c.stroke();}c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[[cx-r*.28,cy-r*.15],[cx+r*.28,cy-r*.15]].forEach(([ex,ey])=>{c.beginPath();c.arc(ex,ey,r*.09,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();});c.beginPath();c.arc(cx,cy+r*.05,r*.26,.2,Math.PI-.2);c.lineWidth=lw*.85;c.strokeStyle='#2e2e2e';c.stroke();cloud(c,w*.16,h*.72,s*.09,lw*.9);cloud(c,w*.74,h*.68,s*.08,lw*.9);c.beginPath();c.moveTo(0,h*.88);c.lineTo(w,h*.88);ol(c,w,h,lw*.8);c.stroke();}
 function tRainbow(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.82,radii=[s*.47,s*.39,s*.31,s*.23,s*.15,s*.08];ol(c,w,h,lw);radii.forEach((r,i)=>{c.beginPath();c.arc(cx,cy,r,Math.PI,0);if(i<radii.length-1)c.arc(cx,cy,radii[i+1],0,Math.PI,true);else c.lineTo(cx,cy);c.closePath();wf(c);c.fill();ol(c,w,h,lw*.9);c.stroke();});cloud(c,cx-radii[0]*.52,cy,s*.1,lw);cloud(c,cx+radii[0]*.3,cy,s*.09,lw);c.fillStyle='#fff';c.fillRect(0,cy+lw,w,h);}
 function tHouse(c,w,h){const s=Math.min(w,h),lw=s*.024,bx=w*.18,by=h*.46,bw=w*.64,bh=h*.41;ol(c,w,h,lw);c.beginPath();c.moveTo(0,h*.84);c.lineTo(w,h*.84);ol(c,w,h,lw*.8);c.stroke();c.beginPath();c.rect(bx,by,bw,bh);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(w*.12,by);c.lineTo(w*.5,h*.14);c.lineTo(w*.88,by);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.rect(w*.65,h*.18,w*.08,h*.15);wf(c);c.fill();ol(c,w,h,lw);c.stroke();const dx=w*.43,dy=h*.6,dw=w*.14,dh=h*.27;c.beginPath();c.rect(dx,dy,dw,dh);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(dx+dw*.76,dy+dh*.52,lw*.65,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();const wy=h*.53,wsz=s*.12;[w*.23,w*.63].forEach(wx=>{c.beginPath();c.rect(wx,wy,wsz,wsz);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(wx+wsz/2,wy);c.lineTo(wx+wsz/2,wy+wsz);c.moveTo(wx,wy+wsz/2);c.lineTo(wx+wsz,wy+wsz/2);c.lineWidth=lw*.6;c.stroke();});c.beginPath();c.moveTo(w*.43,h*.84);c.lineTo(w*.57,h*.84);c.lineTo(w*.62,h);c.lineTo(w*.38,h);c.closePath();wf(c);c.fill();ol(c,w,h,lw*.75);c.stroke();}
-function tButterfly(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.48;ol(c,w,h,lw);[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*s*.22,cy-s*.08,s*.2,s*.25,sd*.4,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.ellipse(cx+sd*s*.22,cy-s*.08,s*.1,s*.13,sd*.4,0,Math.PI*2);c.lineWidth=lw*.7;c.stroke();c.beginPath();c.arc(cx+sd*s*.28,cy-s*.18,lw*1.2,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();});[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*s*.18,cy+s*.16,s*.14,s*.18,sd*.2,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx+sd*s*.22,cy+s*.22,lw*1.2,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();});c.beginPath();c.ellipse(cx,cy+s*.05,s*.04,s*.22,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx,cy-s*.18,s*.06,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.moveTo(cx+sd*s*.02,cy-s*.23);c.quadraticCurveTo(cx+sd*s*.12,cy-s*.35,cx+sd*s*.08,cy-s*.44);c.lineWidth=lw*.7;c.strokeStyle='#2e2e2e';c.stroke();c.beginPath();c.arc(cx+sd*s*.08,cy-s*.44,lw*1.3,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();});}
-function tRocket(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.5,bx=cx-s*.12,by=cy-s*.22,bw=s*.24,bh=s*.4,br=s*.06;ol(c,w,h,lw);c.beginPath();c.moveTo(bx+br,by);c.lineTo(bx+bw-br,by);c.quadraticCurveTo(bx+bw,by,bx+bw,by+br);c.lineTo(bx+bw,by+bh-br);c.quadraticCurveTo(bx+bw,by+bh,bx+bw-br,by+bh);c.lineTo(bx+br,by+bh);c.quadraticCurveTo(bx,by+bh,bx,by+bh-br);c.lineTo(bx,by+br);c.quadraticCurveTo(bx,by,bx+br,by);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(cx-s*.12,cy-s*.22);c.quadraticCurveTo(cx,cy-s*.5,cx+s*.12,cy-s*.22);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.moveTo(cx+sd*s*.12,cy+s*.1);c.lineTo(cx+sd*s*.3,cy+s*.3);c.lineTo(cx+sd*s*.12,cy+s*.22);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();});c.beginPath();c.arc(cx,cy-s*.05,s*.08,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(bx,cy+s*.06);c.lineTo(bx+bw,cy+s*.06);c.lineWidth=lw*.65;c.stroke();c.beginPath();c.moveTo(cx-s*.08,cy+s*.22);c.lineTo(cx-s*.04,cy+s*.38);c.lineTo(cx,cy+s*.32);c.lineTo(cx+s*.04,cy+s*.4);c.lineTo(cx+s*.08,cy+s*.22);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();[[.16,.16],[.84,.2],[.12,.76],[.86,.72]].forEach(([rx,ry])=>star(c,w*rx,h*ry,s*.04,lw));}
-function tCat(c,w,h){const s=Math.min(w,h),lw=s*.022,r=s*.22,cx=w*.5,cy=h*.36;ol(c,w,h,lw);[-1,1].forEach(sd=>{c.beginPath();c.moveTo(cx+sd*r*.6,cy-r*.7);c.lineTo(cx+sd*r*.96,cy-r*1.32);c.lineTo(cx+sd*r*.1,cy-r*.96);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(cx+sd*r*.62,cy-r*.78);c.lineTo(cx+sd*r*.88,cy-r*1.2);c.lineTo(cx+sd*r*.22,cy-r*1.02);c.closePath();c.lineWidth=lw*.65;c.stroke();});c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*r*.38,cy-r*.18,r*.13,r*.18,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.ellipse(cx+sd*r*.38,cy-r*.18,r*.06,r*.13,0,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();});c.beginPath();c.moveTo(cx,cy+r*.12);c.lineTo(cx-r*.1,cy+r*.22);c.lineTo(cx+r*.1,cy+r*.22);c.closePath();c.fillStyle='#2e2e2e';c.fill();[[cx,cy+r*.22,cx-r*.18,cy+r*.38,cx-r*.3,cy+r*.31],[cx,cy+r*.22,cx+r*.18,cy+r*.38,cx+r*.3,cy+r*.31]].forEach(([x1,y1,x2,y2,x3,y3])=>{c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(x2,y2,x3,y3);c.lineWidth=lw*.8;c.strokeStyle='#2e2e2e';c.stroke();});[-1,1].forEach(sd=>{[cy+r*.12,cy+r*.2,cy+r*.28].forEach((wy)=>{c.beginPath();c.moveTo(cx+sd*r*.15,wy);c.lineTo(cx+sd*r*.78,wy);c.lineWidth=lw*.5;c.stroke();});});c.beginPath();c.ellipse(cx,cy+r*1.55,r*.55,r*.72,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*r*.34,cy+r*2.24,r*.2,r*.12,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();});c.beginPath();c.moveTo(cx+r*.55,cy+r*2.1);c.bezierCurveTo(cx+r*1.24,cy+r*2.5,cx+r*1.3,cy+r*.8,cx+r*.82,cy+r*.55);c.lineWidth=lw*1.1;c.strokeStyle='#2e2e2e';c.stroke();}
-function tFlower(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.4,cr=s*.1,pr=s*.14;ol(c,w,h,lw);c.beginPath();c.moveTo(cx,cy+cr);c.quadraticCurveTo(cx-s*.05,h*.65,cx,h*.9);c.lineWidth=lw*1.4;c.strokeStyle='#2e2e2e';c.stroke();[[-1,.55,-.5],[1,.62,.5]].forEach(([sd,ty,ang])=>{const lx=cx+sd*s*.08,ly=h*ty;c.beginPath();c.ellipse(lx+sd*s*.1,ly,s*.12,s*.06,ang,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw*.8);c.stroke();c.beginPath();c.moveTo(lx,ly);c.lineTo(lx+sd*s*.2,ly);c.lineWidth=lw*.5;c.stroke();});for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,px=cx+Math.cos(a)*(cr+pr*.5),py=cy+Math.sin(a)*(cr+pr*.5);c.beginPath();c.ellipse(px,py,pr*.55,pr*.34,a,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();}c.beginPath();c.arc(cx,cy,cr,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();}
-function tFish(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.5;ol(c,w,h,lw);c.beginPath();c.moveTo(cx+s*.26,cy);c.lineTo(cx+s*.46,cy-s*.22);c.lineTo(cx+s*.38,cy);c.lineTo(cx+s*.46,cy+s*.22);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.ellipse(cx-s*.04,cy,s*.3,s*.2,-.05,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(cx-s*.12,cy-s*.2);c.quadraticCurveTo(cx,cy-s*.38,cx+s*.14,cy-s*.2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(cx-s*.06,cy+s*.2);c.quadraticCurveTo(cx+s*.04,cy+s*.32,cx+s*.14,cy+s*.2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx-s*.22,cy-s*.06,s*.05,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx-s*.22,cy-s*.06,s*.025,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();[s*.08,s*.055,s*.038].forEach((br,i)=>{c.beginPath();c.arc(cx-s*.38+i*s*.03,cy-s*.15-i*s*.12,br,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw*.7);c.stroke();});}
-function tDino(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.46,cy=h*.52;ol(c,w,h,lw);c.beginPath();c.ellipse(cx,cy+s*.05,s*.27,s*.19,-.12,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();function thickLine(x1,y1,cpx,cpy,x2,y2,lw2){c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(cpx,cpy,x2,y2);c.strokeStyle='#fff';c.lineWidth=lw2+lw*2;c.stroke();c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(cpx,cpy,x2,y2);c.strokeStyle='#2e2e2e';c.lineWidth=lw2;c.stroke();}thickLine(cx-s*.14,cy-s*.08,cx-s*.2,cy-s*.22,cx-s*.17,cy-s*.34,lw*4.5);c.beginPath();c.ellipse(cx-s*.22,cy-s*.4,s*.13,s*.09,.2,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx-s*.28,cy-s*.43,s*.033,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx-s*.28,cy-s*.43,s*.015,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();thickLine(cx+s*.27,cy+s*.1,cx+s*.5,cy+s*.07,cx+s*.5,cy-s*.2,lw*3.2);[[cx-s*.12,cy+s*.18],[cx+s*.08,cy+s*.2]].forEach(([lx,ly])=>{c.beginPath();c.moveTo(lx,ly);c.lineTo(lx-s*.03,ly+s*.19);c.lineTo(lx+s*.07,ly+s*.19);c.lineWidth=lw*1.5;c.strokeStyle='#2e2e2e';c.stroke();c.beginPath();c.ellipse(lx+s*.02,ly+s*.21,s*.06,s*.03,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw*.8);c.stroke();});[[cx+s*.08,cy-s*.14],[cx,cy-s*.22],[cx-.1,cy-s*.26],[cx-.18,cy-s*.23]].forEach(([sx,sy])=>{c.beginPath();c.moveTo(sx-s*.04,sy+s*.08);c.lineTo(sx,sy);c.lineTo(sx+s*.04,sy+s*.08);c.closePath();wf(c);c.fill();ol(c,w,h,lw*.9);c.stroke();});}
+function tButterfly(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.48;ol(c,w,h,lw);[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*s*.22,cy-s*.08,s*.2,s*.25,sd*.4,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.ellipse(cx+sd*s*.22,cy-s*.08,s*.1,s*.13,sd*.4,0,Math.PI*2);c.lineWidth=lw*.7;c.stroke();});[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*s*.18,cy+s*.16,s*.14,s*.18,sd*.2,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();});c.beginPath();c.ellipse(cx,cy+s*.05,s*.04,s*.22,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx,cy-s*.18,s*.06,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.moveTo(cx+sd*s*.02,cy-s*.23);c.quadraticCurveTo(cx+sd*s*.12,cy-s*.35,cx+sd*s*.08,cy-s*.44);c.lineWidth=lw*.7;c.strokeStyle='#2e2e2e';c.stroke();});}
+function tRocket(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.5,bx=cx-s*.12,by=cy-s*.22,bw=s*.24,bh=s*.4,br=s*.06;ol(c,w,h,lw);c.beginPath();c.moveTo(bx+br,by);c.lineTo(bx+bw-br,by);c.quadraticCurveTo(bx+bw,by,bx+bw,by+br);c.lineTo(bx+bw,by+bh-br);c.quadraticCurveTo(bx+bw,by+bh,bx+bw-br,by+bh);c.lineTo(bx+br,by+bh);c.quadraticCurveTo(bx,by+bh,bx,by+bh-br);c.lineTo(bx,by+br);c.quadraticCurveTo(bx,by,bx+br,by);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(cx-s*.12,cy-s*.22);c.quadraticCurveTo(cx,cy-s*.5,cx+s*.12,cy-s*.22);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.moveTo(cx+sd*s*.12,cy+s*.1);c.lineTo(cx+sd*s*.3,cy+s*.3);c.lineTo(cx+sd*s*.12,cy+s*.22);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();});c.beginPath();c.arc(cx,cy-s*.05,s*.08,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.moveTo(cx-s*.08,cy+s*.22);c.lineTo(cx-s*.04,cy+s*.38);c.lineTo(cx,cy+s*.32);c.lineTo(cx+s*.04,cy+s*.4);c.lineTo(cx+s*.08,cy+s*.22);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();[[.16,.16],[.84,.2],[.12,.76],[.86,.72]].forEach(([rx,ry])=>star(c,w*rx,h*ry,s*.04,lw));}
+function tCat(c,w,h){const s=Math.min(w,h),lw=s*.022,r=s*.22,cx=w*.5,cy=h*.36;ol(c,w,h,lw);[-1,1].forEach(sd=>{c.beginPath();c.moveTo(cx+sd*r*.6,cy-r*.7);c.lineTo(cx+sd*r*.96,cy-r*1.32);c.lineTo(cx+sd*r*.1,cy-r*.96);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();});c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();[-1,1].forEach(sd=>{c.beginPath();c.ellipse(cx+sd*r*.38,cy-r*.18,r*.13,r*.18,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.ellipse(cx+sd*r*.38,cy-r*.18,r*.06,r*.13,0,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();});c.beginPath();c.moveTo(cx,cy+r*.12);c.lineTo(cx-r*.1,cy+r*.22);c.lineTo(cx+r*.1,cy+r*.22);c.closePath();c.fillStyle='#2e2e2e';c.fill();c.beginPath();c.ellipse(cx,cy+r*1.55,r*.55,r*.72,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();}
+function tFlower(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.4,cr=s*.1,pr=s*.14;ol(c,w,h,lw);c.beginPath();c.moveTo(cx,cy+cr);c.quadraticCurveTo(cx-s*.05,h*.65,cx,h*.9);c.lineWidth=lw*1.4;c.strokeStyle='#2e2e2e';c.stroke();[[-1,.55,-.5],[1,.62,.5]].forEach(([sd,ty,ang])=>{const lx=cx+sd*s*.08,ly=h*ty;c.beginPath();c.ellipse(lx+sd*s*.1,ly,s*.12,s*.06,ang,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw*.8);c.stroke();});for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,px=cx+Math.cos(a)*(cr+pr*.5),py=cy+Math.sin(a)*(cr+pr*.5);c.beginPath();c.ellipse(px,py,pr*.55,pr*.34,a,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();}c.beginPath();c.arc(cx,cy,cr,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();}
+function tFish(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.5,cy=h*.5;ol(c,w,h,lw);c.beginPath();c.moveTo(cx+s*.26,cy);c.lineTo(cx+s*.46,cy-s*.22);c.lineTo(cx+s*.38,cy);c.lineTo(cx+s*.46,cy+s*.22);c.closePath();wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.ellipse(cx-s*.04,cy,s*.3,s*.2,-.05,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx-s*.22,cy-s*.06,s*.05,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();c.beginPath();c.arc(cx-s*.22,cy-s*.06,s*.025,0,Math.PI*2);c.fillStyle='#2e2e2e';c.fill();}
+function tDino(c,w,h){const s=Math.min(w,h),lw=s*.022,cx=w*.46,cy=h*.52;ol(c,w,h,lw);c.beginPath();c.ellipse(cx,cy+s*.05,s*.27,s*.19,-.12,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();function thk(x1,y1,cpx,cpy,x2,y2,lw2){c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(cpx,cpy,x2,y2);c.strokeStyle='#fff';c.lineWidth=lw2+lw*2;c.stroke();c.beginPath();c.moveTo(x1,y1);c.quadraticCurveTo(cpx,cpy,x2,y2);c.strokeStyle='#2e2e2e';c.lineWidth=lw2;c.stroke();}thk(cx-s*.14,cy-s*.08,cx-s*.2,cy-s*.22,cx-s*.17,cy-s*.34,lw*4.5);c.beginPath();c.ellipse(cx-s*.22,cy-s*.4,s*.13,s*.09,.2,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw);c.stroke();thk(cx+s*.27,cy+s*.1,cx+s*.5,cy+s*.07,cx+s*.5,cy-s*.2,lw*3.2);[[cx-s*.12,cy+s*.18],[cx+s*.08,cy+s*.2]].forEach(([lx,ly])=>{c.beginPath();c.moveTo(lx,ly);c.lineTo(lx-s*.03,ly+s*.19);c.lineTo(lx+s*.07,ly+s*.19);c.lineWidth=lw*1.5;c.strokeStyle='#2e2e2e';c.stroke();c.beginPath();c.ellipse(lx+s*.02,ly+s*.21,s*.06,s*.03,0,0,Math.PI*2);wf(c);c.fill();ol(c,w,h,lw*.8);c.stroke();});[[cx+s*.08,cy-s*.14],[cx,cy-s*.22],[cx-.1,cy-s*.26],[cx-.18,cy-s*.23]].forEach(([sx,sy])=>{c.beginPath();c.moveTo(sx-s*.04,sy+s*.08);c.lineTo(sx,sy);c.lineTo(sx+s*.04,sy+s*.08);c.closePath();wf(c);c.fill();ol(c,w,h,lw*.9);c.stroke();});}
 
 const TEMPLATES=[{name:'Sunshine ☀️',fn:tSun},{name:'Rainbow 🌈',fn:tRainbow},{name:'House 🏠',fn:tHouse},{name:'Butterfly 🦋',fn:tButterfly},{name:'Rocket 🚀',fn:tRocket},{name:'Cat 🐱',fn:tCat},{name:'Flower 🌸',fn:tFlower},{name:'Fish 🐟',fn:tFish},{name:'Dino 🦕',fn:tDino}];
 const tmplGrid=document.getElementById('tmpl-grid'),tmplModal=document.getElementById('tmpl-modal');
-TEMPLATES.forEach((tmpl,i)=>{
-  const card=document.createElement('div');card.className='tcard';
-  const tc=document.createElement('canvas');tc.width=tc.height=200;
-  const tctx=tc.getContext('2d');tctx.fillStyle='#fff';tctx.fillRect(0,0,200,200);tmpl.fn(tctx,200,200);
-  const lbl=document.createElement('div');lbl.className='tcard-lbl';lbl.textContent=tmpl.name;
-  card.appendChild(tc);card.appendChild(lbl);
-  card.addEventListener('pointerdown',()=>{document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('on'));card.classList.add('on');selTmpl=i;});
-  tmplGrid.appendChild(card);
-});
-document.getElementById('btn-templates').addEventListener('pointerdown',e=>{e.stopPropagation();selTmpl=null;document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('on'));tmplModal.classList.add('open');});
+TEMPLATES.forEach((t,i)=>{const card=document.createElement('div');card.className='tcard';const tc=document.createElement('canvas');tc.width=tc.height=200;const tc2=tc.getContext('2d');tc2.fillStyle='#fff';tc2.fillRect(0,0,200,200);t.fn(tc2,200,200);const lbl=document.createElement('div');lbl.className='tcard-lbl';lbl.textContent=t.name;card.appendChild(tc);card.appendChild(lbl);card.addEventListener('pointerdown',()=>{document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('on'));card.classList.add('on');selTmpl=i;});tmplGrid.appendChild(card);});
+btnTemplates.addEventListener('pointerdown',e=>{e.stopPropagation();selTmpl=null;document.querySelectorAll('.tcard').forEach(c=>c.classList.remove('on'));tmplModal.classList.add('open');});
 document.getElementById('tact-no').addEventListener('pointerdown',()=>tmplModal.classList.remove('open'));
 document.getElementById('tact-ok').addEventListener('pointerdown',()=>{if(selTmpl===null)return;tmplModal.classList.remove('open');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);TEMPLATES[selTmpl].fn(ctx,canvas.width,canvas.height);history=[];saveState();celebrate();});
 tmplModal.addEventListener('pointerdown',e=>{if(e.target===tmplModal)tmplModal.classList.remove('open');});
 
-// ═══════════════════════════════════════════════════
-// LETTER MODE
-// ═══════════════════════════════════════════════════
-const traceGuide  = document.getElementById('traceGuide');
-const traceCanvas = document.getElementById('traceCanvas');
-const gctx        = traceGuide.getContext('2d');
-const tctx2       = traceCanvas.getContext('2d');
-const letterHero  = document.getElementById('letter-hero');
-const letterWord  = document.getElementById('letter-word');
-const progressDots= document.getElementById('progress-dots');
-const letterGrid  = document.getElementById('letter-grid');
-
-let lmode       = 'upper';  // upper | lower | nums
-let curLetterIdx= 0;
-let doneLetters = {};        // { upper:{}, lower:{}, nums:{} }
-['upper','lower','nums'].forEach(m=>doneLetters[m]={});
-
-let ltDrawing=false, ltLastX=0, ltLastY=0;
-
-// Letter data: char, word, emoji
-const LETTER_DATA = {
-  upper: [
+// ═══════════════════════════════════════════════
+//  LETTER MODE — DATA
+// ═══════════════════════════════════════════════
+const LETTER_DATA={
+  upper:[
     {ch:'A',word:'Apple',em:'🍎'},{ch:'B',word:'Ball',em:'🏀'},{ch:'C',word:'Cat',em:'🐱'},
     {ch:'D',word:'Dog',em:'🐶'},{ch:'E',word:'Egg',em:'🥚'},{ch:'F',word:'Fish',em:'🐟'},
     {ch:'G',word:'Grapes',em:'🍇'},{ch:'H',word:'Hat',em:'🎩'},{ch:'I',word:'Igloo',em:'🏠'},
@@ -457,7 +374,7 @@ const LETTER_DATA = {
     {ch:'V',word:'Violin',em:'🎻'},{ch:'W',word:'Whale',em:'🐋'},{ch:'X',word:'X-ray',em:'🩻'},
     {ch:'Y',word:'Yacht',em:'⛵'},{ch:'Z',word:'Zebra',em:'🦓'},
   ],
-  lower: [
+  lower:[
     {ch:'a',word:'ant',em:'🐜'},{ch:'b',word:'bee',em:'🐝'},{ch:'c',word:'cow',em:'🐄'},
     {ch:'d',word:'duck',em:'🦆'},{ch:'e',word:'egg',em:'🥚'},{ch:'f',word:'frog',em:'🐸'},
     {ch:'g',word:'goat',em:'🐐'},{ch:'h',word:'hen',em:'🐔'},{ch:'i',word:'insect',em:'🐛'},
@@ -468,7 +385,7 @@ const LETTER_DATA = {
     {ch:'v',word:'vulture',em:'🦅'},{ch:'w',word:'wolf',em:'🐺'},{ch:'x',word:'ox',em:'🐂'},
     {ch:'y',word:'yak',em:'🐃'},{ch:'z',word:'zebra',em:'🦓'},
   ],
-  nums: [
+  nums:[
     {ch:'1',word:'One star',em:'⭐'},{ch:'2',word:'Two eyes',em:'👀'},{ch:'3',word:'Three hearts',em:'❤️'},
     {ch:'4',word:'Four legs',em:'🐘'},{ch:'5',word:'Five fingers',em:'✋'},{ch:'6',word:'Six petals',em:'🌸'},
     {ch:'7',word:'Seven colors',em:'🌈'},{ch:'8',word:'Eight legs',em:'🕷️'},{ch:'9',word:'Nine planets',em:'🪐'},
@@ -476,254 +393,406 @@ const LETTER_DATA = {
   ],
 };
 
-// Stroke definitions: normalized 0-1 coords, drawn on a 200x200 guide
-// Each letter has an array of strokes, each stroke is an array of [x,y] points
-const STROKES = {
-  // ── UPPERCASE ──
-  'A':[ [[.35,.85],[.5,.15],[.65,.85]], [[.28,.6],[.72,.6]] ],
-  'B':[ [[.28,.15],[.28,.85]], [[.28,.15],[.58,.15],[.68,.22],[.68,.35],[.58,.48],[.28,.48]], [[.28,.48],[.58,.48],[.7,.58],[.7,.72],[.58,.85],[.28,.85]] ],
-  'C':[ [[.7,.3],[.55,.15],[.38,.15],[.25,.3],[.25,.7],[.38,.85],[.55,.85],[.7,.7]] ],
-  'D':[ [[.28,.15],[.28,.85]], [[.28,.15],[.52,.15],[.68,.28],[.68,.72],[.52,.85],[.28,.85]] ],
-  'E':[ [[.65,.15],[.28,.15],[.28,.85],[.65,.85]], [[.28,.5],[.58,.5]] ],
-  'F':[ [[.28,.15],[.28,.85]], [[.28,.15],[.65,.15]], [[.28,.5],[.58,.5]] ],
-  'G':[ [[.7,.3],[.55,.15],[.38,.15],[.25,.3],[.25,.7],[.38,.85],[.55,.85],[.7,.72],[.7,.5],[.52,.5]] ],
-  'H':[ [[.28,.15],[.28,.85]], [[.72,.15],[.72,.85]], [[.28,.5],[.72,.5]] ],
-  'I':[ [[.36,.15],[.64,.15]], [[.5,.15],[.5,.85]], [[.36,.85],[.64,.85]] ],
-  'J':[ [[.62,.15],[.62,.72],[.5,.85],[.36,.85],[.26,.72]] ],
-  'K':[ [[.28,.15],[.28,.85]], [[.68,.15],[.28,.5],[.68,.85]] ],
-  'L':[ [[.28,.15],[.28,.85],[.68,.85]] ],
-  'M':[ [[.22,.85],[.22,.15],[.5,.52],[.78,.15],[.78,.85]] ],
-  'N':[ [[.28,.85],[.28,.15],[.72,.85],[.72,.15]] ],
-  'O':[ [[.5,.15],[.72,.28],[.72,.72],[.5,.85],[.28,.72],[.28,.28],[.5,.15]] ],
-  'P':[ [[.28,.15],[.28,.85]], [[.28,.15],[.58,.15],[.68,.25],[.68,.4],[.58,.5],[.28,.5]] ],
-  'Q':[ [[.5,.15],[.72,.28],[.72,.72],[.5,.85],[.28,.72],[.28,.28],[.5,.15]], [[.58,.72],[.74,.88]] ],
-  'R':[ [[.28,.15],[.28,.85]], [[.28,.15],[.58,.15],[.68,.25],[.68,.4],[.58,.5],[.28,.5],[.68,.85]] ],
-  'S':[ [[.68,.25],[.55,.15],[.38,.15],[.28,.28],[.38,.45],[.62,.55],[.72,.68],[.62,.85],[.42,.85],[.28,.75]] ],
-  'T':[ [[.28,.15],[.72,.15]], [[.5,.15],[.5,.85]] ],
-  'U':[ [[.28,.15],[.28,.72],[.38,.85],[.5,.88],[.62,.85],[.72,.72],[.72,.15]] ],
-  'V':[ [[.25,.15],[.5,.85],[.75,.15]] ],
-  'W':[ [[.18,.15],[.32,.85],[.5,.55],[.68,.85],[.82,.15]] ],
-  'X':[ [[.28,.15],[.72,.85]], [[.72,.15],[.28,.85]] ],
-  'Y':[ [[.28,.15],[.5,.52],[.72,.15]], [[.5,.52],[.5,.85]] ],
-  'Z':[ [[.28,.15],[.72,.15],[.28,.85],[.72,.85]] ],
-  // ── LOWERCASE ──
-  'a':[ [[.65,.42],[.42,.35],[.28,.5],[.28,.7],[.42,.82],[.58,.78],[.65,.65],[.65,.42]], [[.65,.42],[.65,.82]] ],
-  'b':[ [[.28,.15],[.28,.82]], [[.28,.52],[.42,.4],[.58,.42],[.65,.56],[.62,.7],[.5,.82],[.35,.82],[.28,.72]] ],
-  'c':[ [[.65,.48],[.5,.38],[.35,.42],[.28,.56],[.3,.7],[.42,.8],[.58,.8],[.65,.7]] ],
-  'd':[ [[.65,.15],[.65,.82]], [[.65,.52],[.5,.4],[.35,.42],[.28,.56],[.3,.7],[.42,.8],[.58,.8],[.65,.7]] ],
-  'e':[ [[.28,.58],[.65,.58],[.65,.48],[.52,.38],[.36,.4],[.28,.54],[.28,.68],[.38,.8],[.55,.82],[.66,.74]] ],
-  'f':[ [[.62,.2],[.52,.15],[.4,.22],[.38,.38],[.38,.82]], [[.28,.45],[.56,.45]] ],
-  'g':[ [[.65,.42],[.42,.35],[.28,.5],[.28,.7],[.42,.82],[.58,.78],[.65,.65],[.65,.42]], [[.65,.42],[.65,.95],[.55,1.02],[.4,1.0],[.28,.93]] ],
-  'h':[ [[.28,.15],[.28,.82]], [[.28,.56],[.42,.42],[.58,.4],[.65,.52],[.65,.82]] ],
-  'i':[ [[.5,.38],[.5,.82]], [[.5,.22],[.5,.27]] ],
-  'j':[ [[.58,.38],[.58,.92],[.48,.99],[.35,.96]], [[.58,.22],[.58,.27]] ],
-  'k':[ [[.28,.15],[.28,.82]], [[.62,.38],[.28,.62],[.62,.82]] ],
-  'l':[ [[.5,.15],[.5,.78],[.55,.82]] ],
-  'm':[ [[.22,.38],[.22,.82]], [[.22,.52],[.35,.4],[.5,.42],[.55,.52],[.55,.82]], [[.55,.52],[.68,.4],[.78,.42],[.82,.52],[.82,.82]] ],
-  'n':[ [[.28,.38],[.28,.82]], [[.28,.54],[.42,.4],[.58,.4],[.65,.54],[.65,.82]] ],
-  'o':[ [[.5,.38],[.65,.5],[.65,.68],[.5,.8],[.35,.68],[.35,.5],[.5,.38]] ],
-  'p':[ [[.28,.38],[.28,1.0]], [[.28,.52],[.42,.4],[.58,.42],[.65,.56],[.62,.7],[.5,.82],[.35,.82],[.28,.72]] ],
-  'q':[ [[.65,.38],[.65,1.0]], [[.65,.52],[.5,.4],[.35,.42],[.28,.56],[.3,.7],[.42,.8],[.58,.8],[.65,.7]] ],
-  'r':[ [[.28,.38],[.28,.82]], [[.28,.54],[.4,.42],[.52,.38],[.6,.4]] ],
-  's':[ [[.63,.44],[.52,.38],[.38,.38],[.28,.48],[.38,.58],[.55,.62],[.65,.72],[.55,.82],[.38,.82],[.28,.74]] ],
-  't':[ [[.5,.2],[.5,.75],[.56,.82]], [[.32,.45],[.62,.45]] ],
-  'u':[ [[.28,.38],[.28,.68],[.38,.8],[.52,.8],[.65,.68],[.65,.38],[.65,.82]] ],
-  'v':[ [[.28,.38],[.5,.82],[.72,.38]] ],
-  'w':[ [[.22,.38],[.34,.82],[.5,.6],[.66,.82],[.78,.38]] ],
-  'x':[ [[.28,.38],[.65,.82]], [[.65,.38],[.28,.82]] ],
-  'y':[ [[.28,.38],[.5,.65],[.72,.38]], [[.5,.65],[.38,.9],[.28,.95]] ],
-  'z':[ [[.28,.38],[.65,.38],[.28,.82],[.65,.82]] ],
-  // ── NUMBERS ──
-  '1':[ [[.38,.25],[.5,.18],[.5,.82]], [[.32,.82],[.68,.82]] ],
-  '2':[ [[.3,.3],[.38,.2],[.52,.18],[.65,.28],[.65,.42],[.28,.78],[.28,.82],[.72,.82]] ],
-  '3':[ [[.3,.2],[.62,.2],[.5,.5],[.65,.62],[.62,.78],[.48,.85],[.32,.82]] ],
-  '4':[ [[.58,.82],[.58,.18],[.22,.62],[.75,.62]] ],
-  '5':[ [[.65,.18],[.28,.18],[.25,.48],[.4,.42],[.58,.45],[.68,.58],[.65,.75],[.5,.85],[.32,.82]] ],
-  '6':[ [[.65,.22],[.48,.18],[.32,.32],[.25,.52],[.28,.7],[.42,.82],[.58,.82],[.7,.7],[.68,.54],[.52,.44],[.35,.5]] ],
-  '7':[ [[.28,.2],[.72,.2],[.38,.82]] ],
-  '8':[ [[.5,.18],[.65,.28],[.65,.42],[.5,.52],[.35,.42],[.35,.28],[.5,.18]], [[.5,.52],[.35,.62],[.35,.75],[.5,.85],[.65,.75],[.65,.62],[.5,.52]] ],
-  '9':[ [[.5,.2],[.35,.22],[.28,.35],[.32,.5],[.46,.58],[.62,.56],[.7,.42],[.65,.28],[.5,.2]], [[.62,.56],[.58,.82],[.44,.9]] ],
-  '0':[ [[.5,.18],[.68,.3],[.72,.5],[.68,.7],[.5,.85],[.32,.7],[.28,.5],[.32,.3],[.5,.18]] ],
+// Strokes: normalized 0–1 coords
+const STROKES={
+  'A':[[[.35,.85],[.5,.15],[.65,.85]],[[.28,.6],[.72,.6]]],
+  'B':[[[.28,.15],[.28,.85]],[[.28,.15],[.58,.15],[.68,.22],[.68,.35],[.58,.48],[.28,.48]],[[.28,.48],[.58,.48],[.7,.58],[.7,.72],[.58,.85],[.28,.85]]],
+  'C':[[[.7,.3],[.55,.15],[.38,.15],[.25,.3],[.25,.7],[.38,.85],[.55,.85],[.7,.7]]],
+  'D':[[[.28,.15],[.28,.85]],[[.28,.15],[.52,.15],[.68,.28],[.68,.72],[.52,.85],[.28,.85]]],
+  'E':[[[.28,.15],[.28,.85]],[[.28,.15],[.65,.15]],[[.28,.5],[.58,.5]],[[.28,.85],[.65,.85]]],
+  'F':[[[.28,.15],[.28,.85]],[[.28,.15],[.65,.15]],[[.28,.5],[.58,.5]]],
+  'G':[[[.7,.3],[.55,.15],[.38,.15],[.25,.3],[.25,.7],[.38,.85],[.55,.85],[.7,.72],[.7,.5],[.52,.5]]],
+  'H':[[[.28,.15],[.28,.85]],[[.72,.15],[.72,.85]],[[.28,.5],[.72,.5]]],
+  'I':[[[.36,.15],[.64,.15]],[[.5,.15],[.5,.85]],[[.36,.85],[.64,.85]]],
+  'J':[[[.62,.15],[.62,.72],[.5,.85],[.36,.85],[.26,.72]]],
+  'K':[[[.28,.15],[.28,.85]],[[.68,.15],[.28,.5],[.68,.85]]],
+  'L':[[[.28,.15],[.28,.85],[.68,.85]]],
+  'M':[[[.22,.85],[.22,.15],[.5,.52],[.78,.15],[.78,.85]]],
+  'N':[[[.28,.85],[.28,.15],[.72,.85],[.72,.15]]],
+  'O':[[[.5,.15],[.72,.28],[.72,.72],[.5,.85],[.28,.72],[.28,.28],[.5,.15]]],
+  'P':[[[.28,.15],[.28,.85]],[[.28,.15],[.58,.15],[.68,.25],[.68,.4],[.58,.5],[.28,.5]]],
+  'Q':[[[.5,.15],[.72,.28],[.72,.72],[.5,.85],[.28,.72],[.28,.28],[.5,.15]],[[.58,.72],[.74,.88]]],
+  'R':[[[.28,.15],[.28,.85]],[[.28,.15],[.58,.15],[.68,.25],[.68,.4],[.58,.5],[.28,.5],[.68,.85]]],
+  'S':[[[.68,.25],[.55,.15],[.38,.15],[.28,.28],[.38,.45],[.62,.55],[.72,.68],[.62,.85],[.42,.85],[.28,.75]]],
+  'T':[[[.28,.15],[.72,.15]],[[.5,.15],[.5,.85]]],
+  'U':[[[.28,.15],[.28,.72],[.38,.85],[.5,.88],[.62,.85],[.72,.72],[.72,.15]]],
+  'V':[[[.25,.15],[.5,.85],[.75,.15]]],
+  'W':[[[.18,.15],[.32,.85],[.5,.55],[.68,.85],[.82,.15]]],
+  'X':[[[.28,.15],[.72,.85]],[[.72,.15],[.28,.85]]],
+  'Y':[[[.28,.15],[.5,.52],[.72,.15]],[[.5,.52],[.5,.85]]],
+  'Z':[[[.28,.15],[.72,.15],[.28,.85],[.72,.85]]],
+  'a':[[[.65,.42],[.42,.35],[.28,.5],[.28,.7],[.42,.82],[.58,.78],[.65,.65],[.65,.42]],[[.65,.42],[.65,.82]]],
+  'b':[[[.28,.15],[.28,.82]],[[.28,.52],[.42,.4],[.58,.42],[.65,.56],[.62,.7],[.5,.82],[.35,.82],[.28,.72]]],
+  'c':[[[.65,.48],[.5,.38],[.35,.42],[.28,.56],[.3,.7],[.42,.8],[.58,.8],[.65,.7]]],
+  'd':[[[.65,.15],[.65,.82]],[[.65,.52],[.5,.4],[.35,.42],[.28,.56],[.3,.7],[.42,.8],[.58,.8],[.65,.7]]],
+  'e':[[[.28,.58],[.65,.58],[.65,.48],[.52,.38],[.36,.4],[.28,.54],[.28,.68],[.38,.8],[.55,.82],[.66,.74]]],
+  'f':[[[.62,.2],[.52,.15],[.4,.22],[.38,.38],[.38,.82]],[[.28,.45],[.56,.45]]],
+  'g':[[[.65,.42],[.42,.35],[.28,.5],[.28,.7],[.42,.82],[.58,.78],[.65,.65],[.65,.42]],[[.65,.42],[.65,.95],[.55,1.02],[.4,1.0],[.28,.93]]],
+  'h':[[[.28,.15],[.28,.82]],[[.28,.56],[.42,.42],[.58,.4],[.65,.52],[.65,.82]]],
+  'i':[[[.5,.38],[.5,.82]],[[.5,.22],[.5,.26]]],
+  'j':[[[.58,.38],[.58,.92],[.48,.99],[.35,.96]],[[.58,.22],[.58,.26]]],
+  'k':[[[.28,.15],[.28,.82]],[[.62,.38],[.28,.62],[.62,.82]]],
+  'l':[[[.46,.15],[.5,.82]]],
+  'm':[[[.22,.38],[.22,.82]],[[.22,.52],[.35,.4],[.5,.42],[.55,.52],[.55,.82]],[[.55,.52],[.68,.4],[.78,.42],[.82,.52],[.82,.82]]],
+  'n':[[[.28,.38],[.28,.82]],[[.28,.54],[.42,.4],[.58,.4],[.65,.54],[.65,.82]]],
+  'o':[[[.5,.38],[.65,.5],[.65,.68],[.5,.8],[.35,.68],[.35,.5],[.5,.38]]],
+  'p':[[[.28,.38],[.28,1.0]],[[.28,.52],[.42,.4],[.58,.42],[.65,.56],[.62,.7],[.5,.82],[.35,.82],[.28,.72]]],
+  'q':[[[.65,.38],[.65,1.0]],[[.65,.52],[.5,.4],[.35,.42],[.28,.56],[.3,.7],[.42,.8],[.58,.8],[.65,.7]]],
+  'r':[[[.28,.38],[.28,.82]],[[.28,.54],[.4,.42],[.52,.38],[.6,.4]]],
+  's':[[[.63,.44],[.52,.38],[.38,.38],[.28,.48],[.38,.58],[.55,.62],[.65,.72],[.55,.82],[.38,.82],[.28,.74]]],
+  't':[[[.5,.2],[.5,.82]],[[.32,.45],[.62,.45]]],
+  'u':[[[.28,.38],[.28,.68],[.38,.8],[.52,.8],[.65,.68],[.65,.38],[.65,.82]]],
+  'v':[[[.28,.38],[.5,.82],[.72,.38]]],
+  'w':[[[.22,.38],[.34,.82],[.5,.6],[.66,.82],[.78,.38]]],
+  'x':[[[.28,.38],[.65,.82]],[[.65,.38],[.28,.82]]],
+  'y':[[[.28,.38],[.5,.65],[.72,.38]],[[.5,.65],[.38,.9],[.28,.95]]],
+  'z':[[[.28,.38],[.65,.38],[.28,.82],[.65,.82]]],
+  '1':[[[.38,.25],[.5,.18],[.5,.82]],[[.32,.82],[.68,.82]]],
+  '2':[[[.3,.3],[.38,.2],[.52,.18],[.65,.28],[.65,.42],[.28,.78],[.28,.82],[.72,.82]]],
+  '3':[[[.3,.2],[.62,.2],[.5,.5],[.65,.62],[.62,.78],[.48,.85],[.32,.82]]],
+  '4':[[[.58,.82],[.58,.18],[.22,.62],[.75,.62]]],
+  '5':[[[.65,.18],[.28,.18],[.25,.48],[.4,.42],[.58,.45],[.68,.58],[.65,.75],[.5,.85],[.32,.82]]],
+  '6':[[[.65,.22],[.48,.18],[.32,.32],[.25,.52],[.28,.7],[.42,.82],[.58,.82],[.7,.7],[.68,.54],[.52,.44],[.35,.5]]],
+  '7':[[[.28,.2],[.72,.2],[.38,.82]]],
+  '8':[[[.5,.18],[.65,.28],[.65,.42],[.5,.52],[.35,.42],[.35,.28],[.5,.18]],[[.5,.52],[.35,.62],[.35,.75],[.5,.85],[.65,.75],[.65,.62],[.5,.52]]],
+  '9':[[[.5,.2],[.35,.22],[.28,.35],[.32,.5],[.46,.58],[.62,.56],[.7,.42],[.65,.28],[.5,.2]],[[.62,.56],[.58,.82],[.44,.9]]],
+  '0':[[[.5,.18],[.68,.3],[.72,.5],[.68,.7],[.5,.85],[.32,.7],[.28,.5],[.32,.3],[.5,.18]]],
 };
 
+// ═══════════════════════════════════════════════
+//  LETTER MODE — STATE
+// ═══════════════════════════════════════════════
+const traceGuide   = document.getElementById('traceGuide');
+const traceCanvas  = document.getElementById('traceCanvas');
+const gctx         = traceGuide.getContext('2d');
+const tctx2        = traceCanvas.getContext('2d');
+const letterHero   = document.getElementById('letter-hero');
+const letterWord   = document.getElementById('letter-word');
+const strokeCounter= document.getElementById('stroke-counter');
+const progressDots = document.getElementById('progress-dots');
+const letterGrid   = document.getElementById('letter-grid');
+const coachBubble  = document.getElementById('coach-bubble');
+const coachFace    = document.getElementById('coach-face');
+const btnWatch     = document.getElementById('btn-watch');
+const traceWrap    = document.getElementById('trace-wrap');
+
+let lmode          = 'upper';
+let curLetterIdx   = 0;
+let currentStroke  = 0;      // which stroke we're coaching
+let completedStrks = [];     // boolean[] per stroke of current letter
+let strokeAttempts = 0;      // attempts on current stroke (max 2)
+let ltDrawing      = false;
+let ltFirstX       = 0, ltFirstY = 0;
+let ltHasDrawn     = false;
+let isWatching     = false;
+let watchTimer     = null;
+let pulseAnimId    = null;
+let pulsePhase     = 0;
+let letterDone     = false;
+let doneLetters    = {upper:{},lower:{},nums:{}};
+
+// ── COACH ──────────────────────────────────────
+const PRAISE = ['Awesome! ⭐','Perfect! 🎉','You rock! 🌟','Brilliant! 💫','Amazing! 🚀','Super! 👏'];
+const FACES   = {tip:'🦉', praise:'🌟', retry:'🐢', watch:'👀', done:'🎊'};
+
+function showCoach(msg, type='tip'){
+  coachBubble.textContent = msg;
+  coachBubble.className   = type;
+  coachFace.textContent   = FACES[type] || '🦉';
+}
+
+function randPraise(){ return PRAISE[Math.floor(Math.random()*PRAISE.length)]; }
+
+// ── GUIDE RENDERING ────────────────────────────
 function resizeTraceCanvas(){
-  const trw=traceGuide.parentElement;
-  const W=trw.clientWidth, H=trw.clientHeight;
-  traceGuide.width=traceCanvas.width=W;
-  traceGuide.height=traceCanvas.height=H;
+  const tw = traceWrap.clientWidth, th = traceWrap.clientHeight;
+  if(tw<1||th<1) return;
+  traceGuide.width  = traceCanvas.width  = tw;
+  traceGuide.height = traceCanvas.height = th;
   drawGuide();
 }
 
+function strokePx(pts, W, H){
+  // Convert normalized points to canvas px
+  const padX=W*.08, padY=H*.08, fw=W*.84, fh=H*.84;
+  return pts.map(([x,y])=>[padX+x*fw, padY+y*fh]);
+}
+
+function drawArrow(g, x1, y1, x2, y2, size){
+  const a = Math.atan2(y2-y1, x2-x1);
+  g.beginPath();
+  g.moveTo(x2, y2);
+  g.lineTo(x2-size*Math.cos(a-Math.PI/5), y2-size*Math.sin(a-Math.PI/5));
+  g.lineTo(x2-size*Math.cos(a+Math.PI/5), y2-size*Math.sin(a+Math.PI/5));
+  g.closePath(); g.fill();
+}
+
 function drawGuide(){
-  const W=traceGuide.width, H=traceGuide.height;
+  const W = traceGuide.width, H = traceGuide.height;
+  if(W<1||H<1) return;
   gctx.clearRect(0,0,W,H);
 
-  // Ruled lines background
-  gctx.fillStyle='#f8f4ff';
+  // Lined paper background
+  gctx.fillStyle = '#f8f5ff';
   gctx.fillRect(0,0,W,H);
-
-  // Baseline, midline, top line
-  const top=H*.12, mid=H*.5, base=H*.82;
+  const top=H*.1, mid=H*.52, base=H*.85;
   [top,mid,base].forEach((y,i)=>{
-    gctx.strokeStyle = i===2 ? '#b0a0f0' : '#ddd8ff';
-    gctx.lineWidth   = i===2 ? 2 : 1;
-    gctx.setLineDash([6,4]);
+    gctx.strokeStyle = i===2 ? 'rgba(108,99,255,.25)' : 'rgba(200,190,255,.5)';
+    gctx.lineWidth   = i===2 ? 1.5 : 1;
+    gctx.setLineDash([6,5]);
     gctx.beginPath(); gctx.moveTo(0,y); gctx.lineTo(W,y); gctx.stroke();
   });
   gctx.setLineDash([]);
 
-  // Draw ghost letter
   const letters = LETTER_DATA[lmode];
   const ch      = letters[curLetterIdx].ch;
-  const strokes = STROKES[ch];
-  if (!strokes) return;
+  const strokes = STROKES[ch]; if(!strokes) return;
 
-  const padX=W*.08, padY=H*.08, fw=W*.84, fh=H*.84;
+  // Draw all strokes (background ghost, completed green, current highlighted)
+  strokes.forEach((stroke, si)=>{
+    const pts = strokePx(stroke, W, H);
+    const done = completedStrks[si];
+    const isCur= si === currentStroke && !letterDone;
 
-  gctx.strokeStyle = 'rgba(108,99,255,0.18)';
-  gctx.lineWidth   = Math.min(W,H)*.09;
-  gctx.lineCap     = 'round';
-  gctx.lineJoin    = 'round';
-
-  strokes.forEach(stroke=>{
-    if(stroke.length<2) return;
+    if(done){
+      // Completed: draw in green
+      gctx.strokeStyle = 'rgba(39,174,96,.55)';
+      gctx.lineWidth   = Math.min(W,H)*.075;
+    } else if(isCur){
+      // Current: bright purple
+      gctx.strokeStyle = `rgba(108,99,255,${0.22 + 0.18*Math.sin(pulsePhase)})`;
+      gctx.lineWidth   = Math.min(W,H)*.085;
+    } else {
+      // Future: very faint
+      gctx.strokeStyle = 'rgba(180,170,220,.25)';
+      gctx.lineWidth   = Math.min(W,H)*.07;
+    }
+    gctx.lineCap='round'; gctx.lineJoin='round';
     gctx.beginPath();
-    gctx.moveTo(padX+stroke[0][0]*fw, padY+stroke[0][1]*fh);
-    for(let i=1;i<stroke.length;i++) gctx.lineTo(padX+stroke[i][0]*fw, padY+stroke[i][1]*fh);
+    gctx.moveTo(pts[0][0], pts[0][1]);
+    for(let i=1;i<pts.length;i++) gctx.lineTo(pts[i][0],pts[i][1]);
     gctx.stroke();
-  });
 
-  // Draw numbered start dots
-  gctx.font = `bold ${Math.round(Math.min(W,H)*.055)}px Nunito, sans-serif`;
-  gctx.textAlign='center'; gctx.textBaseline='middle';
-  strokes.forEach((stroke,si)=>{
-    const[sx,sy]=stroke[0];
-    const px=padX+sx*fw, py=padY+sy*fh;
-    gctx.fillStyle='rgba(108,99,255,0.55)';
-    gctx.beginPath(); gctx.arc(px,py,Math.min(W,H)*.038,0,Math.PI*2); gctx.fill();
-    gctx.fillStyle='#fff';
-    gctx.fillText(si+1, px, py);
+    if(done){
+      // Checkmark at end
+      const [ex,ey] = pts[pts.length-1];
+      gctx.font = `bold ${Math.min(W,H)*.07}px Nunito,sans-serif`;
+      gctx.textAlign='center'; gctx.textBaseline='middle';
+      gctx.fillStyle='rgba(39,174,96,.8)'; gctx.fillText('✓',ex,ey);
+    }
+
+    if(isCur){
+      // Direction arrows along path
+      const arrowSz = Math.min(W,H)*.038;
+      gctx.fillStyle = 'rgba(108,99,255,.45)';
+      for(let i=1;i<pts.length;i++){
+        const [ax,ay]=[pts[i-1][0],pts[i-1][1]], [bx,by]=[pts[i][0],pts[i][1]];
+        const mx=(ax+bx)/2, my=(ay+by)/2;
+        drawArrow(gctx,ax,ay,bx,by,arrowSz);
+        // mid-arrow
+        drawArrow(gctx,(ax+mx)/2,(ay+my)/2,(bx+mx)/2,(by+my)/2,arrowSz*.7);
+      }
+
+      // Pulsing numbered start dot
+      const [sx,sy] = pts[0];
+      const pulse = 1 + 0.25*Math.sin(pulsePhase);
+      const dotR  = Math.min(W,H)*.062 * pulse;
+      gctx.beginPath(); gctx.arc(sx,sy,dotR,0,Math.PI*2);
+      gctx.fillStyle=`rgba(108,99,255,${0.75+0.25*Math.sin(pulsePhase)})`; gctx.fill();
+      gctx.font=`bold ${Math.round(dotR*1.1)}px Fredoka One,cursive`;
+      gctx.fillStyle='#fff'; gctx.textAlign='center'; gctx.textBaseline='middle';
+      gctx.fillText(si+1, sx, sy);
+    }
   });
 }
 
-function clearTrace(){
-  tctx2.clearRect(0,0,traceCanvas.width,traceCanvas.height);
+function startPulse(){
+  stopPulse();
+  function frame(){ pulsePhase=(pulsePhase+0.07)%(Math.PI*2); drawGuide(); pulseAnimId=requestAnimationFrame(frame); }
+  pulseAnimId=requestAnimationFrame(frame);
+}
+function stopPulse(){ if(pulseAnimId){cancelAnimationFrame(pulseAnimId);pulseAnimId=null;} }
+function clearTrace(){ tctx2.clearRect(0,0,traceCanvas.width,traceCanvas.height); }
+
+// ── STROKE ANALYSIS ────────────────────────────
+function buildMask(strokePts){
+  const W=traceCanvas.width, H=traceCanvas.height;
+  const mc=document.createElement('canvas'); mc.width=W; mc.height=H;
+  const mctx=mc.getContext('2d');
+  const pts=strokePx(strokePts,W,H);
+  const tol=Math.min(W,H)*0.14; // generous 14% tolerance
+  mctx.strokeStyle='#000'; mctx.lineWidth=tol*2; mctx.lineCap='round'; mctx.lineJoin='round';
+  mctx.beginPath(); mctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++) mctx.lineTo(pts[i][0],pts[i][1]);
+  mctx.stroke();
+  return mctx.getImageData(0,0,W,H).data;
 }
 
-function updateLetterUI(){
-  const letters = LETTER_DATA[lmode];
-  const {ch,word,em} = letters[curLetterIdx];
-  letterHero.textContent = ch;
-  letterWord.textContent = em+' '+word;
-  // update grid
-  document.querySelectorAll('.lgrid-btn').forEach((b,i)=>{
-    b.classList.toggle('on', i===curLetterIdx);
-    b.classList.toggle('done', !!doneLetters[lmode][i]);
-  });
-  // progress dots
-  progressDots.innerHTML='';
-  letters.forEach((_,i)=>{
-    const d=document.createElement('div');
-    d.className='pdot'+(doneLetters[lmode][i]?' done':'')+(i===curLetterIdx?' cur':'');
-    progressDots.appendChild(d);
-  });
-  clearTrace();
-  drawGuide();
-}
-
-function buildLetterGrid(){
-  letterGrid.innerHTML='';
+function analyzeStroke(){
+  const W=traceCanvas.width, H=traceCanvas.height;
   const letters=LETTER_DATA[lmode];
-  letters.forEach((l,i)=>{
-    const btn=document.createElement('button');
-    btn.className='lgrid-btn'+(i===curLetterIdx?' on':'')+(doneLetters[lmode][i]?' done':'');
-    btn.textContent=l.ch;
-    const badge=document.createElement('span'); badge.className='star-badge'; badge.textContent='⭐';
-    btn.appendChild(badge);
-    btn.addEventListener('pointerdown',()=>{ curLetterIdx=i; updateLetterUI(); });
-    letterGrid.appendChild(btn);
-  });
+  const ch=letters[curLetterIdx].ch;
+  const strokes=STROKES[ch]; if(!strokes) return {score:1};
+  const strokePts=strokes[currentStroke];
+  const mask=buildMask(strokePts);
+  const user=tctx2.getImageData(0,0,W,H).data;
+
+  let maskTotal=0,maskCovered=0,userTotal=0,userInMask=0;
+  for(let i=0;i<mask.length;i+=4){
+    const inMask=mask[i+3]>30, hasUser=user[i+3]>30;
+    if(inMask){maskTotal++;if(hasUser)maskCovered++;}
+    if(hasUser){userTotal++;if(inMask)userInMask++;}
+  }
+  const recall    = maskTotal>0 ? maskCovered/maskTotal : 0;
+  const precision = userTotal>0 ? userInMask/userTotal  : 0;
+
+  // Start accuracy: did they begin near the expected start dot?
+  const pts=strokePx(strokePts,W,H);
+  const [ex,ey]=pts[0];
+  const startDist=Math.hypot(ltFirstX-ex, ltFirstY-ey);
+  const startOK=startDist<Math.min(W,H)*0.22;
+
+  return {recall,precision,startOK,score:(recall*0.6+precision*0.4)};
 }
 
-// Letter mode toggle
-document.querySelectorAll('.lmode-btn').forEach(btn=>{
-  btn.addEventListener('pointerdown',()=>{
-    document.querySelectorAll('.lmode-btn').forEach(b=>b.classList.remove('on'));
-    btn.classList.add('on');
-    lmode=btn.dataset.lmode;
-    curLetterIdx=0;
-    buildLetterGrid();
-    updateLetterUI();
-  });
-});
-
-// Prev / Next
-document.getElementById('btn-prev-letter').addEventListener('pointerdown',()=>{
-  const letters=LETTER_DATA[lmode];
-  curLetterIdx=(curLetterIdx-1+letters.length)%letters.length;
-  updateLetterUI();
-  document.querySelectorAll('.lgrid-btn').forEach((b,i)=>b.classList.toggle('on',i===curLetterIdx));
-});
-document.getElementById('btn-next-letter').addEventListener('pointerdown',()=>{
-  const letters=LETTER_DATA[lmode];
-  curLetterIdx=(curLetterIdx+1)%letters.length;
-  updateLetterUI();
-  document.querySelectorAll('.lgrid-btn').forEach((b,i)=>b.classList.toggle('on',i===curLetterIdx));
-});
-document.getElementById('btn-letter-clear').addEventListener('pointerdown',()=>clearTrace());
-
-// TRACE DRAWING
-function tracePos(e){
-  const r=traceCanvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e;
-  return[s.clientX-r.left,s.clientY-r.top];
+function specificTip(res){
+  if(!res.startOK && res.recall<0.2){
+    const n=currentStroke+1;
+    return `Start at dot ${n}! Tap right on the circle to begin 🎯`;
+  }
+  if(res.recall<0.15) return 'Keep going — trace all the way to the end! ➡️';
+  if(res.precision<0.35) return 'Try to stay on the purple path! Go nice and slow 🐌';
+  if(res.recall<0.3)  return 'Almost there! Follow the dotted line a bit more 👆';
+  return 'Good try! Trace the path more carefully this time ✏️';
 }
+
+// ── WATCH ME ANIMATION ─────────────────────────
+function watchMe(){
+  if(isWatching||letterDone) return;
+  const letters=LETTER_DATA[lmode];
+  const ch=letters[curLetterIdx].ch;
+  const strokes=STROKES[ch]; if(!strokes) return;
+  const stroke=strokes[currentStroke];
+  const W=traceCanvas.width,H=traceCanvas.height;
+
+  isWatching=true; btnWatch.disabled=true;
+  clearTrace(); showCoach('Watch me trace it... then you try! 👀','watch');
+
+  // Build dense points along the stroke
+  const pts=strokePx(stroke,W,H);
+  const dense=[];
+  for(let i=0;i<pts.length-1;i++){
+    const [ax,ay]=pts[i],[bx,by]=pts[i+1];
+    const d=Math.hypot(bx-ax,by-ay);
+    const steps=Math.max(2,Math.round(d/3));
+    for(let s=0;s<steps;s++) dense.push([ax+(bx-ax)*s/steps, ay+(by-ay)*s/steps]);
+  }
+  dense.push(pts[pts.length-1]);
+
+  let idx=0;
+  const dotR=Math.min(W,H)*.055;
+
+  function step(){
+    if(idx>=dense.length){
+      setTimeout(()=>{
+        clearTrace();
+        isWatching=false; btnWatch.disabled=false;
+        showCoach(`Now you try! Start at dot ${currentStroke+1} 🎯`,'tip');
+      },600);
+      return;
+    }
+    // Grow trail
+    tctx2.clearRect(0,0,W,H);
+    tctx2.strokeStyle='rgba(108,99,255,.55)';
+    tctx2.lineWidth=Math.min(W,H)*.07; tctx2.lineCap='round'; tctx2.lineJoin='round';
+    tctx2.beginPath(); tctx2.moveTo(dense[0][0],dense[0][1]);
+    for(let i=1;i<=idx;i++) tctx2.lineTo(dense[i][0],dense[i][1]);
+    tctx2.stroke();
+    // Moving dot
+    const[cx,cy]=dense[idx];
+    tctx2.fillStyle='#ff6fb7'; tctx2.beginPath(); tctx2.arc(cx,cy,dotR,0,Math.PI*2); tctx2.fill();
+    idx++;
+    watchTimer=setTimeout(step,16);
+  }
+  step();
+}
+
+// ── ADVANCE STROKE / LETTER ─────────────────────
+function advanceStroke(){
+  completedStrks[currentStroke]=true;
+  const letters=LETTER_DATA[lmode];
+  const ch=letters[curLetterIdx].ch;
+  const strokes=STROKES[ch];
+  // Flash green
+  traceWrap.classList.remove('flash'); void traceWrap.offsetWidth; traceWrap.classList.add('flash');
+  setTimeout(()=>traceWrap.classList.remove('flash'),600);
+
+  if(currentStroke < strokes.length-1){
+    currentStroke++;
+    strokeAttempts=0;
+    clearTrace();
+    drawGuide();
+    strokeCounter.textContent=`Stroke ${currentStroke+1} of ${strokes.length}`;
+    showCoach(`${randPraise()} Now trace stroke ${currentStroke+1}!`,'praise');
+  } else {
+    // Letter complete!
+    letterDone=true;
+    stopPulse(); clearTrace(); drawGuide();
+    doneLetters[lmode][curLetterIdx]=true;
+    strokeCounter.textContent='Done! ⭐';
+    // Bounce hero
+    letterHero.classList.remove('bounce'); void letterHero.offsetWidth; letterHero.classList.add('bounce');
+    celebrate();
+    showCoach(`You wrote "${ch}"! Amazing! 🎉 Tap ▶ for the next letter!`,'done');
+    buildLetterGrid(); updateProgressDots();
+  }
+}
+
+function failStroke(tip){
+  strokeAttempts++;
+  if(strokeAttempts>=2){
+    showCoach(`Great effort! Keep going — you'll get it! 💪`,'retry');
+    setTimeout(()=>{clearTrace();advanceStroke();},1200);
+  } else {
+    // Shake
+    traceWrap.classList.remove('shake'); void traceWrap.offsetWidth; traceWrap.classList.add('shake');
+    setTimeout(()=>traceWrap.classList.remove('shake'),400);
+    clearTrace();
+    showCoach(tip,'retry');
+  }
+}
+
+// ── TRACE DRAWING ──────────────────────────────
+function tpos(e){const r=traceCanvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return[s.clientX-r.left,s.clientY-r.top];}
+
 function traceDown(e){
+  if(letterDone||isWatching) return;
   if(e.pointerType==='pen'){pencilDown=true;onPencilSeen();clearTimeout(pencilTimer);showPressure(e.pressure);}
   else if(e.pointerType==='touch'&&pencilDown) return;
-  ltDrawing=true;
-  const[x,y]=tracePos(e); ltLastX=x; ltLastY=y;
+  ltDrawing=true; ltHasDrawn=true;
+  const[x,y]=tpos(e); ltFirstX=x; ltFirstY=y;
   const sz=dynSize(e,22);
-  tctx2.lineWidth=sz; tctx2.lineCap='round'; tctx2.lineJoin='round';
-  tctx2.strokeStyle='#6c63ff';
-  tctx2.beginPath(); tctx2.arc(x,y,sz/2,0,Math.PI*2); tctx2.fillStyle='#6c63ff'; tctx2.fill();
+  tctx2.fillStyle='#6c63ff'; tctx2.beginPath(); tctx2.arc(x,y,sz/2,0,Math.PI*2); tctx2.fill();
 }
 function traceMove(e){
+  if(!ltDrawing||isWatching) return;
   if(e.pointerType==='pen'){pencilDown=true;showPressure(e.pressure);}
   else if(e.pointerType==='touch'&&pencilDown) return;
-  if(!ltDrawing) return;
-  const[x,y]=tracePos(e),sz=dynSize(e,22);
+  const[x,y]=tpos(e),sz=dynSize(e,22);
   tctx2.strokeStyle='#6c63ff'; tctx2.lineWidth=sz; tctx2.lineCap='round'; tctx2.lineJoin='round';
-  tctx2.beginPath(); tctx2.moveTo(ltLastX,ltLastY); tctx2.lineTo(x,y); tctx2.stroke();
-  ltLastX=x; ltLastY=y;
+  tctx2.beginPath(); tctx2.moveTo(ltFirstX,ltFirstY); tctx2.lineTo(x,y); tctx2.stroke();
+  ltFirstX=x; ltFirstY=y;
 }
 function traceUp(e){
-  if(!ltDrawing) return;
-  ltDrawing=false;
-  if(e&&e.pointerType==='pen'){pencilTimer=setTimeout(()=>{pencilDown=false;hidePressure();},300);}
-  else hidePressure();
-  // Check coverage: count purple pixels vs guide pixels
-  const W=traceCanvas.width, H=traceCanvas.height;
-  const drawn=tctx2.getImageData(0,0,W,H).data;
-  let total=0,covered=0;
-  // Sample guide ghost pixels
-  const guide=gctx.getImageData(0,0,W,H).data;
-  for(let i=0;i<guide.length;i+=4){
-    if(guide[i+2]>50&&guide[i+3]>30){ total++; // blue-ish guide pixel
-      if(drawn[i+3]>30) covered++; }
-  }
-  if(total>0 && covered/total>0.28){
-    // Mark done
-    if(!doneLetters[lmode][curLetterIdx]){
-      doneLetters[lmode][curLetterIdx]=true;
-      // Show star burst
-      const burst=document.createElement('div');
-      burst.className='star-burst'; burst.textContent='⭐';
-      document.getElementById('trace-wrap').appendChild(burst);
-      setTimeout(()=>burst.remove(),750);
-      celebrate();
-      updateLetterUI();
-      buildLetterGrid();
-    }
+  if(!ltDrawing) return; ltDrawing=false;
+  if(e&&e.pointerType==='pen'){pencilTimer=setTimeout(()=>{pencilDown=false;hidePressure();},300);}else hidePressure();
+  if(!ltHasDrawn||isWatching||letterDone) return;
+
+  const res=analyzeStroke();
+  if(res.score>=0.32){
+    advanceStroke();
+  } else {
+    failStroke(specificTip(res));
   }
 }
 
@@ -734,12 +803,76 @@ traceCanvas.addEventListener('pointerleave',traceUp);
 traceCanvas.addEventListener('pointercancel',traceUp);
 ['touchstart','touchmove','touchend'].forEach(ev=>traceCanvas.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 
-// Init letter mode
-buildLetterGrid();
-updateLetterUI();
-window.addEventListener('resize',()=>{
-  if(letterScreen.classList.contains('on')) resizeTraceCanvas();
+// ── UI BUILDERS ────────────────────────────────
+function buildLetterGrid(){
+  letterGrid.innerHTML='';
+  LETTER_DATA[lmode].forEach((l,i)=>{
+    const btn=document.createElement('button');
+    btn.className='lgrid-btn'+(i===curLetterIdx?' on':'')+(doneLetters[lmode][i]?' done':'');
+    btn.textContent=l.ch;
+    const badge=document.createElement('span');badge.className='star-badge';badge.textContent='⭐';
+    btn.appendChild(badge);
+    btn.addEventListener('pointerdown',()=>{curLetterIdx=i;initLetter();});
+    letterGrid.appendChild(btn);
+  });
+  // Scroll selected into view
+  const sel=letterGrid.querySelector('.on');
+  if(sel) setTimeout(()=>sel.scrollIntoView({inline:'center',behavior:'smooth'}),80);
+}
+
+function updateProgressDots(){
+  progressDots.innerHTML='';
+  LETTER_DATA[lmode].forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='pdot'+(doneLetters[lmode][i]?' done':'')+(i===curLetterIdx?' cur':'');
+    progressDots.appendChild(d);
+  });
+}
+
+function initLetter(){
+  // Reset state
+  clearTimeout(watchTimer); isWatching=false; btnWatch.disabled=false;
+  stopPulse();
+  const letters=LETTER_DATA[lmode];
+  const{ch,word,em}=letters[curLetterIdx];
+  const strokes=STROKES[ch]||[];
+  currentStroke=0; completedStrks=new Array(strokes.length).fill(false); strokeAttempts=0; letterDone=false; ltHasDrawn=false;
+  letterHero.textContent=ch;
+  letterWord.textContent=em+' '+word;
+  strokeCounter.textContent=strokes.length>1?`Stroke 1 of ${strokes.length}`:'Trace it!';
+  clearTrace(); drawGuide(); startPulse();
+  showCoach(`Start at dot ① and trace the path!`,'tip');
+  buildLetterGrid(); updateProgressDots();
+}
+
+// Controls
+document.getElementById('btn-letter-clear').addEventListener('pointerdown',()=>{
+  if(isWatching) return;
+  clearTrace(); ltHasDrawn=false; strokeAttempts=0;
+  showCoach(`Start at dot ${currentStroke+1} — you can do it! ✏️`,'tip');
 });
+document.getElementById('btn-prev-letter').addEventListener('pointerdown',()=>{
+  const len=LETTER_DATA[lmode].length; curLetterIdx=(curLetterIdx-1+len)%len; initLetter();
+});
+document.getElementById('btn-next-letter').addEventListener('pointerdown',()=>{
+  const len=LETTER_DATA[lmode].length; curLetterIdx=(curLetterIdx+1)%len; initLetter();
+});
+btnWatch.addEventListener('pointerdown',()=>watchMe());
+
+// Letter mode tabs
+document.querySelectorAll('.lmode-btn').forEach(btn=>{
+  btn.addEventListener('pointerdown',()=>{
+    document.querySelectorAll('.lmode-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on'); lmode=btn.dataset.lmode; curLetterIdx=0; initLetter();
+  });
+});
+
+window.addEventListener('resize',()=>{ if(letterScreen.classList.contains('on')){ resizeTraceCanvas(); } });
+
+// Init
+buildLetterGrid(); updateProgressDots();
+// Defer canvas init until visible
+setTimeout(()=>{ if(letterScreen.classList.contains('on')) resizeTraceCanvas(); },100);
 </script>
 
 </body>
