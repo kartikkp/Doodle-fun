@@ -283,6 +283,7 @@ body{font-family:'Fredoka One',cursive;overflow:hidden;height:100dvh;display:fle
   <div id="home-header">
     <div id="home-title">⭐ Fun Learning!</div>
     <div id="home-sub">What do you want to play today?</div>
+    <div id="audio-banner" style="margin-top:8px;display:inline-block;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:20px;padding:5px 14px;font-size:.78rem;color:rgba(255,255,255,.85);font-family:Nunito,sans-serif;font-weight:900;cursor:pointer;">🔊 Tap anywhere to enable sound</div>
   </div>
   <div id="game-grid"></div>
 </div>
@@ -556,23 +557,60 @@ body{font-family:'Fredoka One',cursive;overflow:hidden;height:100dvh;display:fle
 // SHARED UTILS
 // ══════════════════════════════════════════════════════
 let audioCtx = null;
+let audioUnlocked = false;
+
+function unlockAudio(){
+  if(audioUnlocked) return;
+  try{
+    if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    // Play a silent buffer — this is the required iOS unlock handshake
+    const buf = audioCtx.createBuffer(1,1,22050);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    // Pre-warm speechSynthesis on iOS (must happen in same gesture)
+    if('speechSynthesis' in window){
+      const u = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(u);
+      window.speechSynthesis.cancel();
+    }
+    audioUnlocked = true;
+    const banner = document.getElementById('audio-banner');
+    if(banner) banner.remove();
+  } catch(e){ console.warn('Audio unlock failed',e); }
+}
+document.addEventListener('pointerdown', unlockAudio, {passive:true});
+document.addEventListener('touchstart',  unlockAudio, {passive:true});
+
 function getAudio(){
-  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(!audioCtx) audioCtx = new(window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended') audioCtx.resume();
   return audioCtx;
 }
-// Unlock AudioContext on first touch (required on iOS)
-document.addEventListener('pointerdown',()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();},{once:false});
 function playTone(freq,dur=0.4,type='sine',vol=0.4){
-  const a=getAudio(),o=a.createOscillator(),g=a.createGain();
-  o.connect(g);g.connect(a.destination);o.type=type;o.frequency.value=freq;
-  g.gain.setValueAtTime(vol,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
-  o.start();o.stop(a.currentTime+dur);
+  if(!audioUnlocked) return;
+  try{
+    const a=getAudio(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,a.currentTime);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur);
+    o.start();o.stop(a.currentTime+dur);
+  }catch(e){}
 }
 function playClick(pitch=440){playTone(pitch,.08,'square',.25);}
 function playSuccess(){[523,659,784].forEach((f,i)=>setTimeout(()=>playTone(f,.25),i*100));}
 function playFail(){playTone(220,.3,'sawtooth',.2);}
-function speak(txt){if('speechSynthesis'in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.rate=.88;u.pitch=1.15;speechSynthesis.speak(u);}}
+function speak(txt){
+  if(!('speechSynthesis' in window)) return;
+  try{
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(txt);
+    u.rate=.88; u.pitch=1.15;
+    const voices = window.speechSynthesis.getVoices();
+    const pick = voices.find(v=>v.lang.startsWith('en')&&v.localService)||voices.find(v=>v.lang.startsWith('en'))||null;
+    if(pick) u.voice = pick;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
 function celebrate(){
   const e=['🎉','⭐','🌈','🎊','✨','💥','🦄','🍭'];
   for(let i=0;i<14;i++)setTimeout(()=>{
