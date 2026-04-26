@@ -556,7 +556,13 @@ body{font-family:'Fredoka One',cursive;overflow:hidden;height:100dvh;display:fle
 // SHARED UTILS
 // ══════════════════════════════════════════════════════
 let audioCtx = null;
-function getAudio(){ if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function getAudio(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+// Unlock AudioContext on first touch (required on iOS)
+document.addEventListener('pointerdown',()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();},{once:false});
 function playTone(freq,dur=0.4,type='sine',vol=0.4){
   const a=getAudio(),o=a.createOscillator(),g=a.createGain();
   o.connect(g);g.connect(a.destination);o.type=type;o.frequency.value=freq;
@@ -836,6 +842,9 @@ function makeTracer(cfg){
     const mask=buildMask(strokes[curStroke]),user=tctx.getImageData(0,0,W,H).data;
     let mT=0,mC=0,uT=0,uM=0;
     for(let i=0;i<mask.length;i+=4){const inM=mask[i+3]>30,hasU=user[i+3]>30;if(inM){mT++;if(hasU)mC++;}if(hasU){uT++;if(inM)uM++;}}
+    // Require meaningful drawing: at least 2% of mask pixels covered by user strokes
+    const minRequired=Math.max(60,mT*.02);
+    if(uT<minRequired)return{recall:0,prec:0,startOK:false,score:0};
     const recall=mT>0?mC/mT:0,prec=uT>0?uM/uT:0;
     const sps=spts(strokes[curStroke],W,H);
     const startOK=Math.hypot(ltFX-sps[0][0],ltFY-sps[0][1])<Math.min(W,H)*.22;
