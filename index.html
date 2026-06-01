@@ -150,7 +150,7 @@ canvas#drawCanvas { display:block; width:100%; height:100%; }
 <div id="home-screen">
   <div class="home-title">
     <h1>🎨 Doodle Fun!</h1>
-    <p>Pick your activity!</p>
+    <p id="home-subtitle">Pick your activity!</p>
   </div>
 
   <div class="age-card">
@@ -307,6 +307,16 @@ function getDiff() {
   };
 }
 
+function getActivityCount() {
+  // Count all available activities for the current age:
+  // Free Draw (always 1) + available letter/number sets
+  let count = 1; // Free Draw
+  count += LETTER_DATA.upper.length; // uppercase always available
+  if (currentAge >= 5) count += LETTER_DATA.lower.length; // lowercase unlocked at 5+
+  if (currentAge >= 8) count += LETTER_DATA.nums.length;  // numbers unlocked at 8+
+  return count;
+}
+
 function updateAllDiffLabels() {
   const lbl = getDiff().label;
   document.getElementById('hm-diff-label').textContent = lbl;
@@ -314,6 +324,9 @@ function updateAllDiffLabels() {
   document.getElementById('letters-diff-badge').textContent = lbl;
   document.getElementById('diff-pill').textContent = lbl;
   document.getElementById('lt-diff-pill').textContent = lbl;
+  // Update home subtitle dynamically
+  const count = getActivityCount();
+  document.getElementById('home-subtitle').textContent = count + ' activities · ' + lbl;
 }
 
 function updateHomeTiers() {
