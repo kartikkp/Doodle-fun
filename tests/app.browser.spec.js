@@ -1,16 +1,18 @@
 import {test,expect} from '@playwright/test';
+import {ACTIVITIES} from '../catalog.js';
 
 const sizes=[['small iPhone',375,667],['iPhone',390,844],['iPad portrait',820,1180],['iPad landscape',1180,820],['iPhone landscape',844,390]];
 for(const [name,width,height] of sizes) {
   test(`${name}: every activity opens for every age band without overflow`,async({page})=>{
+    test.setTimeout(120000);
     await page.setViewportSize({width,height});
-    const errors=[];page.on('pageerror',error=>errors.push(error.message));
+    const errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text());});
     await page.goto('/');
     for(const age of [3,6,9]) {
       await page.locator(`[data-age="${age}"]`).click();
-      for(const route of ['draw','coloring','letters','numbers']) {
+      for(const {id:route,engine} of ACTIVITIES) {
         await page.locator(`#card-${route}`).click();
-        const view=page.locator(route==='draw'||route==='coloring'?'#drawing-view':'#learning-view');
+        const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view'}[engine]);
         await expect(view).toBeVisible();
         await expect(view.locator('h1')).toBeVisible();
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
@@ -37,7 +39,7 @@ test('grown-up settings persist and support can override age without locks',asyn
   await expect(page.locator('#support-level')).toHaveValue('little');
   await expect(page.locator('#settings-sound')).toBeChecked();
   await page.keyboard.press('Escape');
-  await page.locator('#card-letters').click();
+  await page.locator('#card-uppercase').click();
   await expect(page.locator('[data-learn-set=lower]')).toBeEnabled();
   await expect(page.locator('[data-learn-set=nums]')).toBeEnabled();
 });
@@ -49,11 +51,11 @@ test('malformed persisted settings and unavailable storage do not block play',as
     localStorage.setItem('doodle-fun:v2:learning-progress-v1','null');
     Storage.prototype.setItem=function(){throw new DOMException('Quota exceeded','QuotaExceededError');};
   });
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text());});
   await page.goto('/');
   await page.locator('[data-age="3"]').click();
-  await page.locator('#card-letters').click();
-  await expect(page.locator('[data-learn-set=shapes]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#card-uppercase').click();
+  await expect(page.locator('[data-learn-set=upper]')).toHaveAttribute('aria-pressed','true');
   await page.getByRole('button',{name:/Back to (home|activities)/}).click();
   await page.locator('#card-draw').click();
   await expect(page.locator('.draw-canvas')).toBeVisible();
@@ -65,7 +67,7 @@ test('browser history restores the correct activity',async({page})=>{
   await page.locator('#card-draw').click();
   await expect(page.locator('#drawing-view')).toBeVisible();
   await page.getByRole('button',{name:/Back to (home|activities)/}).click();
-  await page.locator('#card-letters').click();
+  await page.locator('#card-uppercase').click();
   await expect(page.locator('#learning-view')).toBeVisible();
   await page.goBack();
   await expect(page.locator('#home-screen')).toBeVisible();
@@ -79,8 +81,8 @@ test('mobile scroll remains enabled outside drawing surfaces and zoom is not dis
   const viewport=await page.locator('meta[name=viewport]').getAttribute('content');
   expect(viewport).not.toContain('user-scalable=no');
   expect(await page.locator('body').evaluate(el=>getComputedStyle(el).touchAction)).not.toBe('none');
-  await page.locator('#card-numbers').scrollIntoViewIfNeeded();
-  await expect(page.locator('#card-numbers')).toBeInViewport();
+  await page.locator('#card-counting').scrollIntoViewIfNeeded();
+  await expect(page.locator('#card-counting')).toBeInViewport();
   const labels=await page.locator('.age-option strong,.age-option small,.card-bottom p').evaluateAll(els=>els.map(el=>parseFloat(getComputedStyle(el).fontSize)));
   expect(Math.min(...labels)).toBeGreaterThanOrEqual(12);
 });

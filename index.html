@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="draw.css">
   <link rel="stylesheet" href="learning.css">
+  <link rel="stylesheet" href="discovery.css">
+  <link rel="stylesheet" href="challenges.css">
   <script type="module" src="app.js"></script>
 </head>
 <body>
@@ -35,18 +37,17 @@
           <button class="age-option" data-age="9" type="button" aria-pressed="false"><span class="age-emoji" aria-hidden="true">🚀</span><span><strong>Big thinkers</strong><small>Ages 8–10</small></span><span class="age-check" aria-hidden="true">✓</span></button>
         </div>
       </section>
-      <div class="activities-heading"><h2>Your play space</h2><span>4 ways to explore</span></div>
-      <section class="activity-grid" aria-label="Activities">
-        <a class="activity-card card-draw" href="#draw" id="card-draw"><div class="card-topline"><span class="skill-tag">IMAGINATION</span><span class="card-number">01</span></div><div class="card-picture" aria-hidden="true"><span class="draw-scribble">〰</span><span class="activity-emoji">🖍️</span><span class="picture-spark">✦</span></div><div class="card-bottom"><div><h3>Doodle studio</h3><p id="draw-description">Dream it. Draw it.</p></div><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-footnote" id="draw-hint">Colors, stamps & endless ideas</div></a>
-        <a class="activity-card card-color" href="#coloring" id="card-coloring"><div class="card-topline"><span class="skill-tag">CREATIVITY</span><span class="card-number">02</span></div><div class="card-picture" aria-hidden="true"><span class="activity-emoji">🌈</span><span class="picture-spark">✧</span></div><div class="card-bottom"><div><h3>Color & create</h3><p>Give a picture your colors.</p></div><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-footnote" id="color-hint">9 pictures to make your own</div></a>
-        <a class="activity-card card-letters" href="#letters" id="card-letters"><div class="card-topline"><span class="skill-tag">EARLY WRITING</span><span class="card-number">03</span></div><div class="card-picture letter-picture" aria-hidden="true"><span class="letter-a">A</span><span class="letter-b">b</span><span class="picture-spark">✦</span></div><div class="card-bottom"><div><h3>Letter adventures</h3><p id="letters-description">Follow a line. Find a letter.</p></div><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-footnote" id="letters-hint">Big letters, little letters & words</div></a>
-        <a class="activity-card card-numbers" href="#numbers" id="card-numbers"><div class="card-topline"><span class="skill-tag">NUMBER SENSE</span><span class="card-number">04</span></div><div class="card-picture number-picture" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span class="number-dots">● ● ●</span></div><div class="card-bottom"><div><h3>Number explorers</h3><p id="numbers-description">Count, trace & discover.</p></div><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-footnote" id="numbers-hint">Little numbers, big discoveries</div></a>
-      </section>
+      <div class="activities-heading"><h2>Your play space</h2><span id="activity-count" aria-live="polite">24 activities</span></div>
+      <nav id="activity-filters" class="activity-filters" aria-label="Activity categories"></nav>
+      <p class="activity-guidance" id="activity-guidance">Pick a favorite. Every activity grows with you.</p>
+      <section id="activity-grid" class="activity-grid" aria-label="Activities"></section>
       <footer class="home-footer"><span><span aria-hidden="true">♡</span> No rush. No wrong way to be creative.</span><span>Made for fingers & little imaginations</span></footer>
     </main>
   </div>
   <main id="drawing-view" hidden aria-label="Drawing activity"></main>
   <main id="learning-view" hidden aria-label="Learning activity"></main>
+  <main id="discovery-view" hidden aria-label="Discovery activity"></main>
+  <main id="challenges-view" hidden aria-label="Challenge activity"></main>
   <dialog id="grownups-dialog" class="settings-dialog" aria-labelledby="settings-title">
     <form method="dialog"><div class="dialog-heading"><div><span class="eyebrow">A LITTLE HELP FROM YOU</span><h2 id="settings-title">Their pace. Their play.</h2></div><button class="icon-button" aria-label="Close grown-up settings" value="cancel">✕</button></div></form>
     <p class="settings-intro">Age is a starting point. Adjust the support to fit your child. Every activity stays open.</p>
