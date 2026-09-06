@@ -15,3 +15,17 @@
 @media(min-width:1051px){.home-header,.home-main{padding-left:max(40px,env(safe-area-inset-left));padding-right:max(40px,env(safe-area-inset-right))}.age-picker-label{min-width:180px}.age-option{padding:12px 10px}.age-emoji{font-size:22px}.age-check{display:none}}
 @media(max-width:650px){.age-option strong{font-size:.75rem;white-space:normal}.age-option small{font-size:.75rem}.age-option{min-height:95px}.card-topline .skill-tag{font-size:.625rem;letter-spacing:.45px}.card-number{font-size:.625rem}.card-bottom p{font-size:.8125rem}.card-footnote{font-size:.75rem}.card-bottom h3{font-size:.9375rem}.card-arrow{display:none}.card-picture{height:92px}.home-footer{font-size:.75rem}.welcome .eyebrow{font-size:.625rem}}
 .card-draw{--accent:#b64b27}
+/* A browsable library: four clear categories, generous cards, no reading-heavy menus. */
+.activity-filters{display:flex;gap:8px;overflow-x:auto;padding:3px 3px 10px;margin:0 -3px;scrollbar-width:thin}
+.activity-filter{flex-shrink:0;display:flex;align-items:center;gap:8px;min-height:48px;padding:10px 17px;border:1px solid var(--line);border-radius:30px;background:#fff;font-size:.875rem;font-weight:700}
+.activity-filter[aria-pressed=true]{background:var(--primary);border-color:var(--primary);color:#fff}
+.activity-filter>span{font-size:1rem;min-width:20px;text-align:center}
+.activity-guidance{font-size:.875rem;color:var(--muted);line-height:1.5;margin:3px 0 20px}
+.catalog-icon{font-size:58px;font-weight:850;color:var(--accent);letter-spacing:-3px;transform:rotate(-6deg)}
+.catalog-word{font-size:42px;letter-spacing:-2px}
+.activity-card .card-picture{height:105px}
+.activity-card .card-bottom{flex:1;align-items:flex-start}
+.activity-card .card-bottom h3{line-height:1.3}
+.activity-card .card-footnote{margin-top:15px;min-height:34px}
+.card-topline .skill-tag{text-transform:uppercase}
+@media(max-width:650px){.activity-filters{margin-right:-18px;padding-right:18px}.activity-filter{font-size:.8125rem;padding:9px 13px}.activity-guidance{font-size:.8125rem;margin-bottom:15px}.activity-card .card-picture{height:75px}.catalog-icon{font-size:43px}.catalog-word{font-size:32px}.activity-card .card-bottom h3{font-size:1rem;letter-spacing:-.3px}.activity-card .card-bottom p{font-size:.8125rem}.activity-card .card-footnote{font-size:.75rem;min-height:45px}.card-topline .card-arrow{display:flex;width:25px;height:25px;font-size:17px}}
