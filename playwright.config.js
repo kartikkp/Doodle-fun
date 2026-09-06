@@ -12,5 +12,5 @@ export default defineConfig({
     {name:'chromium',use:{...devices['Desktop Chrome']}},
     {name:'webkit',use:{...devices['Desktop Safari']}},
   ],
-  webServer:{command:'node server.js',url:'http://127.0.0.1:4173',reuseExistingServer:true,timeout:15000},
+  webServer:{command:'npm start',url:'http://127.0.0.1:4173',reuseExistingServer:true,timeout:30000},
 });
