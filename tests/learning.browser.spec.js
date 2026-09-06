@@ -107,7 +107,7 @@ test('older children can complete a word and explore the entire 0–20 count ran
   await expect(page.locator('[data-learn-set="words"]')).toHaveAttribute('aria-pressed','true');
   await trace(page,'words','cat');await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
-  await page.locator('#card-numbers').click();
+  await page.locator('#card-equal-groups').click();
   await expect(page.getByRole('button',{name:'Equal groups',exact:true})).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
   await expect(page.locator('.learn-count-dot')).toHaveCount(9);
@@ -119,4 +119,17 @@ test('older children can complete a word and explore the entire 0–20 count ran
     await page.getByRole('button',{name:'Next puzzle →',exact:true}).click();
   }
   expect([...seen].sort((a,b)=>a-b)).toEqual(Array.from({length:21},(_,i)=>i));
+});
+test('catalog trails and number activities open their requested practice instead of the age default',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:9,level:'auto',sound:false})));
+  for(const [route,set]of [['prewriting','shapes'],['uppercase','upper'],['lowercase','lower'],['word-tracing','words'],['number-tracing','nums']]) {
+    await page.goto(`/#${route}`);
+    await expect(page.locator(`[data-learn-set="${set}"]`)).toHaveAttribute('aria-pressed','true');
+    await expect(page.getByTestId('trace-board')).toBeVisible();
+  }
+  for(const [route,label]of [['counting','Count dots'],['addition','Add together'],['equal-groups','Equal groups']]) {
+    await page.goto(`/#${route}`);
+    await expect(page.getByRole('button',{name:label,exact:true})).toHaveAttribute('aria-pressed','true');
+    await expect(page.getByTestId('quantity-frame')).toBeVisible();
+  }
 });
