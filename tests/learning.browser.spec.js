@@ -38,6 +38,8 @@ test('tracing ink survives rotation and guide timers stop when changing item',as
   const ink=await page.locator('.learn-ink-layer').innerHTML();
   await page.setViewportSize({width:844,height:390});
   await expect(page.locator('.learn-ink-layer')).toHaveJSProperty('innerHTML',ink);
+  const landscapeBoard=await page.getByTestId('trace-board').boundingBox();
+  expect(landscapeBoard.height).toBeLessThanOrEqual(390-70);
   await page.locator('[data-learn-item="circle"]').click();
   await page.getByRole('button',{name:'▶ Show me',exact:true}).click();
   await expect(page.getByRole('button',{name:'■ Stop guide',exact:true})).toBeVisible();
