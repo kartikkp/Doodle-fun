@@ -18,6 +18,38 @@ async function draft(page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem('doodle-fun:v2:drawing-draft-v2')).png);
 }
 
+async function compareDecodedPaper(page, before, after) {
+  return page.evaluate(async ([first, second]) => {
+    async function decode(png) {
+      const image = new Image();
+      await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = png; });
+      const paper = document.createElement('canvas'); paper.width = image.width; paper.height = image.height;
+      const ctx = paper.getContext('2d'); ctx.drawImage(image, 0, 0);
+      return { width: paper.width, height: paper.height, pixels: ctx.getImageData(0, 0, paper.width, paper.height).data };
+    }
+    const [a, b] = await Promise.all([decode(first), decode(second)]);
+    const dimensions = [a.width, a.height, b.width, b.height];
+    if (a.width !== b.width || a.height !== b.height) return { dimensions };
+    function ink(paper) {
+      let count = 0, left = paper.width, right = -1, top = paper.height, bottom = -1;
+      for (let i = 0; i < paper.pixels.length; i += 4) {
+        if (Math.min(...paper.pixels.subarray(i, i + 3)) >= 240) continue;
+        const x = i / 4 % paper.width, y = Math.floor(i / 4 / paper.width);
+        count++; left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+      }
+      return { count, bounds: [left, top, right, bottom] };
+    }
+    let maxRGBDelta = 0, maxAlphaDelta = 0, changedPixels = 0;
+    for (let i = 0; i < a.pixels.length; i += 4) {
+      const delta = Math.max(Math.abs(a.pixels[i] - b.pixels[i]), Math.abs(a.pixels[i + 1] - b.pixels[i + 1]), Math.abs(a.pixels[i + 2] - b.pixels[i + 2]));
+      maxRGBDelta = Math.max(maxRGBDelta, delta);
+      maxAlphaDelta = Math.max(maxAlphaDelta, Math.abs(a.pixels[i + 3] - b.pixels[i + 3]));
+      if (delta > 0) changedPixels++;
+    }
+    return { dimensions, maxRGBDelta, maxAlphaDelta, changedPixels, pixelCount: a.width * a.height, beforeInk: ink(a), afterInk: ink(b) };
+  }, [before, after]);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/#draw');
@@ -111,7 +143,17 @@ test('rotation, home navigation, and reload keep the same saved artwork', async 
   const rotated = await snapshot(page);
   await page.reload();
   await expect(page.locator('.draw-draft-status')).toHaveText('Your last picture is ready');
-  expect(await snapshot(page)).toBe(rotated);
+  const restored = await compareDecodedPaper(page, rotated, await snapshot(page));
+  expect(restored.dimensions.slice(0, 2)).toEqual(restored.dimensions.slice(2));
+  expect(restored.beforeInk.count).toBeGreaterThan(100);
+  expect(restored.afterInk).toEqual(restored.beforeInk);
+  expect(restored.maxAlphaDelta).toBe(0);
+  // Linux WebKit's transparent PNG restore rounds a few antialiased RGB values:
+  // CI showed 200/252,004 pixels changing by one level, with identical ink geometry.
+  // Preserve exact geometry/alpha and allow only that bounded color rounding.
+  expect(restored.maxRGBDelta).toBeLessThanOrEqual(1);
+  expect(restored.changedPixels / restored.pixelCount).toBeLessThanOrEqual(.005);
+  // The full-resolution backing PNG itself must remain byte-for-byte unchanged.
   expect(await draft(page)).toBe(original);
 });
 
