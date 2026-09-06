@@ -60,7 +60,7 @@ test('malformed persisted settings and unavailable storage do not block play',as
   expect(errors).toEqual([]);
 });
 
-test('browser history and rapid navigation recover the correct activity',async({page})=>{
+test('browser history restores the correct activity',async({page})=>{
   await page.goto('/');
   await page.locator('#card-draw').click();
   await expect(page.locator('#drawing-view')).toBeVisible();

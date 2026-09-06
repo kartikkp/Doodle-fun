@@ -76,6 +76,7 @@ test('stamps, clear, and page replacement preserve recoverable artwork', async (
 });
 
 test('all nine coloring templates render and accept a fill', async ({ page }) => {
+  test.setTimeout(90000); // All nine full-resolution pages are checked in this case.
   for (const [index, name] of ['Sunshine', 'Rainbow', 'House', 'Butterfly', 'Rocket', 'Cat', 'Flower', 'Fish', 'Dino'].entries()) {
     await page.locator('.draw-templates').click();
     await expect(page.locator('.draw-template-card')).toHaveCount(9);
