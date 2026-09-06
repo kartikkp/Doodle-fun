@@ -22,3 +22,5 @@
 @media(max-width:620px){.learn-add-frames .learn-dot-frame{grid-template-columns:repeat(5,44px);gap:7px;padding:13px}.learn-equal-groups .learn-dot-frame{grid-template-columns:repeat(2,44px);gap:7px;padding:10px}.learn-count-card>.learn-tabs .learn-tab{padding:10px 12px}}
 @media(max-width:350px){.learn-add-frames .learn-dot-frame{grid-template-columns:repeat(5,42px);gap:5px;padding:9px}.learn-equal-groups .learn-dot-frame{grid-template-columns:repeat(2,42px);gap:5px;padding:9px}}
 @media(min-width:621px) and (max-height:560px){.learn-board{max-width:calc(100dvh - 120px)}.learn-header{padding-top:12px;padding-bottom:12px}.learn-card-heading{padding-bottom:10px}.learn-tools{margin-top:10px}}
+/* Keep every learning control inside the usable screen on notched devices. */
+.learning-screen{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
