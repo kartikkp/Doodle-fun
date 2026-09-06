@@ -17,6 +17,11 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+      - name: Verify committed Pages build
+        run: |
+          npm run build
+          git ls-files --error-unmatch index.html sw.js
+          git diff --exit-code -- index.html sw.js
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - uses: actions/upload-artifact@v7
