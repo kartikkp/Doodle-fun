@@ -1,15 +1,12 @@
 # Current state
 
-Phase 2 implementation and local verification complete; preparing a follow-up draft PR from current main.
+PR #2 merged as 2463a45. Checked live https://kartikkp.github.io/Doodle-fun/ on September 6, 2026.
 
-- Reproduced user's failed lazy imports from a stopped preview server.
-- Replaced entry-time imports with a self-contained built app and versioned offline reload cache.
-- Added 24 explicit activity cards across four categories, including 14 new games.
-- All original drawing pages, stamps, alphabets, digits and export retained.
-- 40 unit tests and 122 combined Chromium/WebKit browser tests passed.
-- 720 responsive matrix launches passed. Actual user tab reloaded and opened all 24 cards with real preview server stopped; detached server then restored.
-- Source build fingerprint: 387b68987e207d18.
-- Standalone HTML, source archive, screenshots, QA report and verified activity catalog are deliverables.
-- Original PR #1 was already merged by the user. These new changes go into a separate follow-up draft PR; no new merge/production replacement without user direction.
+- 288 live launch checks passed:24 activities×3 ages×2 sizes×2 engines.
+- Published source scripts/styles match tested source, but Pages main/root omitted the ignored dist build and returned 404 for sw.js.
+- Publication correction prepared on codex/pages-built-app. Source HTML is app-shell.html; root index.html/sw.js are committed generated copies identical to dist. Existing Pages settings retained.
+- Runtime remains byte-identical to fingerprint 387b68987e207d18.
+- 40 unit checks and 2 new Pages-path/browser/server-stop regressions passed locally. Existing 40 unit/122 browser suite validated this unchanged runtime previously.
+- Follow-up PR review/merge is the next publishing step. After merge, verify live fingerprint and worker response and offline reload. Do not claim offline production is fixed before that verification.
 
-Physical iPhone/iPad, Pencil, share-sheet, VoiceOver and observed child playtesting remain documented release checks, not completed claims.
+The Mac was locked during this check; fresh isolated test browsers verified the public site. No desktop state or Pages settings changed. Physical-device and observed-child playtesting limits remain in docs/qa-report.md.

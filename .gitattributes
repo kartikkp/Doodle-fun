@@ -1,0 +1,3 @@
+# Generated release artifacts. Edit app-shell.html and source modules, then build.
+index.html linguist-generated=true
+sw.js linguist-generated=true
