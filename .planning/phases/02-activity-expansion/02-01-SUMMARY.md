@@ -8,4 +8,4 @@ Verification: 40 unit tests; 122 Chromium/WebKit browser tests; all 24 × 3 ages
 
 WebKit's simulated offline reload initially produced an internal automation error. The final regression shuts down a private actual server and succeeds in both engines. Previous green tests did not exercise this failure; docs/qa-report.md explicitly records the gap and corrected evidence.
 
-Deliver through the existing draft PR and updated local artifacts. Physical-device and observed child testing remain documented limitations.
+Original PR #1 had already been merged. Deliver these additional changes through a follow-up draft PR and updated local artifacts. Physical-device and observed child testing remain documented limitations.

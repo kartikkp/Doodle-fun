@@ -1,6 +1,6 @@
 # Doodle Fun — QA report
 
-Verified September 6, 2026. Branch: `codex/kid-friendly-activities`. Tested standalone build fingerprint: **387b68987e207d18** (the `doodle-build` HTML meta tag).
+Verified September 6, 2026. Branch: `codex/activity-library-recovery`. Tested standalone build fingerprint: **387b68987e207d18** (the `doodle-build` HTML meta tag).
 
 ## Result
 
