@@ -9,6 +9,7 @@ Verified September 6, 2026. Implementation branch: `codex/kid-friendly-activitie
 - Combined browser suite: **48 passed**, split equally between Chromium and WebKit.
 - Final age-default change: **14 learning browser checks passed** in a separate targeted recheck in both engines.
 - Independent review findings were reproduced, fixed, and rechecked.
+- Linux WebKit exposed a PNG decode rounding difference: 200 of 252,004 display pixels changed by at most one color level, with identical alpha, ink count and bounds. The restore check compares decoded dimensions, transparency, ink geometry and bounded color differences while retaining exact backing-draft equality.
 - No production deployment or main-branch merge is part of this change.
 
 ## Device-size coverage
