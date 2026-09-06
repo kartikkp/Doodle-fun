@@ -9,6 +9,25 @@ async function start(page,id,age) {
   return generateChallenge(id,getProfile({age}),0);
 }
 async function passed(page) {await expect(page.getByTestId('challenge-feedback')).toHaveClass(/is-complete/);}
+test('320px phones keep twenty-frame and dense word, case and subtraction controls inside the screen',async({page})=>{
+  await page.setViewportSize({width:320,height:568});
+  for(const id of ['ten-frame','subtraction','word-build','letter-match']) {
+    await start(page,id,9);
+    const layout=await page.locator('.challenges-screen').evaluate(screen=>({
+      width:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+      controls:[...screen.querySelectorAll('button')].map(button=>{const rect=button.getBoundingClientRect();return {label:button.getAttribute('aria-label')||button.textContent,left:rect.left,right:rect.right,width:rect.width,height:rect.height};}),
+      frames:[...screen.querySelectorAll('.challenge-frame')].map(frame=>{const rect=frame.getBoundingClientRect();return {left:rect.left,right:rect.right,width:rect.width};}),
+    }));
+    expect(layout.scrollWidth,`${id}: page width`).toBeLessThanOrEqual(layout.width);
+    for(const control of layout.controls) {
+      expect(control.left,`${id}: ${control.label} left edge`).toBeGreaterThanOrEqual(0);
+      expect(control.right,`${id}: ${control.label} right edge`).toBeLessThanOrEqual(layout.width);
+      expect(control.width,`${id}: ${control.label} width`).toBeGreaterThanOrEqual(48);
+      expect(control.height,`${id}: ${control.label} height`).toBeGreaterThanOrEqual(48);
+    }
+    for(const frame of layout.frames){expect(frame.left).toBeGreaterThanOrEqual(0);expect(frame.right).toBeLessThanOrEqual(layout.width);}
+  }
+});
 for(const [age,viewport]of [[3,{width:375,height:812}],[6,{width:820,height:1180}],[9,{width:844,height:390}]]) {
   test.describe(`challenge play at age ${age}`,()=>{
     test.use({viewport});
