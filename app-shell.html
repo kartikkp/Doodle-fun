@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="description" content="Draw, color, trace letters, and explore numbers. A playful, touch-friendly learning space for children ages 2–10.">
+  <title>Doodle Fun · Play, create & learn</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="draw.css">
+  <link rel="stylesheet" href="learning.css">
+  <link rel="stylesheet" href="discovery.css">
+  <link rel="stylesheet" href="challenges.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to activities</a>
+  <div id="home-screen">
+    <header class="home-header">
+      <a class="brand" href="#home" aria-label="Doodle Fun home"><span class="brand-mark" aria-hidden="true">d<span>•</span></span><span>Doodle<span class="brand-fun">fun</span><span class="brand-dot">.</span></span></a>
+      <div class="header-actions">
+        <button id="sound-toggle" class="icon-button sound-toggle" type="button" aria-label="Turn on read aloud" aria-pressed="false"></button>
+        <button id="grownups-open" class="button grownups-button" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4Z"/><path d="m8 12 3 3 5-6"/></svg><span>Grown-ups</span></button>
+      </div>
+    </header>
+    <main id="main-content" class="home-main" tabindex="-1">
+      <section class="welcome" aria-labelledby="welcome-title">
+        <div><div class="eyebrow"><span class="welcome-spark" aria-hidden="true">✦</span> A SPACE FOR LITTLE IDEAS</div><h1 id="welcome-title">What will you <span>try today?</span></h1><p>Pick something fun. Make it your own.</p></div>
+        <div class="little-win" aria-live="polite"><span class="win-star" aria-hidden="true">★</span><div><strong id="home-progress">Every try counts</strong><span id="home-progress-sub">Play at your own pace</span></div></div>
+      </section>
+      <section class="age-picker" aria-labelledby="age-picker-title">
+        <div class="age-picker-label"><strong id="age-picker-title">Choose your starting point</strong><span id="age-description">A little help, a little challenge.</span></div>
+        <div class="age-options" role="group" aria-label="Age group">
+          <button class="age-option" data-age="3" type="button" aria-pressed="false"><span class="age-emoji" aria-hidden="true">🌱</span><span><strong>Little learners</strong><small>Ages 2–4</small></span><span class="age-check" aria-hidden="true">✓</span></button>
+          <button class="age-option" data-age="6" type="button" aria-pressed="true"><span class="age-emoji" aria-hidden="true">🔎</span><span><strong>Explorers</strong><small>Ages 5–7</small></span><span class="age-check" aria-hidden="true">✓</span></button>
+          <button class="age-option" data-age="9" type="button" aria-pressed="false"><span class="age-emoji" aria-hidden="true">🚀</span><span><strong>Big thinkers</strong><small>Ages 8–10</small></span><span class="age-check" aria-hidden="true">✓</span></button>
+        </div>
+      </section>
+      <div class="activities-heading"><h2>Your play space</h2><span id="activity-count" aria-live="polite">24 activities</span></div>
+      <nav id="activity-filters" class="activity-filters" aria-label="Activity categories"></nav>
+      <p class="activity-guidance" id="activity-guidance">Pick a favorite. Every activity grows with you.</p>
+      <section id="activity-grid" class="activity-grid" aria-label="Activities"></section>
+      <footer class="home-footer"><span><span aria-hidden="true">♡</span> No rush. No wrong way to be creative.</span><span>Made for fingers & little imaginations</span></footer>
+    </main>
+  </div>
+  <main id="drawing-view" hidden aria-label="Drawing activity"></main>
+  <main id="learning-view" hidden aria-label="Learning activity"></main>
+  <main id="discovery-view" hidden aria-label="Discovery activity"></main>
+  <main id="challenges-view" hidden aria-label="Challenge activity"></main>
+  <dialog id="grownups-dialog" class="settings-dialog" aria-labelledby="settings-title">
+    <form method="dialog"><div class="dialog-heading"><div><span class="eyebrow">A LITTLE HELP FROM YOU</span><h2 id="settings-title">Their pace. Their play.</h2></div><button class="icon-button" aria-label="Close grown-up settings" value="cancel">✕</button></div></form>
+    <p class="settings-intro">Age is a starting point. Adjust the support to fit your child. Every activity stays open.</p>
+    <div class="settings-row"><label for="child-age">Child’s age<span>Sets the suggested starting point</span></label><div class="age-stepper"><button class="icon-button" id="age-minus" aria-label="Decrease age" type="button">−</button><output id="child-age-output" for="child-age">6</output><button class="icon-button" id="age-plus" aria-label="Increase age" type="button">+</button></div><input id="child-age" type="hidden" value="6"></div>
+    <label class="settings-field" for="support-level">How much help?<select id="support-level"><option value="auto">Suggested for their age</option><option value="little">More help · broad strokes & small counts</option><option value="explorer">A little challenge · letters & counting</option><option value="maker">Stretch me · words & number puzzles</option></select></label>
+    <div class="settings-row"><label for="settings-sound">Read aloud<span>Tap “Hear it” inside an activity</span></label><input id="settings-sound" type="checkbox" role="switch"></div>
+    <div class="parent-note"><strong>Small moments of learning</strong><p id="parent-guidance"></p><p>Drawings and practice stars stay in this browser. There are no accounts, ads, or leaderboards. Try playing together, especially with little learners.</p></div>
+    <button class="button button-primary settings-done" id="settings-done" type="button">Let’s play <span aria-hidden="true">→</span></button>
+  </dialog>
+  <div id="app-notice" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><div class="noscript-message">Doodle Fun needs JavaScript to draw and play. Enable it in your browser, then reload.</div></noscript>
+</body>
+</html>

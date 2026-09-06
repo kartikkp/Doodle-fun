@@ -24,9 +24,15 @@ npm install
 npm start
 ```
 
-Open `http://127.0.0.1:4173`. `PORT` can override the port. `npm start` first builds a self-contained app into `dist/` and then serves it.
+Open `http://127.0.0.1:4173`. `PORT` can override the port. `npm start` first builds a self-contained app into `dist/` and then serves it. The build also writes identical generated `index.html` and `sw.js` files at the repository root.
 
 For a standalone copy, run `npm run build` and open **dist/index.html** in a browser. All game code, styles, and icons are embedded: opening an activity does not fetch another module and does not need a server. To host the app, publish **dist/index.html** and **dist/sw.js** together. The service worker caches the complete app for offline reloads after its first successful installation over HTTPS or localhost. It does not claim to install before the initial page has loaded. Browser storage eviction can remove this cache; the downloadable HTML remains independent.
+
+## Build and deploy
+
+Edit **app-shell.html**, the JavaScript modules, or the CSS source files, then run `npm run build`. The root **index.html** and **sw.js** are generated release files; commit both whenever a source change changes the build. Do not edit the generated files directly. CI rebuilds the app and rejects stale committed release files.
+
+The existing GitHub Pages configuration publishes the repository root from the `main` branch. Its generated **index.html** and **sw.js** are byte-identical to the tested copies in `dist/`, so merging a built change keeps the same public URL and includes the offline worker. No Pages settings change is needed. For another static host, deploy the two files from `dist/` together as above.
 
 The prior preview failed because a cached home page tried to import game modules from a stopped local server. Bundling removes that dependency from every activity entry point. Offline entry, offline reload, and the downloadable HTML each have dedicated regression checks.
 
