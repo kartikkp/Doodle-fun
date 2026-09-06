@@ -80,13 +80,15 @@ test('zero has an empty group and count/addition questions give recoverable feed
 });
 test('counting retains tap order between panels and equal-group totals match visible dots',async({page})=>{
   await page.setViewportSize({width:390,height:844});await start(page,9,'numbers');
+  await page.getByRole('button',{name:'Count dots',exact:true}).click();
   await page.locator('.learn-count-dot').nth(2).click();await page.locator('.learn-count-dot').nth(0).click();
   await page.getByRole('button',{name:'Trace numbers',exact:true}).click();
   await page.getByRole('button',{name:'Count & play',exact:true}).click();
   await expect(page.locator('.learn-count-dot').nth(2)).toHaveText('1');
   await expect(page.locator('.learn-count-dot').nth(0)).toHaveText('2');
   await page.getByRole('button',{name:'Equal groups',exact:true}).click();
-  await expect(page.locator('.learn-equal-group')).toHaveCount(2);
+  await expect(page.locator('.learn-equal-group')).toHaveCount(3);
+  await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
   const count=Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity'));
   await expect(page.locator('.learn-count-dot')).toHaveCount(count);
   await page.getByRole('button',{name:`Answer ${count}`,exact:true}).click();
@@ -106,6 +108,11 @@ test('older children can complete a word and explore the entire 0–20 count ran
   await trace(page,'words','cat');await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
   await page.locator('#card-numbers').click();
+  await expect(page.getByRole('button',{name:'Equal groups',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
+  await expect(page.locator('.learn-count-dot')).toHaveCount(9);
+  await page.getByRole('button',{name:'Count dots',exact:true}).click();
+  await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity','8');
   const seen=new Set();
   for(let i=0;i<21;i++) {
     seen.add(Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity')));

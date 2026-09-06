@@ -233,7 +233,8 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
     }
     card.append(modeButtons);
-    const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,countRound);
+    const variant=countRound+(profile.tier==='maker'&&countMode==='groups'?7:0);
+    const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,variant);
     card.append(element('p','learn-eyebrow',`NUMBER DETECTIVE · ROUND ${countRound+1}`),element('h2','learn-count-prompt',question.prompt));
     const frames=element('div','learn-count-frames');frames.dataset.testid='quantity-frame';frames.dataset.quantity=String(question.answer);
     let dotOffset=0;
@@ -281,7 +282,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   }
   function open(requestedKind='letters') {
     profile=getProfile(getSettings());opened=true;kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
-    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode='count';countValue=profile.tier==='little'?0:3;countRound=0;countAnswered=false;countMarked.clear();}
+    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=profile.tier==='little'?0:profile.tier==='maker'?8:3;countRound=0;countAnswered=false;countMarked.clear();}
     else{set=SETS.some(([value])=>value===profile.defaultSet)?profile.defaultSet:'upper';index=0;pageMode='trace';}
     ink=[];done=false;render();report();
   }
