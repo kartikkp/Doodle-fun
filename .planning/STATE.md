@@ -1,12 +1,15 @@
 # Current state
 
-Phase 1 implementation and local QA are complete.
+Phase 2 implementation and local verification complete; preparing a follow-up draft PR from current main.
 
-- Four touch-friendly entry points preserve all original capabilities.
-- Adjustable age defaults; maker number activity starts with 3 × 3 visual groups.
-- 23 unit tests and 48 combined Chromium/WebKit tests passed. Final maker default correction additionally passed all 14 learning browser checks.
-- Independent code and age review findings resolved.
-- Source, instructions, age rationale, and QA report are ready for review.
-- Deliver as draft PR; do not merge or replace production without user direction.
+- Reproduced user's failed lazy imports from a stopped preview server.
+- Replaced entry-time imports with a self-contained built app and versioned offline reload cache.
+- Added 24 explicit activity cards across four categories, including 14 new games.
+- All original drawing pages, stamps, alphabets, digits and export retained.
+- 40 unit tests and 122 combined Chromium/WebKit browser tests passed.
+- 720 responsive matrix launches passed. Actual user tab reloaded and opened all 24 cards with real preview server stopped; detached server then restored.
+- Source build fingerprint: 387b68987e207d18.
+- Standalone HTML, source archive, screenshots, QA report and verified activity catalog are deliverables.
+- Original PR #1 was already merged by the user. These new changes go into a separate follow-up draft PR; no new merge/production replacement without user direction.
 
-Physical Safari/Pencil/share-sheet/VoiceOver acceptance and observed child play sessions remain release checks, distinct from completed browser emulation. See docs/qa-report.md for exact coverage and limits.
+Physical iPhone/iPad, Pencil, share-sheet, VoiceOver and observed child playtesting remain documented release checks, not completed claims.

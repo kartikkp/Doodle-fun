@@ -1,15 +1,19 @@
 {
   "name": "doodle-fun",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
-  "description": "A touch-first creative learning playground for ages 2–10.",
+  "description": "A touch-first creative learning playground for ages 2\u201310.",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
+    "dev": "npm run build && node server.js",
+    "start": "npm run build && node server.js",
     "test": "node --test tests/*.test.js",
-    "test:browser": "playwright test",
-    "check": "node --check app.js && node --check core.js && node --check draw.js && node --check learning.js"
+    "test:browser": "npm run build && playwright test",
+    "check": "node --check app.js && node --check catalog.js && node --check core.js && node --check draw.js && node --check learning.js && node --check discovery.js && node --check challenges.js && node --check scripts/build.mjs",
+    "build": "node scripts/build.mjs"
   },
-  "devDependencies": { "@playwright/test": "^1.55.0" }
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "esbuild": "^0.28.2"
+  }
 }

@@ -280,10 +280,12 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     side.append(button('Try writing a number →','button',()=>{set='nums';index=Math.min(countValue,9);pageMode='trace';ink=[];done=false;render();}));
     layout.append(card,side);body.append(layout);
   }
-  function open(requestedKind='letters') {
+  function open(requestedKind='letters',options={}) {
     profile=getProfile(getSettings());opened=true;kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
     if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=profile.tier==='little'?0:profile.tier==='maker'?8:3;countRound=0;countAnswered=false;countMarked.clear();}
     else{set=SETS.some(([value])=>value===profile.defaultSet)?profile.defaultSet:'upper';index=0;pageMode='trace';}
+    if(SETS.some(([value])=>value===options.set)){set=options.set;index=0;pageMode='trace';}
+    if(kind==='numbers'&&['count','add','groups'].includes(options.mode)){countMode=options.mode;pageMode='count';}
     ink=[];done=false;render();report();
   }
   function close() {opened=false;clearTransient();}
