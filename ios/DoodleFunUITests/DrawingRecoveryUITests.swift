@@ -17,6 +17,13 @@ final class DrawingRecoveryUITests: XCTestCase {
     }
 
     override func tearDownWithError() throws {
+        if (testRun?.failureCount ?? 0) > 0 {
+            capture("Drawing failure screen")
+            let tree = XCTAttachment(string: app.debugDescription)
+            tree.name = "Drawing failure accessibility tree"
+            tree.lifetime = .keepAlways
+            add(tree)
+        }
         XCUIDevice.shared.orientation = .portrait
         app.terminate()
     }
@@ -59,7 +66,14 @@ final class DrawingRecoveryUITests: XCTestCase {
         card.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 15))
         XCTAssertTrue(paper.waitForExistence(timeout: 15), "The visible drawing canvas must be accessible by its label.")
-        XCTAssertTrue(paper.isHittable)
+        waitFor("The drawing paper should be fully visible after navigation.") { self.paperFrameIsVisible() }
+    }
+
+    private func paperFrameIsVisible() -> Bool {
+        guard paper.exists else { return false }
+        let frame = paper.frame
+        return frame.width > 120 && abs(frame.width - frame.height) <= 2 &&
+            app.webViews.firstMatch.frame.insetBy(dx: -2, dy: -2).contains(frame)
     }
 
     private func selectSupply(_ label: String) {
@@ -86,7 +100,10 @@ final class DrawingRecoveryUITests: XCTestCase {
     private func snapshot(_ name: String) throws -> InkSnapshot {
         let element = paper
         XCTAssertTrue(element.exists)
-        XCTAssertTrue(element.isHittable)
+        // Native WebKit exposes canvas as a non-activatable AX element, so
+        // isHittable can be false even when its paper is fully visible. Its
+        // observed frame locates touches; subsequent ink changes prove input.
+        waitFor("The visible paper should finish laying out before its screenshot.") { self.paperFrameIsVisible() }
         let frame = element.frame
         XCTAssertGreaterThan(frame.width, 120, "Drawing paper should remain usable in this orientation.")
         XCTAssertEqual(frame.width, frame.height, accuracy: 2, "The observed canvas must be square before comparing artwork.")
