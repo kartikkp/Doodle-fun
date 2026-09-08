@@ -142,23 +142,26 @@ final class ActivityCatalogUITests: XCTestCase {
 
     @discardableResult
     private func reveal(_ target: XCUIElement, toward preferred: ScrollDirection = .up,
-                        inCoach: Bool = false, entireTarget: Bool = true,
+                        inCoach: Bool = false,
                         file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         var previousFrame: CGRect?
         var stationaryAttempts = 0
         for _ in 0..<28 {
             let bounds = safeTapBounds
-            if target.exists && target.isHittable {
-                let fits = entireTarget ? bounds.contains(target.frame) : bounds.contains(CGPoint(x: target.frame.midX, y: target.frame.midY))
-                if fits { return target }
-                stationaryAttempts = previousFrame == target.frame ? stationaryAttempts + 1 : 0
+            let targetFrame = target.exists ? target.frame : nil
+            if let frame = targetFrame, !frame.isEmpty {
+                // iOS may throw while resolving a clipped Link's activation
+                // point. Require the complete frame, including card titles,
+                // inside the viewport before requesting native hittability.
+                if bounds.contains(frame) && target.isHittable { return target }
+                stationaryAttempts = previousFrame == frame ? stationaryAttempts + 1 : 0
                 if stationaryAttempts >= 3 { break }
             }
-            previousFrame = target.exists ? target.frame : nil
+            previousFrame = targetFrame
             var direction = preferred
-            if target.exists && !target.frame.isEmpty {
-                if target.frame.minY < bounds.minY { direction = .down }
-                else if target.frame.maxY > bounds.maxY { direction = .up }
+            if let frame = targetFrame, !frame.isEmpty {
+                if frame.minY < bounds.minY { direction = .down }
+                else if frame.maxY > bounds.maxY { direction = .up }
             }
             // Native event synthesis intermittently timed out on the old
             // 685pt near-edge pan. Keep each scroll short and centered inside
@@ -166,11 +169,11 @@ final class ActivityCatalogUITests: XCTestCase {
             // inside the coach, drag the modal body instead.
             let x = inCoach ? bounds.midX : bounds.minX + 12
             var distance = min(300, bounds.height - 96)
-            if target.exists && !target.frame.isEmpty {
+            if let frame = targetFrame, !frame.isEmpty {
                 // A fixed full-height pan skipped past the compact landscape
                 // Color & create home link in alternating directions. Aim for
                 // the viewport center when the remaining distance is shorter.
-                distance = min(distance, max(44, abs(target.frame.midY - bounds.midY)))
+                distance = min(distance, max(44, abs(frame.midY - bounds.midY)))
             }
             let lower = bounds.midY + distance / 2
             let upper = bounds.midY - distance / 2
@@ -239,9 +242,9 @@ final class ActivityCatalogUITests: XCTestCase {
         }
         for activity in subset ?? Self.activities {
             XCTContext.runActivity(named: "Age \(age) · \(inLandscape ? "landscape" : "portrait") · \(activity.title)") { _ in
-                // Tap the card's observed title link. Its center must be
-                // visible; full-size game controls are checked separately.
-                let link = reveal(card(activity), entireTarget: false)
+                // Tap the fully visible observed title link. Full-size game
+                // controls are checked separately for their 44pt minimum.
+                let link = reveal(card(activity))
                 XCTAssertTrue(link.isHittable)
                 link.tap()
                 if activity.id == "coloring" {
