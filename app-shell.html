@@ -48,7 +48,7 @@
       <nav id="activity-filters" class="activity-filters" aria-label="Activity categories"></nav>
       <p class="activity-guidance" id="activity-guidance">Pick a favorite. Every activity grows with you.</p>
       <section id="activity-grid" class="activity-grid" aria-label="Activities"></section>
-      <footer class="home-footer"><span><span aria-hidden="true">♡</span> No rush. No wrong way to be creative.</span><span>Made for fingers & little imaginations</span></footer>
+      <footer class="home-footer"><span><span aria-hidden="true">♡</span> No rush. No wrong way to be creative.</span><nav class="policy-links" aria-label="App information"><button type="button" data-open-info="privacy">Privacy</button><button type="button" data-open-info="support">Help & support</button></nav></footer>
     </main>
   </div>
   <div id="activity-coach-bar" class="activity-coach-bar" hidden>
@@ -79,8 +79,37 @@
     <div class="settings-row"><label for="child-age">Child’s age<span>Each age has its own starting challenge</span></label><div class="age-stepper"><button class="icon-button" id="age-minus" aria-label="Decrease age" type="button">−</button><output id="child-age-output" for="child-age">6</output><button class="icon-button" id="age-plus" aria-label="Increase age" type="button">+</button></div><input id="child-age" type="hidden" value="6"></div>
     <label class="settings-field" for="support-level">How much help?<select id="support-level"><option value="auto">Suggested for their age</option><option value="little">More help · broad strokes & small counts</option><option value="explorer">A little challenge · letters & counting</option><option value="maker">Stretch me · words & number puzzles</option></select></label>
     <div class="settings-row"><label for="settings-sound">Read aloud<span>Tap “Hear it” inside an activity</span></label><input id="settings-sound" type="checkbox" role="switch"></div>
-    <div class="parent-note"><strong>Small moments of learning</strong><p id="parent-guidance"></p><p>Drawings and practice stars stay on this device. There are no accounts, ads, or leaderboards. Try playing together, especially with little learners.</p></div>
+    <div class="parent-note"><strong>Small moments of learning</strong><p id="parent-guidance"></p><p>Drawings and practice stars are saved locally. There are no accounts, ads, or leaderboards. A grown-up helps before sharing a picture. Try playing together, especially with little learners.</p></div>
+    <nav class="policy-links settings-policy-links" aria-label="Privacy and support"><button type="button" data-open-info="privacy">Privacy policy</button><button type="button" data-open-info="support">Help & support</button></nav>
     <button class="button button-primary settings-done" id="settings-done" type="button">Let’s play <span aria-hidden="true">→</span></button>
+  </dialog>
+  <dialog id="privacy-dialog" class="settings-dialog information-dialog" aria-labelledby="privacy-title">
+    <div class="dialog-heading"><div><span class="eyebrow">FOR YOUR FAMILY</span><h2 id="privacy-title">Privacy policy</h2></div><button type="button" class="icon-button" data-close-info="privacy" aria-label="Close privacy policy">✕</button></div>
+    <div class="policy-content"><!-- EMBED_PRIVACY_POLICY --></div>
+    <button type="button" class="button button-primary information-done" data-close-info="privacy">Done reading</button>
+  </dialog>
+  <dialog id="support-dialog" class="settings-dialog information-dialog" aria-labelledby="support-title">
+    <div class="dialog-heading"><div><span class="eyebrow">A LITTLE HELP</span><h2 id="support-title">Help & support</h2></div><button type="button" class="icon-button" data-close-info="support" aria-label="Close help and support">✕</button></div>
+    <div class="policy-content">
+      <h3>Find their pace</h3><p>Choose a starting age from 2 to 10. Inside any activity, open Coach for a first step, a strategy and a hint. Use “A little easier” or “A little harder” to adjust that activity.</p>
+      <h3>Keep a picture</h3><p>In Doodle studio or Color & create, tap Save. A grown-up answers a question before choosing where the picture goes. Cancel at any point to keep drawing. Undo brings back the previous step.</p>
+      <h3>Hear the clues</h3><p>Turn on Read aloud, then tap “Hear it” or open Coach. Check your device volume if you cannot hear the voice. Voice availability depends on your device.</p>
+      <h3>Saved on this device</h3><p>Settings, practice progress and the latest drawing are saved locally. Browser and app copies are separate. Device backups may include this data. Save a picture you want to keep before removing the app or clearing browser data.</p>
+      <h3>Need more help?</h3><p>Our support page has troubleshooting steps and a way for a grown-up to report a problem. Please do not include a child’s name, photo or other personal details in a public report.</p>
+      <button type="button" class="button" data-external-url="https://kartikkp.github.io/Doodle-fun/support.html">Visit support website ↗</button>
+      <p class="information-small">A grown-up check appears before opening a website.</p>
+    </div>
+    <button type="button" class="button button-primary information-done" data-close-info="support">Back to play</button>
+  </dialog>
+  <dialog id="parent-gate" class="settings-dialog parent-gate" aria-labelledby="parent-title" aria-describedby="parent-purpose">
+    <form id="parent-form" novalidate>
+      <span class="eyebrow">A MOMENT FOR A GROWN-UP</span><h2 id="parent-title">Ask a grown-up</h2>
+      <p id="parent-purpose"></p><p class="parent-instruction">Grown-ups: solve this question to continue.</p>
+      <label for="parent-answer" id="parent-question"></label>
+      <input id="parent-answer" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-describedby="parent-error" aria-label="Answer to the grown-up question">
+      <p id="parent-error" role="alert"></p>
+      <div class="parent-actions"><button id="parent-cancel" class="button" type="button">Cancel</button><button class="button button-primary" type="submit">Continue</button></div>
+    </form>
   </dialog>
   <div id="app-notice" class="toast" role="status" aria-live="polite" hidden></div>
   <noscript><div class="noscript-message">Doodle Fun needs JavaScript to draw and play. Enable it in your browser, then reload.</div></noscript>

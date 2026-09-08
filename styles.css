@@ -65,3 +65,31 @@ body dialog[open]{inset:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area
 /* These screen insets also protect the header; keep its usual inner spacing. */
 .discover-screen>.activity-header,.adventure-screen>.activity-header{padding-left:16px;padding-right:16px}
 @media(max-width:650px){.discover-screen>.activity-header{padding-left:14px;padding-right:14px}}
+/* Family information stays readable offline and outside the play controls. */
+.policy-links{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.policy-links button{border:0;background:transparent;min-height:44px;padding:8px 0;color:var(--primary);text-decoration:underline;text-underline-offset:3px;font-size:.8125rem;font-weight:650}
+.home-footer{align-items:center;flex-wrap:wrap}
+.settings-policy-links{margin:0 0 14px}
+.information-dialog{width:min(660px,calc(100vw - 28px))}
+.information-dialog .dialog-heading{position:sticky;top:-28px;background:#fff;padding:12px 0;z-index:1}
+.policy-content{font-size:.9375rem;line-height:1.65;overflow-wrap:anywhere}
+.policy-content h1{font-size:1.25rem;line-height:1.3;margin:20px 0 10px}
+.policy-content h2,.policy-content h3{font-size:1.0625rem;line-height:1.4;margin:22px 0 8px;letter-spacing:-.2px}
+.policy-content p{margin:12px 0;color:var(--muted)}
+.policy-content ul,.policy-content ol{padding-left:22px;margin:12px 0;color:var(--muted)}
+.policy-content li{margin:8px 0}
+.policy-content a{color:var(--primary);text-underline-offset:3px}
+.policy-content .policy-external{display:inline;border:0;background:transparent;color:var(--primary);font:inherit;text-align:inherit;text-decoration:underline;text-underline-offset:3px;padding:4px 0;overflow-wrap:anywhere}
+.policy-content .information-small{font-size:.8125rem}
+.information-done{width:100%;margin-top:20px}
+.parent-gate h2{font-size:1.5rem;margin:10px 0 14px}
+.parent-gate p{line-height:1.55;font-size:.9375rem;color:var(--muted);margin:12px 0}
+.parent-gate .parent-instruction{font-weight:650;color:var(--ink)}
+#parent-question{display:block;font-size:1.75rem;font-weight:800;letter-spacing:1px;margin:18px 0 12px}
+#parent-answer{width:100%;border:2px solid #b6b0df;border-radius:14px;min-height:52px;padding:10px 14px;background:white;color:var(--ink);font:inherit;font-size:1.25rem}
+#parent-error{min-height:24px;color:#9d354b;font-size:.875rem}
+.parent-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+@media(max-width:650px){.information-dialog .dialog-heading{top:-21px}.home-footer .policy-links{justify-content:center}}
+/* The notch adds padding to the header; let content determine its height. */
+.home-header{height:auto;min-height:104px}
+@media(max-width:650px){.home-header{min-height:80px}}

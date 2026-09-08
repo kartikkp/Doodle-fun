@@ -19,6 +19,36 @@ enum NativeBridgePolicy {
         return hash
     }
 
+    static func externalURL(_ value: Any?) -> URL? {
+        let destinations: Set<String> = [
+            "https://kartikkp.github.io/Doodle-fun/privacy.html",
+            "https://kartikkp.github.io/Doodle-fun/support.html",
+            "https://github.com/kartikkp/Doodle-fun/issues",
+            "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+        ]
+        guard let value = value as? String, destinations.contains(value) else { return nil }
+        return URL(string: value)
+    }
+
+    struct ParentChallenge {
+        let left: Int
+        let right: Int
+
+        init(left: Int = Int.random(in: 12...19), right: Int = Int.random(in: 12...19)) {
+            self.left = left
+            self.right = right
+        }
+
+        var prompt: String { "To continue, ask a grown-up to solve: \(left) × \(right) = ?" }
+
+        func accepts(_ answer: String) -> Bool {
+            let value = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !value.isEmpty, value.utf8.count <= 4,
+                  value.utf8.allSatisfy({ (48...57).contains($0) }) else { return false }
+            return Int(value) == left * right
+        }
+    }
+
     struct ShareImage {
         let png: Data
         let filename: String

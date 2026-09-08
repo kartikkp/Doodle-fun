@@ -15,13 +15,14 @@ const full = indexNativeTests(sources);
 
 test('real Swift inventory indexes each test under its declared target and class', () => {
   assert.deepEqual([...full.keys()], ['DoodleFunTests', 'DoodleFunUITests']);
-  assert.equal(full.get('DoodleFunTests').get('NativeBridgeTests').size, 5);
+  assert.equal(full.get('DoodleFunTests').get('NativeBridgeTests').size, 7);
+  assert.equal(full.get('DoodleFunTests').get('NativeParentGateTests').size, 4);
   for (let age = 2; age <= 10; age++) {
     assert.equal(full.get('DoodleFunTests').get(`NativeGameplayAge${String(age).padStart(2, '0')}Tests`).size, 30);
   }
   assert.equal(full.get('DoodleFunTests').get('NativeLayoutTests').size, 1);
   assert.deepEqual([...full.get('DoodleFunUITests')].map(([name, methods]) => [name, methods.size]), [
-    ['DoodleFunUITests', 3], ['ActivityCatalogUITests', 6], ['DrawingRecoveryUITests', 3], ['TracingGestureUITests', 2],
+    ['DoodleFunUITests', 4], ['ActivityCatalogUITests', 6], ['DrawingRecoveryUITests', 3], ['TracingGestureUITests', 2],
   ]);
   assert.equal(full.get('DoodleFunTests').has('NativeGameplayCase'), false, 'A helper-only base is not a runnable suite.');
 });
@@ -67,7 +68,9 @@ test('missing, empty, malformed and overlong selections are rejected', () => {
 test('without gameplay excludes all gameplay and layout filters while keeping both real test targets', () => {
   const included = new Set(nativeTestSourcePaths({withoutGameplay:true}));
   const index = indexNativeTests(sources.filter(({file}) => included.has(file)));
-  assert.deepEqual([...index.get('DoodleFunTests').keys()], ['NativeBridgeTests']);
+  assert.deepEqual([...index.get('DoodleFunTests')].map(([name, methods]) => [name, methods.size]), [
+    ['NativeBridgeTests', 7], ['NativeParentGateTests', 4],
+  ]);
   assert.equal(validateNativeTestSelection('DoodleFunTests', index), 'DoodleFunTests');
   assert.equal(validateNativeTestSelection('DoodleFunUITests/ActivityCatalogUITests/testAge6LandscapeCatalog', index),
     'DoodleFunUITests/ActivityCatalogUITests/testAge6LandscapeCatalog');
