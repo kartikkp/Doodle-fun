@@ -40,17 +40,27 @@ final class DrawingRecoveryUITests: XCTestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 30), "The bundled activity catalog should open.")
         let web = app.webViews.firstMatch
         waitFor("The activity title should have a visible layout frame.") { card.frame.width > 0 && card.frame.height > 0 }
-        for _ in 0..<3 {
-            if web.frame.insetBy(dx: 12, dy: 60).contains(card.frame) { break }
-            // Scroll only when the observed title is outside the usable viewport.
-            if card.frame.midY > web.frame.midY { web.swipeUp() } else { web.swipeDown() }
+        // The title only needs a safe visible center. Use short gutter pans as
+        // in the catalog sweep; full WebView swipes overshot this card on SE.
+        let tapBand = web.frame.insetBy(dx: 16, dy: 80)
+        for _ in 0..<12 {
+            let center = CGPoint(x: card.frame.midX, y: card.frame.midY)
+            if card.isHittable && tapBand.contains(center) { break }
+            let upward = center.y >= tapBand.minY
+            let distance = min(300, tapBand.height - 96)
+            let lower = tapBand.midY + distance / 2
+            let upper = tapBand.midY - distance / 2
+            let origin = web.coordinate(withNormalizedOffset: .zero)
+            let start = origin.withOffset(CGVector(dx: 12, dy: (upward ? lower : upper) - web.frame.minY))
+            let finish = origin.withOffset(CGVector(dx: 12, dy: (upward ? upper : lower) - web.frame.minY))
+            start.press(forDuration: 0.05, thenDragTo: finish)
         }
         var previousFrame = CGRect.zero
         var unchangedSince: Date?
         waitFor("The exact activity title should settle in a hittable position.") {
             let frame = card.frame
             guard card.isHittable, frame.width > 0, frame.height > 0,
-                  web.frame.insetBy(dx: 12, dy: 60).contains(frame) else {
+                  tapBand.contains(CGPoint(x: frame.midX, y: frame.midY)) else {
                 unchangedSince = nil
                 return false
             }
