@@ -211,6 +211,10 @@ test('saving generates a real full-resolution PNG with a white paper background'
   await page.evaluate(() => Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false }));
   await stroke(page);
   await page.locator('.draw-save').click();
+  await expect(page.locator('#parent-gate')).toBeVisible();
+  const [left,right]=(await page.locator('#parent-question').textContent()).match(/\d+/g).map(Number);
+  await page.locator('#parent-answer').fill(String(left*right));
+  await page.locator('#parent-form').getByRole('button',{name:'Continue',exact:true}).click();
   const image = page.locator('.draw-export-image');
   await expect(image).toBeVisible();
   await expect.poll(() => image.evaluate(el => el.naturalWidth)).toBe(1536);

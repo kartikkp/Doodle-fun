@@ -43,7 +43,12 @@ for(let age=2;age<=10;age++)for(const id of ADVENTURE_IDS){
     const progress=await page.evaluate(id=>JSON.parse(localStorage.getItem('doodle-fun:v2:adventures-progress-v1'))[id],id);expect(progress).toBe(1);
     await page.locator('.adventure-retry').tap();await expect(page.locator('.adventure-next')).not.toHaveClass(/is-ready/);
     await page.locator('.adventure-next').tap();await expect(page.locator('.adventure-round')).toContainText('round 2');
-    const layout=await page.locator('#adventures-view').evaluate(root=>({overflow:document.documentElement.scrollWidth>innerWidth,targets:[...root.querySelectorAll('button')].filter(node=>node.getBoundingClientRect().width>0).map(node=>({width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height}))}));
-    expect(layout.overflow).toBe(false);for(const target of layout.targets){expect(target.width).toBeGreaterThanOrEqual(47.5);expect(target.height).toBeGreaterThanOrEqual(47.5);}
+    // Touch feedback scales the pressed button to .96 briefly. Measure its
+    // resting target after that transition; permanently small controls fail.
+    await expect.poll(()=>page.locator('#adventures-view').evaluate(root=>({
+      overflow:document.documentElement.scrollWidth>innerWidth,
+      undersized:[...root.querySelectorAll('button')].map(node=>({label:node.textContent,width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height}))
+        .filter(target=>target.width>0&&(target.width<47.5||target.height<47.5))
+    }))).toEqual({overflow:false,undersized:[]});
   });
 }

@@ -1,5 +1,6 @@
 import { getProfile, readStore, writeStore } from './core.js';
 import { TEMPLATES } from './templates.js';
+import { requestParentAction } from './parental-gate.js';
 
 const SIDE = 1536;
 const DRAFT_KEY = 'drawing-draft-v2';
@@ -403,10 +404,13 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
         return;
       }
       const file = new File([blob], 'my-doodle.png', { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: 'My doodle' }); if (current()) tell('Your picture is ready to keep!'); }
-        catch (error) { if (current() && error.name !== 'AbortError') showExport(blob); }
-      } else showExport(blob);
+      await requestParentAction(async () => {
+        if (!current()) return;
+        if (navigator.canShare?.({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'My doodle' }); if (current()) tell('Your picture is ready to keep!'); }
+          catch (error) { if (current() && error.name !== 'AbortError') showExport(blob); }
+        } else showExport(blob);
+      });
     } catch { if (current()) { pendingNativeShare = null; tell('Your drawing is safe here. Please try Save again.'); } }
     finally { button.disabled = false; }
   });
@@ -418,7 +422,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     else if(event.detail?.status==='completed') tell('Your picture is ready to keep!');
   });
   document.addEventListener('keydown', event => {
-    if (!active || container.querySelector('dialog[open]') || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;
+    if (!active || document.querySelector('dialog[open]') || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;
     event.preventDefault(); finishPointer(); applyPatch(event.shiftKey ? history.redo() : history.undo(), !event.shiftKey);
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { finishPointer(); persist(); } });

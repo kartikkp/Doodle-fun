@@ -9,6 +9,137 @@ private final class WeakMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
+/// Native UI: web content cannot supply or approve the answer. Each instance
+/// authorizes exactly the operation retained by its presenting controller.
+final class ParentGateViewController: UIViewController, UIAdaptivePresentationControllerDelegate {
+    private(set) var challenge = NativeBridgePolicy.ParentChallenge()
+    let answerField = UITextField()
+    let continueButton = UIButton(type: .system)
+    let cancelButton = UIButton(type: .system)
+    private let errorLabel = UILabel()
+    private var challengeLabel: UILabel?
+    private let purpose: String
+    private var decided = false
+    var onDecision: ((Bool) -> Void)?
+
+    init(purpose: String) {
+        self.purpose = purpose
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .formSheet
+        preferredContentSize = CGSize(width: 440, height: 440)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .systemBackground
+        view.accessibilityIdentifier = "DoodleParentGate"
+        let scroll = UIScrollView()
+        scroll.accessibilityIdentifier = "DoodleParentScroll"
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(scroll)
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 18
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        scroll.addSubview(stack)
+        func label(_ text: String, style: UIFont.TextStyle) -> UILabel {
+            let label = UILabel()
+            label.text = text
+            label.font = .preferredFont(forTextStyle: style)
+            label.adjustsFontForContentSizeCategory = true
+            label.numberOfLines = 0
+            return label
+        }
+        let title = label("Ask a grown-up", style: .title2)
+        title.accessibilityTraits.insert(.header)
+        stack.addArrangedSubview(title)
+        stack.addArrangedSubview(label(purpose, style: .body))
+        let prompt = label(challenge.prompt, style: .headline)
+        challengeLabel = prompt
+        prompt.accessibilityIdentifier = "DoodleParentChallenge"
+        stack.addArrangedSubview(prompt)
+        answerField.accessibilityIdentifier = "DoodleParentAnswer"
+        answerField.accessibilityLabel = "Grown-up answer"
+        answerField.placeholder = "Enter the answer"
+        answerField.keyboardType = .numberPad
+        answerField.borderStyle = .roundedRect
+        answerField.font = .preferredFont(forTextStyle: .body)
+        answerField.adjustsFontForContentSizeCategory = true
+        answerField.autocorrectionType = .no
+        stack.addArrangedSubview(answerField)
+        errorLabel.textColor = .label
+        errorLabel.font = .preferredFont(forTextStyle: .body)
+        errorLabel.adjustsFontForContentSizeCategory = true
+        errorLabel.numberOfLines = 0
+        errorLabel.accessibilityIdentifier = "DoodleParentError"
+        errorLabel.isHidden = true
+        stack.addArrangedSubview(errorLabel)
+        continueButton.setTitle("Continue", for: .normal)
+        continueButton.accessibilityIdentifier = "DoodleParentContinue"
+        continueButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        continueButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        continueButton.addTarget(self, action: #selector(submit), for: .touchUpInside)
+        stack.addArrangedSubview(continueButton)
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.accessibilityIdentifier = "DoodleParentCancel"
+        cancelButton.titleLabel?.font = .preferredFont(forTextStyle: .body)
+        cancelButton.titleLabel?.adjustsFontForContentSizeCategory = true
+        cancelButton.addTarget(self, action: #selector(cancel), for: .touchUpInside)
+        stack.addArrangedSubview(cancelButton)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor),
+            stack.topAnchor.constraint(equalTo: scroll.contentLayoutGuide.topAnchor, constant: 24),
+            stack.leadingAnchor.constraint(equalTo: scroll.contentLayoutGuide.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(equalTo: scroll.contentLayoutGuide.trailingAnchor, constant: -24),
+            stack.bottomAnchor.constraint(equalTo: scroll.contentLayoutGuide.bottomAnchor, constant: -24),
+            stack.widthAnchor.constraint(equalTo: scroll.frameLayoutGuide.widthAnchor, constant: -48),
+            answerField.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
+            continueButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 48),
+            cancelButton.heightAnchor.constraint(greaterThanOrEqualToConstant: 48)
+        ])
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        presentationController?.delegate = self
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        decide(false)
+    }
+
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { decide(false) }
+
+    @objc private func submit() {
+        guard !decided else { return }
+        guard challenge.accepts(answerField.text ?? "") else {
+            challenge = NativeBridgePolicy.ParentChallenge()
+            challengeLabel?.text = challenge.prompt
+            answerField.text = ""
+            errorLabel.text = "That answer doesn’t match. Please try again, or choose Cancel."
+            errorLabel.isHidden = false
+            UIAccessibility.post(notification: .announcement, argument: errorLabel.text)
+            return
+        }
+        decide(true)
+    }
+
+    @objc private func cancel() { decide(false) }
+
+    private func decide(_ approved: Bool) {
+        guard !decided else { return }
+        decided = true
+        view.endEditing(true)
+        onDecision?(approved)
+    }
+}
+
 final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDelegate {
     private(set) var webView: WKWebView!
     private(set) var currentHash = "#"
@@ -20,6 +151,20 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
     private let statusLabel = UILabel()
     private let retryButton = UIButton(type: .system)
     private var shareDirectory: URL?
+    private enum ParentAction {
+        case share(NativeBridgePolicy.ShareImage)
+        case external(URL)
+
+        var purpose: String {
+            switch self {
+            case .share: return "A grown-up can approve sharing this drawing with another app."
+            case .external(let url): return "A grown-up can approve opening this website in your browser:\n\(url.absoluteString)"
+            }
+        }
+    }
+    private var pendingParentAction: (id: UUID, action: ParentAction)?
+    private var parentGate: ParentGateViewController?
+    private var openingExternalURL = false
     private var recovering = false
     private var contentRulesReady = false
     private var recoveryTimes: [Date] = []
@@ -69,6 +214,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         setupStatus()
         backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.speaker.stopSpeaking(at: .immediate)
+            self?.cancelParentAction()
         }
         prepareDocument()
     }
@@ -164,6 +310,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         speaker.stopSpeaking(at: .immediate)
+        cancelParentAction()
         recoveryTimes = recoveryTimes.filter { Date().timeIntervalSince($0) < 30 }
         guard recoveryTimes.count < 2 else { showError(); return }
         recoveryTimes.append(Date())
@@ -176,8 +323,18 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
               let body = message.body as? [String: Any], let type = body["type"] as? String else { return }
         switch type {
         case "route":
-            if let hash = NativeBridgePolicy.route(body["hash"]) { currentHash = hash }
-        case "shareImage": share(body)
+            if let hash = NativeBridgePolicy.route(body["hash"]) {
+                if hash != currentHash { cancelParentAction() }
+                currentHash = hash
+            }
+        case "shareImage":
+            guard canRequestParentAction else { return }
+            guard let image = NativeBridgePolicy.shareImage(body) else { shareResult("failed"); return }
+            requestParentAction(.share(image))
+        case "openExternalURL":
+            guard canRequestParentAction else { return }
+            guard let url = NativeBridgePolicy.externalURL(body["url"]) else { externalResult("failed"); return }
+            requestParentAction(.external(url))
         case "speak":
             guard let text = body["text"] as? String, !text.isEmpty, text.count <= 4000 else { return }
             speaker.stopSpeaking(at: .immediate)
@@ -190,9 +347,55 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         }
     }
 
-    private func share(_ body: [String: Any]) {
-        guard presentedViewController == nil, shareDirectory == nil else { return }
-        guard let image = NativeBridgePolicy.shareImage(body) else { shareResult("failed"); return }
+    private var canRequestParentAction: Bool {
+        pendingParentAction == nil && presentedViewController == nil && shareDirectory == nil &&
+            !openingExternalURL && UIApplication.shared.applicationState == .active
+    }
+
+    private func requestParentAction(_ action: ParentAction) {
+        guard canRequestParentAction else { return }
+        let id = UUID()
+        let gate = ParentGateViewController(purpose: action.purpose)
+        pendingParentAction = (id, action)
+        parentGate = gate
+        speaker.stopSpeaking(at: .immediate)
+        gate.onDecision = { [weak self, weak gate] approved in
+            guard let self, let gate, self.pendingParentAction?.id == id else { return }
+            guard approved, UIApplication.shared.applicationState == .active else { self.cancelParentAction(); return }
+            // Keep the exact payload pending until dismissal ends. Backgrounding
+            // during this transition invalidates it before either operation runs.
+            gate.dismiss(animated: true) { [weak self] in
+                guard let self, let pending = self.pendingParentAction, pending.id == id else { return }
+                guard UIApplication.shared.applicationState == .active else { self.cancelParentAction(); return }
+                self.pendingParentAction = nil
+                self.parentGate = nil
+                switch pending.action {
+                case .share(let image): self.shareApprovedImage(image)
+                case .external(let url):
+                    self.openingExternalURL = true
+                    UIApplication.shared.open(url, options: [:]) { [weak self] opened in
+                        self?.openingExternalURL = false
+                        self?.externalResult(opened ? "completed" : "failed")
+                    }
+                }
+            }
+        }
+        present(gate, animated: true)
+    }
+
+    private func cancelParentAction() {
+        guard let pending = pendingParentAction else { return }
+        pendingParentAction = nil
+        let gate = parentGate
+        parentGate = nil
+        gate?.dismiss(animated: false)
+        switch pending.action {
+        case .share: shareResult("cancelled")
+        case .external: externalResult("cancelled")
+        }
+    }
+
+    private func shareApprovedImage(_ image: NativeBridgePolicy.ShareImage) {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("DoodleShare-\(UUID().uuidString)", isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
@@ -221,5 +424,9 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
     private func shareResult(_ status: String) {
         // Status is native-owned, never interpolated from web content.
         webView.evaluateJavaScript("window.dispatchEvent(new CustomEvent('doodle-native-share',{detail:{status:'\(status)'}}))", completionHandler: nil)
+    }
+
+    private func externalResult(_ status: String) {
+        webView.evaluateJavaScript("window.dispatchEvent(new CustomEvent('doodle-native-external',{detail:{status:'\(status)'}}))", completionHandler: nil)
     }
 }

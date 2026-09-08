@@ -6,6 +6,7 @@ import {ACTIVITIES} from '../catalog.js';
 test('branch-published root bundle works under the GitHub project path and reloads after server loss',async({page})=>{
   test.setTimeout(90000);
   const [html,worker]=await Promise.all([readFile(new URL('../index.html',import.meta.url)),readFile(new URL('../sw.js',import.meta.url))]);
+  const documents=Object.fromEntries(await Promise.all(['privacy.html','support.html'].map(async file=>[file,await readFile(new URL('../'+file,import.meta.url))])));
   expect(html.equals(await readFile(new URL('../dist/index.html',import.meta.url)))).toBe(true);
   expect(worker.equals(await readFile(new URL('../dist/sw.js',import.meta.url)))).toBe(true);
   const errors=[],unexpected=[];
@@ -14,7 +15,8 @@ test('branch-published root bundle works under the GitHub project path and reloa
     const path=new URL(req.url,'http://localhost').pathname;
     if(path==='/Doodle-fun/'||path==='/Doodle-fun/sw.js'){
       const isWorker=path.endsWith('/sw.js');res.writeHead(200,{'Content-Type':isWorker?'text/javascript':'text/html','Cache-Control':'no-store'});res.end(isWorker?worker:html);
-    }else{unexpected.push(path);res.writeHead(404);res.end();}
+    }else if(documents[path.replace('/Doodle-fun/','')]){res.writeHead(200,{'Content-Type':'text/html'});res.end(documents[path.replace('/Doodle-fun/','')]);}
+    else{unexpected.push(path);res.writeHead(404);res.end();}
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   try{

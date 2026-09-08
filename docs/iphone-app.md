@@ -39,7 +39,7 @@ xcrun simctl launch booted com.kartikkp.DoodleFun
 
 ### Full iPhone QA
 
-The expanded suite runs **270 age/activity gameplay cases**, five native bridge checks, one native landscape-layout check, and fourteen UI tests. The four catalog UI tests each visit all 30 activities, including a landscape pass. An additional archive test captures all 30 landscape screens with full-device screenshots. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet.
+The expanded suite runs **270 age/activity gameplay cases**, seven native bridge checks, four parental-gate checks, one native landscape-layout check, and fifteen UI tests. The four catalog UI tests each visit all 30 activities, including a landscape pass. An additional archive test captures all 30 landscape screens with full-device screenshots. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet.
 
 Use a dedicated simulator: the suite resets the tested app's local data. Install the Node dependencies, then supply its UDID from `xcrun simctl list devices available`:
 
@@ -62,13 +62,15 @@ Do not run two jobs against the same simulator or output directory concurrently.
 ## Native behavior
 
 - All activities load from the packaged HTML. Navigation is restricted to that exact file and its activity fragments. Network resources are blocked by a WebKit content rule. No service worker is needed for native offline launch.
-- WebKit's default persistent store keeps local settings and progress across application launches. Native and browser installations have separate storage. Removing the app removes its local data; there is no cloud backup.
+- WebKit's default persistent store keeps local settings and progress across application launches. Native and browser installations have separate storage. Deleting the app removes its local data; offloading can retain it. Doodle Fun has no app-provided cloud sync. Operating-system or device backups may include local app data according to the owner’s settings.
 - The native shell reloads the current activity when WebKit reports a terminated content process. It preserves data already saved by the web app, but cannot restore a gesture or round that was only in memory. Repeated termination displays a native **Try again** action.
-- **Save** opens the system share sheet using a temporary PNG. Cancelling returns to the drawing; reopening works. The popover is anchored on iPad. The file is deleted when sharing completes or is cancelled. Native validation permits only a bounded, decodable PNG from the bundled main frame and sanitizes the filename.
+- **Save** first opens a native grown-up check with a fresh multiplication question. Correct approval opens the system share sheet using a temporary PNG. Cancelling returns to the drawing; reopening works. The popover is anchored on iPad. The file is deleted when sharing completes or is cancelled. Native validation permits only a bounded, decodable PNG from the bundled main frame and sanitizes the filename.
 - Spoken coaching uses `AVSpeechSynthesizer`. It follows the web sound preference, replaces the previous utterance, and stops when the app becomes inactive. Available voices are supplied by iOS.
 - A debug-only `--reset-test-data` launch argument isolates automated UI tests. It is excluded from Release behavior.
 
 ## Bridge contract
+
+The complete privacy policy is available offline from the home footer or Grown-ups. Help and external policy/support links are also available there. External links use a native `openExternalURL` message; only four exact support/privacy destinations are accepted, and each opens in the system browser after a fresh grown-up check. Cancellation, navigation, backgrounding or process recovery invalidates any pending approval.
 
 Only the trusted bundled main frame may send messages to `window.webkit.messageHandlers.doodleNative`:
 
@@ -79,7 +81,7 @@ postMessage({type: 'speak', text: 'Let’s try one small step.'});
 postMessage({type: 'stopSpeaking'});
 ```
 
-The native share sheet dispatches `doodle-native-share` with `event.detail.status` equal to `completed`, `cancelled`, or `failed`. The web app requests sharing only after the child presses Save. The wrapper's own injected script sends validated `route` messages to remember the current activity for process recovery.
+The native share sheet dispatches `doodle-native-share` with `event.detail.status` equal to `completed`, `cancelled`, or `failed`. The web app requests sharing only after the child presses Save. The native boundary then requires a fresh grown-up check; approval never carries over to another share. The wrapper's own injected script sends validated `route` messages to remember the current activity for process recovery.
 
 ## Verification
 

@@ -7,6 +7,7 @@ import {createAdventures} from './adventures.js';
 import {ACTIVITIES,CATEGORIES,getActivity} from './catalog.js';
 import {coachingFor,normalizeAdjustments} from './coaching.js';
 import {canSpeak,speak,stopSpeaking} from './speech.js';
+import {openExternalURL} from './parental-gate.js';
 
 let settings = normalizeSettings(readStore('settings', null));
 let drawing, learning, discovery, challenges, adventures, activeRoute = 'home', navigationId = 0, noticeTimer, filter = 'all';
@@ -16,6 +17,7 @@ const home = $('home-screen'), drawView = $('drawing-view'), learnView = $('lear
 const discoveryView = $('discovery-view'), challengesView = $('challenges-view');
 const adventuresView = $('adventures-view');
 const settingsDialog = $('grownups-dialog');
+let informationReturn = null;
 const getSettings = () => ({...settings,challengeOffset:adjustments[activeRoute] || 0});
 const soundIcon = enabled => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4V5Z"/>${enabled?'<path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>':'<path d="m16 9 5 6m0-6-5 6"/>'}</svg>`;
 function notice(message) {
@@ -176,6 +178,23 @@ $('age-minus').addEventListener('click',()=>updateSettings({age:settings.age-1})
 $('age-plus').addEventListener('click',()=>updateSettings({age:settings.age+1}));
 $('support-level').addEventListener('change',e=>updateSettings({level:e.target.value}));
 $('settings-sound').addEventListener('change',e=>updateSettings({sound:e.target.checked}));
+document.querySelectorAll('[data-open-info]').forEach(button => button.addEventListener('click', () => {
+  informationReturn = button;
+  $(button.dataset.openInfo + '-dialog').showModal();
+}));
+document.querySelectorAll('[data-close-info]').forEach(button => button.addEventListener('click', () => $(button.dataset.closeInfo + '-dialog').close()));
+for (const id of ['privacy-dialog', 'support-dialog']) {
+  $(id).addEventListener('close', () => informationReturn?.focus({preventScroll:true}));
+  $(id).addEventListener('click', event => {
+    const link = event.target.closest('a[href], [data-external-url]');
+    if (!link) return;
+    event.preventDefault();
+    openExternalURL(link.dataset.externalUrl || link.href).catch(() => notice('The website could not open. Please try again.'));
+  });
+}
+window.addEventListener('doodle-native-external', event => {
+  if (event.detail?.status === 'failed') notice('The website could not open. Please try again.');
+});
 window.addEventListener('hashchange',route);
 $('coach-open').addEventListener('click',()=>{renderCoach();$('coach-dialog').showModal();});
 for(const id of ['coach-close','coach-done']) $(id).addEventListener('click',()=>{$('coach-dialog').close();stopSpeaking();});
