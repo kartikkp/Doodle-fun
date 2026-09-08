@@ -4,6 +4,7 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
+import {nativeTestSourcePaths, indexNativeTests, nativeTestSelections} from './native-test-selection.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -18,35 +19,20 @@ if (!device && !args.includes('--prepare-only')) {
 const output = path.resolve(option('--output') || path.join(root, 'test-results', 'iphone-native'));
 if (output === root || !path.relative(path.join(root, 'ios'), output).startsWith('..')) throw new Error('Use a separate QA output directory.');
 const project = path.join(output, 'project');
-await mkdir(project, {recursive:true});
 const sourceProject = path.join(root, 'ios', 'DoodleFun.xcodeproj', 'project.pbxproj');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const originalProjectHash = sha(await readFile(sourceProject));
-const testSources = [
-  'DoodleFunTests/NativeBridgeTests.swift', 'DoodleFunTests/NativeGameplayTests.swift',
-  'DoodleFunUITests/DoodleFunUITests.swift', 'DoodleFunUITests/ActivityCatalogUITests.swift',
-  'DoodleFunUITests/DrawingRecoveryUITests.swift', 'DoodleFunUITests/TracingGestureUITests.swift',
-];
-// Xcode silently ignores unknown method filters; fail before preparing a run
-// so a typo cannot be mistaken for completed coverage.
-const testSourceText = (await Promise.all(testSources.map(file =>
-  readFile(path.join(root, 'ios', file), 'utf8')
-))).join('\n');
-for (let i = 0; i < args.length; i++) {
-  if (args[i] !== '--only' && args[i] !== '--skip') continue;
-  const selection = args[++i];
-  if (!selection) throw new Error('A test target/class/method is required after --only or --skip.');
-  const method = selection.split('/')[2]?.replace(/\(\)$/, '');
-  if (method && (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(method) ||
-      !new RegExp(`\\bfunc\\s+${method}\\s*\\(`).test(testSourceText))) {
-    throw new Error(`Unknown native test method: ${selection}`);
-  }
-}
-const testSourceSHA256 = Object.fromEntries(await Promise.all(testSources.map(async file =>
-  [file, sha(await readFile(path.join(root, 'ios', file)))]
-)));
+const withoutGameplay = args.includes('--without-gameplay');
+const testSources = await Promise.all(nativeTestSourcePaths({withoutGameplay}).map(async file =>
+  ({file, source:await readFile(path.join(root, 'ios', file), 'utf8')})
+));
+// Xcode silently ignores unknown filters. Validate the complete tuple against
+// tests included in this run before creating files or invoking Xcode.
+const selections = nativeTestSelections(args, indexNativeTests(testSources));
+const testSourceSHA256 = Object.fromEntries(testSources.map(({file, source}) => [file, sha(source)]));
 
 // Work in a copy: Xcode signing settings and an already running app stay intact.
+await mkdir(project, {recursive:true});
 await cp(path.join(root, 'ios'), path.join(project, 'ios'), {
   recursive:true, force:true,
   filter:src => !src.split(path.sep).some(part => ['build','DerivedData','xcuserdata'].includes(part)),
@@ -54,7 +40,7 @@ await cp(path.join(root, 'ios'), path.join(project, 'ios'), {
 const integrationFile = path.join(project, 'ios/DoodleFunTests/NativeBridgeTests.swift');
 const uiFile = path.join(project, 'ios/DoodleFunUITests/DoodleFunUITests.swift');
 let script = '';
-if (!args.includes('--without-gameplay')) {
+if (!withoutGameplay) {
   const bundled = await build({
     entryPoints:[path.join(root, 'ios/DoodleFunTests/Fixtures/native-gameplay.js')],
     bundle:true, format:'iife', platform:'browser', target:'safari17', write:false,
@@ -89,9 +75,8 @@ const command = [
   '-parallel-testing-enabled','NO',
   'CODE_SIGNING_ALLOWED=NO', action,
 ];
-for (let i=0;i<args.length;i++) {
-  if (args[i] === '--only') command.push(`-only-testing:${args[++i]}`);
-  if (args[i] === '--skip') command.push(`-skip-testing:${args[++i]}`);
+for (const {flag, selection} of selections) {
+  command.push(`${flag === '--only' ? '-only-testing' : '-skip-testing'}:${selection}`);
 }
 await writeFile(path.join(output,'last-command.json'), JSON.stringify(['xcodebuild',...command],null,2)+'\n');
 await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify({...metadata, command:['xcodebuild',...command]},null,2)+'\n');
