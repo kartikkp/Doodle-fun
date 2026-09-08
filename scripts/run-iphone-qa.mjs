@@ -53,15 +53,18 @@ for (const name of ['ActivityCatalogUITests.swift','DrawingRecoveryUITests.swift
   await appendFile(uiFile, '\n' + await readFile(path.join(root, 'ios/DoodleFunUITests', name), 'utf8'));
 }
 const manifest = JSON.parse(await readFile(path.join(root, 'ios/DoodleFun/Resources/BundleManifest.json'), 'utf8'));
-await writeFile(path.join(output,'qa-build.json'), JSON.stringify({
+const preparedAt = new Date().toISOString();
+const stamp = preparedAt.replaceAll(':','-').replaceAll('.','-');
+const metadata = {
   device, manifest, originalProjectHash, testSourceSHA256, fixtureSHA256:sha(script),
-  preparedAt:new Date().toISOString(), project,
-}, null, 2) + '\n');
+  preparedAt, project,
+};
+await writeFile(path.join(output,'qa-build.json'), JSON.stringify(metadata, null, 2) + '\n');
+await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify(metadata, null, 2) + '\n');
 if (sha(await readFile(sourceProject)) !== originalProjectHash) throw new Error('Original Xcode project changed during QA preparation.');
 console.log(`Prepared isolated native QA for ${manifest.fingerprint}: ${project}`);
 if (args.includes('--prepare-only')) process.exit(0);
 
-const stamp = new Date().toISOString().replaceAll(':','-').replaceAll('.','-');
 const action = args.includes('--build-only') ? 'build-for-testing' : 'test';
 const command = [
   '-project', path.join(project,'ios/DoodleFun.xcodeproj'), '-scheme','DoodleFun',
@@ -76,6 +79,7 @@ for (let i=0;i<args.length;i++) {
   if (args[i] === '--skip') command.push(`-skip-testing:${args[++i]}`);
 }
 await writeFile(path.join(output,'last-command.json'), JSON.stringify(['xcodebuild',...command],null,2)+'\n');
+await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify({...metadata, command:['xcodebuild',...command]},null,2)+'\n');
 const child = spawn('caffeinate',['-i','xcodebuild',...command],{cwd:root,stdio:'inherit'});
 child.on('error',error => { console.error(error); process.exitCode=1; });
 child.on('exit',code => { process.exitCode=code ?? 1; });
