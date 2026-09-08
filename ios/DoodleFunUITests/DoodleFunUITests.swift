@@ -12,9 +12,11 @@ final class DoodleFunUITests: XCTestCase {
     }
 
     private func openDrawing() {
-        let card = app.links.matching(NSPredicate(format: "label CONTAINS[c] %@", "Doodle studio")).firstMatch
+        let card = app.links["Doodle studio"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
-        card.tap()
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: card)
+        XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 10), .completed)
+        card.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 10))
     }
 

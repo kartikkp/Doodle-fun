@@ -11,7 +11,8 @@
     "test:browser": "npm run build && playwright test",
     "check": "node --check app.js && node --check catalog.js && node --check core.js && node --check draw.js && node --check learning.js && node --check discovery.js && node --check challenges.js && node --check adventures.js && node --check coaching.js && node --check speech.js && node --check scripts/build.mjs",
     "build": "node scripts/build.mjs",
-    "ios:sync": "npm run build && node scripts/sync-ios.mjs"
+    "ios:sync": "npm run build && node scripts/sync-ios.mjs",
+    "test:iphone": "node scripts/run-iphone-qa.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
