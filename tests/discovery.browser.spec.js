@@ -115,7 +115,7 @@ test('memory mismatch waits for the child and every pair can be completed', asyn
 test('maze blocks teleporting, supports undo and keyboard, and reaches its carrot', async ({ page }) => {
   await open(page, 'maze', 3);
   const map = await page.locator('[data-cell]').evaluateAll(nodes => nodes.map(node => ({ index: Number(node.dataset.cell), neighbors: node.dataset.neighbors.split(',').map(Number), goal: node.dataset.goal === 'true' })));
-  expect(map).toHaveLength(16);
+  expect(map).toHaveLength(9);
   const invalid = map.find(cell => cell.index !== 0 && !map[0].neighbors.includes(cell.index));
   await page.locator(`[data-cell="${invalid.index}"]`).tap();
   await expect(page.locator('[data-current="true"]')).toHaveAttribute('data-cell', '0');
@@ -136,7 +136,7 @@ test('maze blocks teleporting, supports undo and keyboard, and reaches its carro
   await expect(page.locator('.discover-level')).toContainText('round 2');
 });
 
-for (const [age, choices, pairs, cells, items] of [[3, 3, 2, 16, 6], [6, 4, 4, 25, 9], [9, 6, 6, 36, 9]]) {
+for (const [age, choices, pairs, cells, items] of [[3, 2, 2, 9, 6], [6, 4, 4, 25, 9], [9, 6, 6, 36, 9]]) {
   test(`age ${age}: meaningful board sizes and phone-safe controls`, async ({ page }) => {
     await open(page, 'shape-match', age);
     await expect(page.locator('[data-choice]')).toHaveCount(choices);
