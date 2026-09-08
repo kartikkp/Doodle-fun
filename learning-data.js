@@ -89,6 +89,28 @@ export const STROKES={
   '0':[[[.5,.18],[.68,.3],[.72,.5],[.68,.7],[.5,.85],[.32,.7],[.28,.5],[.32,.3],[.5,.18]]],
 };
 
+// Use dense, shared arc geometry for the round guides. Rendering, the animated
+// model, and trace validation all consume these same points, so the child sees
+// the curve that is actually checked. Straight stems and angular letters stay
+// straight; this is not a blanket smoothing pass over the alphabet.
+function ovalArc(cx,cy,rx,ry,start=-Math.PI/2,sweep=-Math.PI*2) {
+  const steps=Math.ceil(Math.abs(sweep)/(Math.PI*2)*64);
+  const points=Array.from({length:steps+1},(_,i)=>{
+    const angle=start+sweep*i/steps;
+    return [cx+Math.cos(angle)*rx,cy+Math.sin(angle)*ry];
+  });
+  if(Math.abs(sweep)===Math.PI*2)points[points.length-1]=[...points[0]];
+  return points;
+}
+STROKES.O=[ovalArc(.5,.5,.22,.35)];
+STROKES.Q=[ovalArc(.5,.5,.22,.35),STROKES.Q[1]];
+STROKES['0']=[ovalArc(.5,.515,.22,.335)];
+STROKES.o=[ovalArc(.5,.59,.15,.21)];
+STROKES.C=[ovalArc(.49,.5,.24,.35,-.65,-Math.PI*2+1.3)];
+STROKES.c=[ovalArc(.48,.60,.19,.22,-.65,-Math.PI*2+1.3)];
+STROKES.a=[ovalArc(.47,.60,.19,.22),[[.66,.42],[.66,.82]]];
+STROKES.g=[ovalArc(.47,.60,.19,.22),[[.66,.42],[.66,.95],[.55,1.02],[.4,1.0],[.28,.93]]];
+
 // Keep ascenders, x-height, baseline, and descenders inside the same square.
 // The original g, j, p, and q extended beyond its drawing surface.
 for (const ch of 'abcdefghijklmnopqrstuvwxyz') {
@@ -200,17 +222,19 @@ export function evaluateTrace(targets, ink, options={}) {
     reason:passed?'complete':!enoughInk?'keep-going':completed<targets.length?'coverage':!notExcessive?'extra-ink':'precision'};
 }
 
-export function buildQuantityQuestion(value, mode='count', max=10, variant=0) {
+export function buildQuantityQuestion(value, mode='count', max=10, variant=0, age=6) {
   const number=Number.isFinite(value)?Math.max(0,Math.min(max,Math.floor(value))):0;
   if (mode==='add') {
-    const left=(Math.floor(number/2)+Math.abs(Math.floor(variant)))%(number+1),right=number-left;
-    return {answer:number,left,right,prompt:`${left} + ${right} = ?`,spoken:`What is ${left} plus ${right}?`,mode};
+    const left=age>=10?Math.floor(number/3):(Math.floor(number/2)+Math.abs(Math.floor(variant)))%(number+1);
+    const middle=age>=10?(Math.floor(number/3)+Math.abs(Math.floor(variant)))%(number-left+1):0,right=number-left-middle;
+    const operands=age>=10?[left,middle,right]:[left,right];
+    return {answer:number,left,right,middle,operands,prompt:`${operands.join(' + ')} = ?`,spoken:`What is ${operands.join(' plus ')}?`,strategy:`Start with ${operands[0]}. ${operands.slice(1).map(value=>`Count on ${value} more.`).join(' ')} Tap each dot once to check the total.`,mode};
   }
   if (mode==='groups') {
     const possibilities=[];
     for(let groups=2;groups<=4;groups++)for(let each=1;each<=5;each++)if(groups*each<=max)possibilities.push({groups,each});
     const selected=possibilities[Math.abs(Math.floor(variant))%possibilities.length]||{groups:2,each:1};
-    return {...selected,answer:selected.groups*selected.each,prompt:`${selected.groups} groups of ${selected.each}. How many?`,spoken:`There are ${selected.groups} groups of ${selected.each} dots. How many dots altogether?`,mode};
+    return {...selected,answer:selected.groups*selected.each,prompt:`${selected.groups} groups of ${selected.each}. How many?`,spoken:`There are ${selected.groups} groups of ${selected.each} dots. How many dots altogether?`,strategy:`Each group has ${selected.each}. Count ${selected.each} at a time: ${Array.from({length:selected.groups},(_,i)=>(i+1)*selected.each).join(', ')}. The last count is the total.`,mode};
   }
-  return {answer:number,prompt:number===0?'How many dots in the empty frame?':'How many dots can you count?',spoken:number===0?'How many dots are in the empty frame?':'How many dots can you count?',mode:'count'};
+  return {answer:number,prompt:number===0?'How many dots in the empty frame?':'How many dots can you count?',spoken:number===0?'How many dots are in the empty frame?':'How many dots can you count?',strategy:number===0?'The frame is empty. There are no dots to count, so the number is zero.':number>10?'Count the full rows in fives, then add the extra dots. Tap each dot to check your count.':'Touch one dot for each number you say. The last number tells how many dots there are.',mode:'count'};
 }

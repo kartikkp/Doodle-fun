@@ -1,6 +1,6 @@
 # Age, activity, and touch guidance
 
-Research checked 6 September 2026. This document records design recommendations and acceptance criteria, not a claim that every recommendation is implemented or has passed QA.
+Research checked 6 September 2026. Current implemented nine-age defaults and all 30 activity assessments are in [the coached play review](coached-play-review.md). This document records design recommendations and acceptance criteria, not a claim that every recommendation is implemented or has passed QA.
 
 Age selects a starting point; it does not measure ability. Every activity stays available, and children or adults can change support without losing artwork. The proposed ranges below are product defaults, not validated assessments or universal developmental deadlines. NAEYC calls for learning experiences responsive to each child's development, interests, prior experiences, and abilities. [NAEYC: Teaching to Enhance Each Child's Development and Learning](https://www.naeyc.org/node/3812)
 
@@ -47,7 +47,7 @@ Apple recommends comfortable control sizes and spacing, simple interactions, vis
 
 ## Activity QA cases
 
-1. **All ages:** open all five activity types at ages 2, 4, 5, 7, 8, and 10; change support; return home and reopen. Verify no hidden age locks, wrong selected preset, unintended reset, or stale progress.
+1. **All ages:** open all 30 activity cards at ages 2, 4, 5, 7, 8, and 10; change support; return home and reopen. Verify no hidden age locks, wrong selected preset, unintended reset, or stale progress.
 2. **Free draw:** test every tool, color, and size; verify a same-color fill completes promptly; undo/redo mixed actions; clear and recover; save/reload/rotate. Canvas-only gestures must not prevent menu scrolling.
 3. **Every coloring template:** inspect each closed region; fill neighboring regions and the background; verify outlines and intended separations survive fill/erase/undo. Make sure older templates differ meaningfully from broad beginner shapes.
 4. **All 26 uppercase and 26 lowercase letters:** guide is legible, hero glyph agrees with the taught form, start markers are visible, complete trace succeeds, and unrelated marks do not succeed. Test crossbars, i/j dots, and g/j/p/q/y descenders. Off-canvas path coordinates must be brought inside safe margins.

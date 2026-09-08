@@ -1,4 +1,5 @@
 import { getProfile, readStore, writeStore } from './core.js';
+import { canSpeak, speak as say, stopSpeaking } from './speech.js';
 
 export const DISCOVERY_IDS = ['shape-match', 'color-match', 'patterns', 'sorting', 'odd-one-out', 'memory', 'maze'];
 const META = {
@@ -38,8 +39,14 @@ const MEMORY = [
   { id: 'bee', name: 'Bee', emoji: '🐝' }, { id: 'ladybug', name: 'Ladybug', emoji: '🐞' },
   { id: 'rabbit', name: 'Rabbit', emoji: '🐰' }, { id: 'owl', name: 'Owl', emoji: '🦉' },
 ];
-export function discoveryConfig(tier) {
-  return ({ little: { choices: 3, memoryPairs: 2, mazeSize: 4, sortCategories: 2 }, explorer: { choices: 4, memoryPairs: 4, mazeSize: 5, sortCategories: 3 }, maker: { choices: 6, memoryPairs: 6, mazeSize: 6, sortCategories: 3 } })[tier] || discoveryConfig('explorer');
+export function discoveryConfig(value) {
+  const age = Math.max(2, Math.min(10, Math.round(Number(value) || ({little:3,explorer:6,maker:9}[value]) || 6))), i = age - 2;
+  const fields = {
+    choices:[2,2,3,3,4,4,5,6,6], memoryPairs:[2,2,3,3,4,4,5,6,6], mazeSize:[3,3,4,4,5,5,6,6,6],
+    sortCategories:[2,2,2,3,3,3,3,3,4], sortItemsEach:[2,3,3,2,3,2,2,3,3],
+    shapePool:[2,3,4,5,6,7,8,8,8], colorPool:[4,5,6,7,8,8,9,10,10], oddCount:[3,3,3,4,4,5,5,6,6],
+  };
+  return {age,tier:age<=4?'little':age<=7?'explorer':'maker',...Object.fromEntries(Object.entries(fields).map(([key,values])=>[key,values[i]]))};
 }
 function shuffle(values, random) {
   const result = [...values];
@@ -64,23 +71,23 @@ export function makeMaze(size, random = Math.random) {
 export function mazeStep(maze, path, next) {
   return Number.isInteger(next) && maze.cells[path[path.length - 1]]?.includes(next) ? [...path, next] : path;
 }
-export function buildDiscoveryRound(id, tier = 'explorer', index = 0, random = Math.random) {
-  const config = discoveryConfig(tier);
+export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math.random) {
+  const config = discoveryConfig(difficulty), {age,tier} = config;
   if (id === 'shape-match' || id === 'color-match') {
-    const pool = id === 'shape-match' ? SHAPES.slice(0, tier === 'little' ? 3 : tier === 'explorer' ? 6 : 8) : COLORS.slice(0, tier === 'little' ? 6 : tier === 'explorer' ? 8 : 10);
+    const pool = id === 'shape-match' ? SHAPES.slice(0, config.shapePool) : COLORS.slice(0, config.colorPool);
     const target = pool[((index % pool.length) + pool.length) % pool.length];
-    return { id, tier, target, choices: choicesFor(target, pool, config.choices, random), answer: target.id };
+    return { id, tier, age, target, choices: choicesFor(target, pool, config.choices, random), answer: target.id };
   }
   if (id === 'patterns') {
-    const forms = tier === 'little' ? [[0, 1]] : tier === 'explorer' ? [[0, 1], [0, 0, 1], [0, 1, 2]] : [[0, 0, 1], [0, 1, 2], [0, 0, 1, 1], [0, 1, 1, 2]];
+    const forms = age <= 3 ? [[0,1]] : age === 4 ? [[0,1],[0,0,1]] : age <= 6 ? [[0,1],[0,0,1],[0,1,2]] : age === 7 ? [[0,1,2],[0,0,1,1]] : age === 8 ? [[0,0,1,1],[0,1,1,2]] : age === 9 ? [[0,1,0,1,2],[0,0,1,1]] : [[0,0,1,0,2],[0,1,1,2,2]];
     const form = forms[index % forms.length], symbols = shuffle(TOKENS, random), repeat = form.map(i => symbols[i]);
-    const length = tier === 'little' ? 4 + index % 2 : repeat.length * 2;
+    const length = repeat.length * 2 + (age === 4 ? index % 2 : 0);
     const sequence = Array.from({ length }, (_, i) => repeat[i % repeat.length]), target = repeat[length % repeat.length];
-    return { id, tier, repeat, sequence, target, choices: choicesFor(target, TOKENS, tier === 'little' ? 3 : 4, random), answer: target.id };
+    return { id, tier, age, repeat, sequence, target, choices: choicesFor(target, TOKENS, Math.min(4, config.choices), random), answer: target.id };
   }
   if (id === 'sorting') {
-    const categories = tier === 'maker' ? [
-      { id: 'land', name: 'On land', emoji: '🛣️', items: [['car', 'Car', '🚗'], ['bus', 'Bus', '🚌'], ['bike', 'Bicycle', '🚲']] },
+    const categories = age >= 7 ? [
+      { id: 'land', name: age === 10 ? 'On roads' : 'On land', emoji: '🛣️', items: [['car', 'Car', '🚗'], ['bus', 'Bus', '🚌'], ['bike', 'Bicycle', '🚲']] },
       { id: 'air', name: 'In the air', emoji: '☁️', items: [['plane', 'Airplane', '✈️'], ['helicopter', 'Helicopter', '🚁'], ['small-plane', 'Small plane', '🛩️']] },
       { id: 'water', name: 'On water', emoji: '🌊', items: [['sailboat', 'Sailboat', '⛵'], ['canoe', 'Canoe', '🛶'], ['ship', 'Ship', '🚢']] },
     ] : [
@@ -88,21 +95,22 @@ export function buildDiscoveryRound(id, tier = 'explorer', index = 0, random = M
       { id: 'fruit', name: 'Fruit', emoji: '🍎', items: [['apple', 'Apple', '🍎'], ['banana', 'Banana', '🍌'], ['pear', 'Pear', '🍐']] },
       { id: 'vehicles', name: 'Vehicles', emoji: '🛞', items: [['car', 'Car', '🚗'], ['bus', 'Bus', '🚌'], ['bike', 'Bicycle', '🚲']] },
     ].slice(0, config.sortCategories);
-    return { id, tier, categories: categories.map(({ items, ...category }) => category), items: shuffle(categories.flatMap(category => category.items.map(([itemId, name, emoji]) => ({ id: itemId, name, emoji, category: category.id }))), random) };
+    if(age===10) categories.push({id:'rails',name:'On rails',emoji:'🛤️',items:[['train','Train','🚂'],['metro','Metro','🚇'],['tram','Tram','🚋']]});
+    return { id, tier, age, categories: categories.map(({ items, ...category }) => category), items: shuffle(categories.flatMap(category => category.items.slice(0,config.sortItemsEach).map(([itemId, name, emoji]) => ({ id: itemId, name, emoji, category: category.id }))), random) };
   }
   if (id === 'odd-one-out') {
-    const property = tier === 'little' ? 'color' : tier === 'explorer' ? ['color', 'shape'][index % 2] : ['shape', 'number'][index % 2];
-    const count = tier === 'little' ? 3 : tier === 'explorer' ? 4 : 6;
-    const same = property === 'color' ? COLORS[index % 4] : property === 'shape' ? SHAPES[index % 5] : { id: 'four', name: '4 dots', dots: 4 };
-    const different = property === 'color' ? COLORS[(index + 1) % 4] : property === 'shape' ? SHAPES[(index + 1) % 5] : { id: 'five', name: '5 dots', dots: 5 };
+    const property = age <= 3 ? 'color' : age <= 5 ? 'shape' : age <= 7 ? ['color','shape'][index%2] : ['shape','number'][index%2];
+    const count = config.oddCount, dots = age >= 9 ? age - 3 : 4;
+    const same = property === 'color' ? COLORS[index % 4] : property === 'shape' ? SHAPES[index % 5] : { id: 'same-count', name: `${dots} dots`, dots };
+    const different = property === 'color' ? COLORS[(index + 1) % 4] : property === 'shape' ? SHAPES[(index + 1) % 5] : { id: 'different-count', name: `${dots+1} dots`, dots:dots+1 };
     const items = shuffle(Array.from({ length: count }, (_, i) => ({ id: String(i), value: i === 0 ? different : same })), random);
-    return { id, tier, property, same, different, choices: items, answer: '0' };
+    return { id, tier, age, property, same, different, choices: items, answer: '0' };
   }
   if (id === 'memory') {
     const pairs = shuffle(MEMORY, random).slice(0, config.memoryPairs);
-    return { id, tier, pairs: config.memoryPairs, cards: shuffle(pairs.flatMap(item => [{ ...item, key: `${item.id}-a` }, { ...item, key: `${item.id}-b` }]), random) };
+    return { id, tier, age, pairs: config.memoryPairs, cards: shuffle(pairs.flatMap(item => [{ ...item, key: `${item.id}-a` }, { ...item, key: `${item.id}-b` }]), random) };
   }
-  if (id === 'maze') return { id, tier, ...makeMaze(config.mazeSize, random) };
+  if (id === 'maze') return { id, tier, age, ...makeMaze(config.mazeSize, random) };
   throw new Error(`Unknown discovery activity: ${id}`);
 }
 
@@ -128,14 +136,14 @@ export function createDiscovery(container, { getSettings, onBack = () => {}, onN
   let currentId = 'shape-match', profile = getProfile(getSettings()), current, active = false, progress = getProgress();
   let title, objective, play, status, nextButton, restartButton, hearButton, counter;
   container.classList.add('discover-screen');
-  container.innerHTML = `<header class="activity-header discover-header"><button class="icon-button discover-back" aria-label="Back to activities">←</button><div class="discover-heading"><p class="discover-eyebrow">LITTLE DISCOVERIES</p><h1 class="discover-title"></h1></div><button class="button discover-hear" aria-label="Hear the instructions">♪ <span>Hear it</span></button></header><div class="discover-main"><div class="discover-intro"><span class="discover-activity-icon" aria-hidden="true"></span><div><p class="discover-level"></p><h2 class="discover-objective"></h2></div></div><div class="discover-play"></div><div class="discover-feedback"><p class="discover-status" role="status" aria-live="polite"></p><p class="discover-round-count"></p></div><div class="discover-footer"><button class="button discover-restart">↶ Start again</button><button class="button button-primary discover-next">New round <span aria-hidden="true">→</span></button></div></div>`;
+  container.innerHTML = `<header class="activity-header discover-header"><button class="icon-button discover-back" aria-label="Back to activities">←</button><div class="discover-heading"><p class="discover-eyebrow">LITTLE DISCOVERIES</p><h1 class="discover-title"></h1></div><button class="button discover-hear" aria-label="Hear the instructions">♪ <span>Hear it</span></button></header><div class="discover-main"><div class="discover-intro"><span class="discover-activity-icon" aria-hidden="true"></span><div><p class="discover-level"></p><h2 class="discover-objective"></h2></div></div><div class="discover-play"></div><div class="discover-feedback"><p class="discover-status" role="status" aria-live="polite"></p><p class="discover-round-count"></p></div><div class="discover-footer"><button class="button discover-hint">✦ Hint</button><button class="button discover-restart">↶ Start again</button><button class="button button-primary discover-next">New round <span aria-hidden="true">→</span></button></div></div>`;
   const $ = selector => container.querySelector(selector);
   title = $('.discover-title'); objective = $('.discover-objective'); play = $('.discover-play'); status = $('.discover-status');
   nextButton = $('.discover-next'); restartButton = $('.discover-restart'); hearButton = $('.discover-hear'); counter = $('.discover-round-count');
-  function speak(text) { if (!active || !getSettings().sound || !('speechSynthesis' in window)) return; window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'en-US'; utterance.rate = .82; window.speechSynthesis.speak(utterance); }
+  function speak(text) { if(active && getSettings().sound) say(text); }
   function report() { onProgress({ source: 'discovery', completedCount: Object.values(progress).reduce((sum, count) => sum + count, 0) }); }
-  function fresh(index = 0) { return { index, round: buildDiscoveryRound(currentId, profile.tier, index), done: false, recorded: false, selected: null, sorted: new Set(), flipped: [], matched: new Set(), path: [0], message: '', feedback: '' }; }
-  function getSession() { const key = `${currentId}:${profile.tier}`; if (!sessions.has(key)) sessions.set(key, fresh()); current = sessions.get(key); }
+  function fresh(index = 0) { return { index, round: buildDiscoveryRound(currentId, profile.challengeAge, index), done: false, recorded: false, selected: null, sorted: new Set(), flipped: [], matched: new Set(), path: [0], message: '', feedback: '' }; }
+  function getSession() { const key = `${currentId}:${profile.challengeAge}`; if (!sessions.has(key)) sessions.set(key, fresh()); current = sessions.get(key); }
   function message(text, kind = '') { current.message = text; current.feedback = kind; status.textContent = text; status.className = `discover-status ${kind ? `is-${kind}` : ''}`; }
   function complete(text) {
     current.done = true;
@@ -187,7 +195,7 @@ export function createDiscovery(container, { getSettings, onBack = () => {}, onN
   }
   function renderSorting() {
     const round = current.round;
-    objective.textContent = profile.tier === 'maker' ? 'Where does each vehicle travel?' : 'Put each picture in its basket.';
+    objective.textContent = profile.challengeAge >= 7 ? 'Where does each vehicle travel?' : 'Put each picture in its basket.';
     play.append(element('p', 'discover-tip', '1. Tap a picture.   2. Tap its basket.'));
     const items = element('div', 'discover-sort-items'); items.setAttribute('role', 'group'); items.setAttribute('aria-label', 'Pictures to sort');
     round.items.forEach(item => {
@@ -282,26 +290,64 @@ export function createDiscovery(container, { getSettings, onBack = () => {}, onN
     controls.append(arrows, undo, element('p', 'discover-tip', 'Follow the open paths. Take your time.')); layout.append(board, controls); play.append(layout);
   }
   function render() {
-    const meta = META[currentId]; title.textContent = meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name} · round ${current.index + 1}`;
-    hearButton.disabled = !getSettings().sound || !('speechSynthesis' in window); hearButton.title = hearButton.disabled ? 'Turn on sound from the home screen to hear instructions' : 'Hear these instructions';
+    const meta = META[currentId]; title.textContent = meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name}${profile.challengeAge>=8&&['shape-match','color-match'].includes(currentId)?' · warm-up':''} · round ${current.index + 1}`;
+    hearButton.disabled = !getSettings().sound || !canSpeak(); hearButton.title = hearButton.disabled ? 'Turn on sound from the home screen to hear instructions' : 'Hear these instructions';
     play.replaceChildren(); nextButton.classList.toggle('is-ready', current.done); container.dataset.discovery = currentId;
     if (currentId === 'sorting') renderSorting(); else if (currentId === 'memory') renderMemory(); else if (currentId === 'maze') renderMaze(); else renderChoices();
     message(current.message || meta[1], current.feedback); updateCounter();
   }
+  function hint() {
+    if(!active || current.done) return;
+    const round=current.round;
+    play.querySelectorAll('.is-hint').forEach(node=>node.classList.remove('is-hint'));
+    let text='';
+    if(currentId==='shape-match') {
+      text=`${round.target.clue} Match this shape to one of the pictures.`;
+      const model=play.querySelector('.discover-model');
+      if(!model.querySelector('.discover-shape')) model.prepend(shapePicture(round.target));
+    } else if(currentId==='color-match') text=`Look for ${round.target.name.toLowerCase()}. Compare each picture with the big swatch.`;
+    else if(currentId==='patterns') {
+      text=`The repeating part is ${round.repeat.map(item=>item.name.toLowerCase()).join(', ')}. Start that part again.`;
+      [...play.querySelectorAll('.discover-pattern-token')].slice(0,round.repeat.length).forEach(node=>node.classList.add('is-hint'));
+    } else if(currentId==='sorting') {
+      const item=round.items.find(item=>item.id===current.selected)||round.items.find(item=>!current.sorted.has(item.id));
+      const category=round.categories.find(category=>category.id===item.category);
+      text=`Choose ${item.name.toLowerCase()}, then the ${category.name.toLowerCase()} basket.`;
+      play.querySelector(`[data-item="${item.id}"]`).classList.add('is-hint'); play.querySelector(`[data-category="${category.id}"]`).classList.add('is-hint');
+    } else if(currentId==='odd-one-out') text=`Most pictures show ${round.same.name.toLowerCase()}. Look for ${round.different.name.toLowerCase()} instead.`;
+    else if(currentId==='memory') {
+      if(current.flipped.length===2) text='Look at both pictures, then tap Turn them over. Their places will stay the same.';
+      else {
+        const first=current.flipped[0] ?? round.cards.findIndex(card=>!current.matched.has(card.id));
+        const partner=round.cards.findIndex((card,index)=>index!==first && card.id===round.cards[first].id);
+        current.flipped=[first]; render();
+        play.querySelector(`[data-card="${partner}"]`).classList.add('is-hint');
+        text=`This is ${round.cards[first].name.toLowerCase()}. Try the outlined card for its partner.`;
+      }
+    } else {
+      const start=current.path.at(-1),queue=[[start]],seen=new Set([start]); let route;
+      while(queue.length) { const path=queue.shift(),cell=path.at(-1); if(cell===round.goal){route=path;break;} for(const next of round.cells[cell]) if(!seen.has(next)){seen.add(next);queue.push([...path,next]);} }
+      play.querySelector(`[data-cell="${route[1]}"]`).classList.add('is-hint');
+      text='The outlined square is one step toward the carrot. Follow its open path.';
+    }
+    message(text,'hint'); speak(text);
+  }
   $('.discover-back').addEventListener('click', onBack);
   hearButton.addEventListener('click', () => speak(`${objective.textContent} ${$('.discover-tip')?.textContent || ''}`));
-  nextButton.addEventListener('click', () => { const key = `${currentId}:${profile.tier}`; current = fresh(current.index + 1); sessions.set(key, current); render(); objective.focus({ preventScroll: true }); });
-  restartButton.addEventListener('click', () => { const { round, index, recorded } = current; current = { ...fresh(index), round, recorded }; sessions.set(`${currentId}:${profile.tier}`, current); render(); message('A fresh start. Have another go.'); });
+  $('.discover-hint').addEventListener('click', hint);
+  nextButton.addEventListener('click', () => { const key = `${currentId}:${profile.challengeAge}`; current = fresh(current.index + 1); sessions.set(key, current); render(); objective.focus({ preventScroll: true }); });
+  restartButton.addEventListener('click', () => { const { round, index, recorded } = current; current = { ...fresh(index), round, recorded }; sessions.set(`${currentId}:${profile.challengeAge}`, current); render(); message('A fresh start. Have another go.'); });
   objective.tabIndex = -1;
   document.addEventListener('keydown', event => {
     if (!active || currentId !== 'maze' || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) || event.target.closest?.('dialog, input, select, textarea')) return;
     event.preventDefault(); const position = current.path[current.path.length - 1], offset = { ArrowUp: -current.round.size, ArrowDown: current.round.size, ArrowLeft: -1, ArrowRight: 1 }[event.key]; moveMaze(position + offset);
   });
-  function settingsChanged() { const next = getProfile(getSettings()), tierChanged = next.tier !== profile.tier; profile = next; if (!getSettings().sound && 'speechSynthesis' in window) window.speechSynthesis.cancel(); if (active) { if (tierChanged) getSession(); render(); } }
+  function settingsChanged() { const next = getProfile(getSettings()), tierChanged = next.challengeAge !== profile.challengeAge; profile = next; if (!getSettings().sound) stopSpeaking(); if (active) { if (tierChanged) { getSession(); render(); } else { hearButton.disabled=!getSettings().sound||!canSpeak(); hearButton.title=hearButton.disabled?'Turn on sound to hear instructions':'Hear these instructions'; } } }
   report();
   return {
     open(id) { if (!DISCOVERY_IDS.includes(id)) throw new Error(`Unknown discovery activity: ${id}`); active = true; currentId = id; profile = getProfile(getSettings()); getSession(); render(); },
-    close() { active = false; if ('speechSynthesis' in window) window.speechSynthesis.cancel(); },
+    close() { active = false; stopSpeaking(); },
     settingsChanged,
+    hint,
   };
 }

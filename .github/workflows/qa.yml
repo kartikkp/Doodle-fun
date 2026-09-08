@@ -7,7 +7,7 @@ permissions:
 jobs:
   activities:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -17,6 +17,13 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+      - name: Verify committed Pages build
+        run: |
+          npm run build
+          git ls-files --error-unmatch index.html sw.js
+          git diff --exit-code -- index.html sw.js
+          node scripts/sync-ios.mjs
+          git diff --exit-code -- ios/DoodleFun/Resources/index.html ios/DoodleFun/Resources/BundleManifest.json
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:browser
       - uses: actions/upload-artifact@v7
@@ -27,3 +34,16 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  iphone-build:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the offline iPhone app
+        run: >-
+          xcodebuild -project ios/DoodleFun.xcodeproj -scheme DoodleFun
+          -configuration Release -sdk iphonesimulator
+          -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/DoodleFun-build"
+          CODE_SIGNING_ALLOWED=NO build

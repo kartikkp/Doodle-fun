@@ -1,95 +1,42 @@
-# Doodle Fun — QA report
+# Doodle Fun QA — coached play and iPhone app
 
-Verified September 6, 2026. Branch: `codex/activity-library-recovery`. Tested standalone build fingerprint: **387b68987e207d18** (the `doodle-build` HTML meta tag).
+Tested September 8, 2026. Final release fingerprint: **ee99aaf12c5dbcac**. The complete local gameplay baseline was **030d813f25b61b2d**; subsequent changes correct dialog safe-area positioning and a native-share feedback race, with affected browser/native rechecks described below. The committed Pages HTML, dist HTML and native bundled HTML are byte-identical. This report describes software verification and adult playthrough judgment, not observed testing with children.
 
-## Result
+## Results
 
-- **40 unit tests passed.**
-- **122 browser tests passed** in one combined run: 61 Chromium, 61 WebKit, no skipped cases (2.6 minutes locally).
-- **24 cards × 3 age presets × 5 viewport sizes × 2 engines = 720 activity launches** in the responsive launch matrix. Tests check rendered activity content, back navigation, horizontal overflow, page errors, and console errors.
-- All 14 new games have browser completion/retry coverage. The seven number/letter challenges complete at each of the three age presets in both engines; discovery coverage includes each game's full touch loop and all three board-size presets.
-- **Actual delivered browser:** the user's existing in-app tab reloaded with its real preview server stopped, then all 24 cards were clicked, their game headings read, and home navigation verified. No activity import was needed. The server was then restored as a detached process.
-- Independent content/code review found no unresolved gameplay issue. Screenshot review covered home, sorting, patterns, memory, maze, and word building at phone/tablet sizes.
-- Changes remain in a draft PR; main/production has not been replaced.
+- **63 JavaScript unit tests passed.** These include every tracing practice item across all nine profiles, malformed input and storage recovery, arithmetic, solvable game generation, bounded values, exactly paired cards, fair sharing, coaching coverage and native bundle sync.
+- **All 508 browser scenarios passed across the main run and targeted rechecks**, using Chromium and WebKit. The main run passed 506 and hit two 45-second timeouts reported after 3.4 minutes during a host interruption. The same age-four sorting and memory cases passed independently in 2.2 seconds and 1.3 seconds. No runtime patch or weakened assertion was required for those rechecks.
+- **30 activities × 9 ages × 2 engines = 540 age/activity/engine play flows.** Educational activities complete a round; drawing and coloring create and recover artwork. Coverage includes incorrect attempts, visible support, recovery, completion and continued play where applicable.
+- **900 responsive card launches:** 30 cards × 3 age presets × 5 viewport sizes × 2 engines. These check actual rendered activity headings, back navigation, no page overflow and no JavaScript/console errors. Additional gameplay checks cover exact ages 2 through 10 and 320px dense layouts.
+- **90 final phone screenshots captured** at ages 2, 6 and 10; visible content was checked for invalid numeric values. The visual review covered all 30 activity types and inspected corrections separately.
+- **16 native simulator test runs passed, zero failures/skips:** eight tests each on iPhone 17 Pro/iOS 26.5 and iPad Air 11-inch (M4)/iPadOS 26.5, built with Xcode 26.6. Five tests cover local navigation, PNG validation, route bounds, packaged SHA integrity, and real WebKit reload with saved route/data. Three UI tests cover Coach/home navigation, settings after relaunch, and two actual Save→native share→cancel→reopen cycles. An earlier iOS 18.6 run also passed the native integration checks and share flow.
+- **Safe-area recheck on 87f8df15e211c1db: 63 unit tests, 38 affected browser scenarios and six native test runs passed.** The browser checks cover coaching and drawing in both engines. Each native device repeated bundle integrity, Coach/navigation, and picture sharing plus the New picture confirmation. Final screenshots show the Coach clear of the iPhone status bar and visible confirmation choices.
+- **Final sharing-fix recheck on ee99aaf12c5dbcac: 63 unit tests, all 42 drawing/coaching browser scenarios and four native runs passed.** Both engines passed deterministic failed/completed sharing feedback checks. Both native devices repeated packaged integrity and real share/cancel/reopen/New picture flows. The full browser suite now contains 512 scenarios.
+- GitHub Actions also builds the unsigned iPhone app on macOS, verifies generated release integrity and runs the full web suite on Linux. The first independent full run passed 507 of 508 scenarios and exposed the feedback race described below; it was corrected with a deterministic regression. Current independent results are available on [PR #3](https://github.com/kartikkp/Doodle-fun/pull/3/checks).
 
-## The failure the previous QA missed
+## Problems found and corrected
 
-The previous preview left its home page visible after the local server stopped. Clicking a card then fetched `draw.js` or `learning.js` through a dynamic import. The user's browser logged `Failed to fetch dynamically imported module` and displayed the reported activity-open error. The earlier green tests ran while the server was alive and did not validate the delivered page after server shutdown.
+1. **Sharing showed an invalid cookie total at age 10.** The remainder configuration was missing an entry. Each age now has a finite, solvable total; age 10 has 19 cookies, four per friend and three left over. Unit and full touch playthrough checks cover every age.
+2. **Size labels revealed the ordering answer.** Visible choices now say “Flower”; accessible names refer to shuffled positions, so size remains the deciding feature.
+3. **Older math prompts conflicted with supporting text.** Missing-removed subtraction, empty-space frames, descending number paths and three-addend sums now have matching instructions and coaching.
+4. **Long words wrapped the last letter onto an isolated row.** Eight-letter answer slots now fit one row on narrow phones; letter-choice buttons keep their touch size.
+5. **Some rounded trace guides looked polygonal.** Zero and O/Q/o/C/c/a/g now share dense curved geometry between rendering, demonstration and scoring. Straight corners remain intact. Other older glyph paths retain their prior geometry and are not claimed as a fully revised handwriting font.
+6. **Sound changes could disturb current practice or a shown hint.** Controllers update audio controls without rebuilding in-progress boards, counted dots, selected tiles, ink or active hint state. Per-activity difficulty changes remain separate.
+7. **The native screen applied notch spacing twice.** The Coach bar now owns the top safe area; activity headers sit directly below it, and drawing accounts for the bar height. Actual simulator screenshots confirm the drawing tools remain visible.
+8. **The Coach dialog could sit under the native status bar.** All dialogs now respect each safe-area inset and retain scrollable content. Affected browser and native checks passed on the final bundle.
+9. **A delayed draft save overwrote native share failure feedback.** Independent Linux/WebKit CI exposed the race. A clock-controlled test reproduced it in both engines at the 650 ms debounce boundary. Explicit feedback now survives background persistence until the next edit; invalidated export results cannot overwrite feedback after New picture or navigation. The original PNG/error assertion and both new regressions passed in both engines after the fix.
+10. **Test selectors assumed desktop-style share UI and incomplete coloring-page names.** Tests now use the actual accessible labels and observed iOS system share process; those were test harness corrections, not evidence of successful product behavior by themselves.
 
-Every game's JavaScript, CSS, and icon now ship inside **one standalone HTML file**. Activities require no further network fetch. A versioned service worker caches the complete app after first installation for offline reloads. The downloadable HTML also runs from a file URL, independently of any server or service worker.
+## Offline and persistence checks
 
-Dedicated regressions now cover:
+The browser suite opens every card after the network is disconnected, opens standalone HTML from disk with service workers blocked, and stops a private HTTP server before reloading the cached app. The Pages-path regression serves only committed release files under `/Doodle-fun/`, stops that server, reloads and opens all 30 cards. Generated output is checked against source in CI.
 
-1. Load home without opening any game, disconnect the browser network, then click every card.
-2. Load from a private test server, wait for the offline cache, **actually stop that server**, reload home, enter the maze, and reload the activity again.
-3. Open the generated HTML directly from disk and click all 24 cards with service workers blocked.
-4. Exercise category filters and return focus to the activity card after navigating home.
+The native app loads only its bundled file, blocks network resources and retains WebKit's local data store. Tests reload the WebKit content after simulated termination and verify the activity route and previously saved storage. Unsaved gestures or in-memory rounds are not claimed to survive process termination.
 
-The initial WebKit test using simulated offline mode produced an internal automation reload error. It was replaced with actual isolated-server shutdown, which passed in both engines and directly tests the reported failure. Playwright documents limitations to its [service-worker automation support](https://playwright.dev/docs/service-workers). No failed run was counted as a pass.
+Drawing checks include all nine templates, pen/fill/stamp/eraser, exact bounded undo/redo, orientation, pointer cancellation, multiple touches, reload and a 1536×1536 PNG. Native sharing is exercised through the real Save control and the system sheet.
 
-## Device coverage
+## Age and enjoyment assessment
 
-| Matrix size | Viewport |
-| --- | --- |
-| Small iPhone portrait | 375 × 667 |
-| iPhone portrait | 390 × 844 |
-| iPhone landscape | 844 × 390 |
-| iPad portrait | 820 × 1180 |
-| iPad landscape | 1180 × 820 |
+See the [30-activity coached play review](coached-play-review.md) for individual judgments and the nine-year configuration table. Younger modes emphasize modelling and shared exploration. Middle modes connect symbols, groups and sequences. Older modes add reasoning, longer patterns, inverse questions, spatial distractors and remainders. Recognition and simple tracing remain explicitly useful warm-ups, not advanced curriculum.
 
-The full matrix uses ages 3, 6, and 9. Unit tests check age-band boundaries and support overrides. Additional **320 × 568** browser checks cover twenty-frame, subtraction, word-building, and letter-matching layouts and minimum 48 × 48 controls. Real browser touch taps cover drawing and discovery games; Chromium additionally exercises simultaneous fingers. These are browser checks, not certification on physical iPhones/iPads.
-
-## Activity results
-
-Every entry below passed its launch check in both engines and in the user's server-offline tab. Internal checks are described precisely; generator/path checks cover more content than representative pointer interactions.
-
-| Activity | Verified behavior |
-| --- | --- |
-| Doodle studio | Pen, eraser, fill, stamps, exact undo/redo, new-paper confirmation, pointer cancellation, second-pointer rejection, rotation/navigation/reload recovery, decoded 1536 × 1536 PNG export. |
-| Color & create | All nine original pages render, accept fill, and undo; replacement confirmation/cancellation and export remain functional. |
-| Line & shape trails | Direct card selects prewriting; all eight paths pass geometric validation at all support levels; real line tracing and guide cancellation work. |
-| Big letter trails | Direct card selects capitals; every capital passes valid-path checks; real A completion, incomplete paths/taps rejection, persistence, and start-marker separation work. |
-| Little letter trails | Direct card selects lowercase; all 26 forms validate; real g tracing completes; all glyphs stay in bounds. |
-| Word trails | Direct card selects words; six word paths validate; actual cat tracing completes and survives the shared tracing workflow. |
-| Number trails | Direct card selects digits; all 0–9 paths validate; real 0 tracing completes. |
-| Count with me | Direct counting mode, empty zero, correct visible quantities, retries, tap-order preservation, and every count through 20. |
-| Add together | Direct adding mode, visible operands and totals, varied decompositions, zero operands, wrong/correct answer flow. |
-| Equal groups | Direct group mode, equal group sizes/total, maker 3 × 3 starting puzzle, stable cross-panel dot ordinals. |
-| Shape detective | Unique target, matching/clue support, wrong/correct/next/restart, no double credit on replay. |
-| Color buddies | Unique named swatch match, retry/completion/new round, support-scaled choices. |
-| Pattern parade | Correct AB/AAB/ABC/AABB/ABBC continuations by profile, wrong answer retry, completed/new round. |
-| Sort it out | Every item sorted into its valid category, wrong-basket recovery, completed items retained through navigation. |
-| Spot the difference | One exception to the stated color/shape/quantity property, retry and correct selection. |
-| Memory garden | Exact pairs, no self-pair/third-card interference, mismatch waits for child, complete board, restart/new board. |
-| Little pathfinder | 120 generated connected mazes; walls and invalid moves blocked; actual touch/keyboard route completion, undo, and no duplicate credit. |
-| More, less, same | Greater/fewer/equal quantities agree; wrong answer retry and correct relation at each age preset. |
-| Number stepping stones | Whole ascending sequence required, wrong choice preserves sequence, tiles used once, older skip-counting generation. |
-| Take away | Crossed-out objects match subtraction; correct remaining quantities including zero; retry at all age presets. |
-| Missing number | Whole/part arithmetic and visual hints agree; wrong answer retry and correct missing part at each preset. |
-| Fill the frame | 5/10/20 structured cells, full quantity cycles including endpoints, toggle/edit, overfill correction, exact-target completion. |
-| Letter buddies | Every uppercase/lowercase pair required, mismatch recovery, disabled completed pairs, age-scaled pair count. |
-| Build a word | Visible/optional model, incorrect letter help, complete spelling, repeated letters handled as separate tiles, no tile reuse. |
-
-Tracing includes **76 practice items** (26 capitals, 26 lowercase letters, 10 digits, eight paths, six words), each assessed at three support levels: **228 valid-path assessments**. Individual glyphs are not counted as separate games. Geometric completion checks coverage, continuous travel, precision, and excessive ink; they demonstrate but do not enforce a particular stroke order.
-
-Drawing restoration keeps byte-exact saved backing artwork. The displayed PNG check compares decoded dimensions, alpha, ink count/bounds, and a tightly bounded one-color-level rendering tolerance for WebKit decode rounding.
-
-For all educational objectives, actual support settings, and the broader independent acceptance checklist, see [the 24-activity catalog](activity-catalog.md). That checklist is distinct from the completed results recorded here.
-
-## Remaining practical limits
-
-Physical Safari, Apple Pencil pressure/palm behavior, native share sheets, VoiceOver, enlarged text, and observed child play remain device/playtesting checks. Age settings are adjustable support defaults, not validated assessments of an individual child. Youngest word/arithmetic activities may need shared play with an adult.
-
-Drawings and progress stay in the current browser; no cross-device sync. Full/blocked storage preserves current-session play but cannot guarantee persistence. Detailed drawings above 2.5MB request PNG saving; undo is bounded by 30 actions and memory. Offline cache requires a completed first installation over HTTPS/localhost and can be evicted by the browser. The standalone HTML does not depend on that cache.
-
-## Reproduce
-
-```sh
-npm ci
-npm run check
-npm test
-npx playwright install chromium webkit
-npm run test:browser
-```
-
-`npm run test:browser` builds the app before testing. `npm start` builds and serves it. `npm run build` generates `dist/index.html` and `dist/sw.js`; publish those two files for static hosting, or open `dist/index.html` directly for standalone play. GitHub Actions runs the same suite for the draft PR.
+No children participated. Passing interaction tests cannot establish enjoyment, educational efficacy, independent comprehension, or an exact developmental age fit. The same synthetic wobbly path was used to verify that supportive tracing settings are more forgiving; it is not a calibrated model of a child's movement. Physical-device Pencil pressure/palm handling, VoiceOver, real speech voices and all share destinations remain hardware follow-up checks. The iPhone app is a buildable project and tested simulator app; personal-device installation requires the owner's signing team, and it has not been submitted to the App Store.

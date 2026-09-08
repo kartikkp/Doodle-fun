@@ -17,11 +17,31 @@ const STAMPS = [
   ['🌟', 'Shining star'], ['🔥', 'Flame'], ['👾', 'Alien'], ['🦊', 'Fox'],
   ['🍦', 'Ice cream'], ['🎸', 'Guitar'], ['🌊', 'Wave'], ['🦁', 'Lion'],
 ];
-const CHALLENGES = {
-  little: ['Make big circles in your favorite color.', 'Can you draw a happy face?', 'Try dots, then long wiggly lines.', 'Make a sunny sky with two colors.', 'Add three stars. Count them together!'],
-  explorer: ['Draw an animal made from circles and triangles.', 'Make a garden with five different flowers.', 'Draw a rainbow. Can you name its colors?', 'Invent a friendly creature and give it a name.', 'Make a repeating pattern: circle, star, circle, star.'],
-  maker: ['Design a new planet and the creatures who live there.', 'Draw a scene with a foreground and a background.', 'Make a butterfly with matching patterns on both wings.', 'Tell a tiny story in three pictures.', 'Use warm and cool colors to show two different moods.'],
+export const DRAWING_IDEAS = {
+  2:['Make a big mark. Try another color beside it.','Tap to make dots, then slide to make a line.','Make a long line and a short line together.'],
+  3:['Make a big circle and a little circle.','Draw a face with eyes and a mouth.','Make three colorful dots. Count them together.'],
+  4:['Build a flower with a circle and lines.','Draw a person. Tell someone what they are doing.','Make a pattern of dots and lines.'],
+  5:['Build an animal from circles and triangles.','Draw a garden with five different flowers.','Make a picture with something above and something below.'],
+  6:['Invent a friendly creature. Add details that show where it lives.','Draw the same tree in two different seasons.','Make a repeating border around a picture.'],
+  7:['Draw a place with something near and something far away.','Show what happens before and after a surprise in two pictures.','Make both butterfly wings follow the same pattern.'],
+  8:['Design a planet. Add details that help its creatures live there.','Tell a story in three pictures: beginning, middle, end.','Use warm and cool colors to show two different moods.'],
+  9:['Show the same place from above and from the side.','Design an invention and label the parts that make it work.','Make a creature whose outline is symmetrical, then add a surprise.'],
+  10:['Plan a three-panel comic. Show emotion through poses and details.','Draw a landscape with foreground, middle ground, and background.','Design a helpful invention. Show a problem and how your idea solves it.'],
 };
+export function drawingIdeas(age) { return DRAWING_IDEAS[Math.max(2,Math.min(10,Math.round(age)||6))]; }
+
+export const COLORING_IDEAS = {
+  2:['Pick a color. Tap a big space. Name the color together.','Try one color, then choose another. Watch what changes.'],
+  3:['Give a big space and a little space different colors.','Find two spaces you want to make the same color.'],
+  4:['Use three colors. Tell someone what is in your picture.','Add a row of colorful dots with the Pen.'],
+  5:['Make a repeating color pattern in your picture.','Color the picture, then draw something beside it.'],
+  6:['Choose three colors that belong together in your picture.','Color a scene, then add details that tell us where it is.'],
+  7:['Use sunny colors to show a cheerful mood.','Use blue, green, and purple to make a calm color plan.'],
+  8:['Choose where the light comes from. Add a few darker details.','Give the main part a bold color and the background a quieter color.'],
+  9:['Use a small color palette. Repeat one color to connect the picture.','Add a background that makes your subject stand out.'],
+  10:['Choose a main color, a second color, and one accent. Make each one count.','Use color and extra details to turn this picture into a story.'],
+};
+export function coloringIdeas(age) { return COLORING_IDEAS[Math.max(2,Math.min(10,Math.round(age)||6))]; }
 
 /** Flood a connected region, comparing its visible color against white paper.
  * The fixed-size queue prevents repeated neighbor allocations on large fills.
@@ -141,12 +161,19 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   const art = document.createElement('canvas'); art.width = art.height = SIDE;
   const ctx = art.getContext('2d', { willReadFrequently: true });
   const history = createPixelHistory();
-  let profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0][0];
+  let coloringMode = false, profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0][0];
   let pointer = null, beforeStroke = null, lastPoint = null, artName = '', hasWork = false;
   let revision = 0, saveTimer, pendingReplacement, challengeIndex = 0, active = false;
   let restoring = false, ready = false, exportURL;
+  let feedbackRevision = -1, exportGeneration = 0, pendingNativeShare = null;
 
-  function tell(message) { $('.draw-draft-status').textContent = message; onNotice(message); }
+  function tell(message) { feedbackRevision = revision; $('.draw-draft-status').textContent = message; onNotice(message); }
+  function draftStatus(message) {
+    // Saving still happens, but a background save must not replace the result
+    // of Save (or a coaching hint) for this same picture. A new edit releases it.
+    if (feedbackRevision !== revision) $('.draw-draft-status').textContent = message;
+  }
+  function invalidateExport() { exportGeneration++; pendingNativeShare = null; }
   function render() {
     display.clearRect(0, 0, canvas.width, canvas.height);
     display.fillStyle = '#fff'; display.fillRect(0, 0, canvas.width, canvas.height);
@@ -171,13 +198,13 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     try {
       const png = art.toDataURL('image/png');
       // Leave room for settings and learning progress in small storage quotas.
-      if (png.length > 2500000) { $('.draw-draft-status').textContent = 'Save a PNG to keep this detailed picture'; return; }
+      if (png.length > 2500000) { draftStatus('Save a PNG to keep this detailed picture'); return; }
       const stored = writeStore(DRAFT_KEY, { png, name: artName, hasWork, version: 2 });
-      $('.draw-draft-status').textContent = stored === false ? 'Save a PNG to keep your picture' : 'Draft saved on this device';
-    } catch { $('.draw-draft-status').textContent = 'Save a PNG to keep your picture'; }
+      draftStatus(stored === false ? 'Save a PNG to keep your picture' : 'Draft saved on this device');
+    } catch { draftStatus('Save a PNG to keep your picture'); }
   }
   function changed() {
-    revision++; render(); updateHistory();
+    revision++; invalidateExport(); render(); updateHistory();
     clearTimeout(saveTimer); saveTimer = setTimeout(persist, 650);
   }
   function transaction(action, { name = artName, work = true } = {}) {
@@ -313,7 +340,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     $('.draw-stamp-grid').append(button);
   });
   function updateChallenge() {
-    const ideas = CHALLENGES[profile.tier] || CHALLENGES.explorer;
+    const ideas = (coloringMode ? coloringIdeas : drawingIdeas)(profile.challengeAge || profile.age);
     $('.draw-challenge').textContent = ideas[challengeIndex % ideas.length];
   }
   function settingsChanged() {
@@ -360,19 +387,35 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   }
   $('.draw-save').addEventListener('click', async () => {
     finishPointer();
+    const generation = ++exportGeneration;
+    const current = () => active && generation === exportGeneration;
     const button = $('.draw-save'); button.disabled = true;
     try {
       const output = document.createElement('canvas'); output.width = output.height = SIDE;
       const out = output.getContext('2d'); out.fillStyle = '#fff'; out.fillRect(0, 0, SIDE, SIDE); out.drawImage(art, 0, 0);
       const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
+      if (!current()) return;
       if (!blob) throw new Error('Could not create picture');
+      const native = globalThis.webkit?.messageHandlers?.doodleNative;
+      if (native) {
+        pendingNativeShare = generation;
+        native.postMessage({type:'shareImage',dataURL:output.toDataURL('image/png'),name:'my-doodle.png'});
+        return;
+      }
       const file = new File([blob], 'my-doodle.png', { type: 'image/png' });
       if (navigator.canShare?.({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: 'My doodle' }); tell('Your picture is ready to keep!'); }
-        catch (error) { if (error.name !== 'AbortError') showExport(blob); }
+        try { await navigator.share({ files: [file], title: 'My doodle' }); if (current()) tell('Your picture is ready to keep!'); }
+        catch (error) { if (current() && error.name !== 'AbortError') showExport(blob); }
       } else showExport(blob);
-    } catch { tell('Your drawing is safe here. Please try Save again.'); }
+    } catch { if (current()) { pendingNativeShare = null; tell('Your drawing is safe here. Please try Save again.'); } }
     finally { button.disabled = false; }
+  });
+  window.addEventListener('doodle-native-share', event => {
+    if (!['failed','completed','cancelled'].includes(event.detail?.status)) return;
+    const generation = pendingNativeShare; pendingNativeShare = null;
+    if (!active || generation === null || generation !== exportGeneration) return;
+    if(event.detail?.status==='failed') tell('Your drawing is safe here. Please try Save again.');
+    else if(event.detail?.status==='completed') tell('Your picture is ready to keep!');
   });
   document.addEventListener('keydown', event => {
     if (!active || container.querySelector('dialog[open]') || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;
@@ -399,12 +442,13 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   settingsChanged(); updateHistory();
   return {
     open({ coloring = false } = {}) {
-      active = true; settingsChanged();
+      active = true; coloringMode = coloring; settingsChanged();
       $('.draw-title').textContent = coloring ? 'Color & create' : 'Doodle studio';
       requestAnimationFrame(resize);
       if (coloring) showDialog($('.draw-template-dialog'));
     },
-    close() { active = false; finishPointer(); persist(); container.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); },
+    close() { active = false; invalidateExport(); finishPointer(); persist(); container.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); },
+    hint() { tell(coloringMode ? "Pick Fill, then tap inside a space. Use Pen for details and Undo to try another color." : "Pick Pen and a color. Make a line or a shape. Undo lets you try another way."); },
     settingsChanged,
   };
 }

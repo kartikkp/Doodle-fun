@@ -24,3 +24,7 @@
 @media(min-width:621px) and (max-height:560px){.learn-board{max-width:calc(100dvh - 120px)}.learn-header{padding-top:12px;padding-bottom:12px}.learn-card-heading{padding-bottom:10px}.learn-tools{margin-top:10px}}
 /* Keep every learning control inside the usable screen on notched devices. */
 .learning-screen{padding-top:env(safe-area-inset-top);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+
+.learn-count-coach{margin:20px 10px 0 0;font-size:14px;min-height:48px}.learn-count-dot{width:48px;height:48px}.learn-dot-frame{grid-template-columns:repeat(5,48px)}.learn-add-frames .learn-dot-frame{grid-template-columns:repeat(4,48px)}.learn-equal-groups .learn-dot-frame{grid-template-columns:repeat(2,48px)}.learn-three-addends{display:grid;grid-template-columns:1fr;justify-items:center;gap:10px}.learn-three-addends .learn-count-plus{line-height:1}
+@media(max-width:620px){.learn-add-frames .learn-dot-frame{grid-template-columns:repeat(5,48px);gap:5px;padding:8px}.learn-dot-frame{gap:5px;padding:8px}.learn-equal-groups .learn-dot-frame{grid-template-columns:repeat(2,48px);gap:7px;padding:10px}}
+@media(max-width:350px){.learn-dot-frame,.learn-add-frames .learn-dot-frame{grid-template-columns:repeat(5,48px);gap:4px;padding:6px}.learn-equal-groups .learn-dot-frame{grid-template-columns:repeat(2,48px);gap:5px;padding:7px}.learn-count-dot{width:48px;height:48px}.learn-count-coach{margin-right:0}}

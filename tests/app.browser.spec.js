@@ -12,7 +12,7 @@ for(const [name,width,height] of sizes) {
       await page.locator(`[data-age="${age}"]`).click();
       for(const {id:route,engine} of ACTIVITIES) {
         await page.locator(`#card-${route}`).click();
-        const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view'}[engine]);
+        const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view'}[engine]);
         await expect(view).toBeVisible();
         await expect(view.locator('h1')).toBeVisible();
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);

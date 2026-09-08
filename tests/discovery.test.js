@@ -27,7 +27,7 @@ test('patterns repeat exactly and advance from AB to longer repeating units', ()
     if (tier === 'little') { assert.equal(round.repeat.length, 2); assert.notEqual(round.repeat[0].id, round.repeat[1].id); }
   }
   assert.equal(buildDiscoveryRound('patterns', 'explorer', 1, random()).repeat.length, 3);
-  assert.equal(buildDiscoveryRound('patterns', 'maker', 2, random()).repeat.length, 4);
+  assert.equal(buildDiscoveryRound('patterns', 'maker', 2, random()).repeat.length, 5);
 });
 
 test('sorting gives each picture one meaningful category and multiple items per basket', () => {
@@ -36,7 +36,7 @@ test('sorting gives each picture one meaningful category and multiple items per 
     assert.equal(round.categories.length, discoveryConfig(tier).sortCategories);
     assert.equal(new Set(round.items.map(item => item.id)).size, round.items.length);
     for (const item of round.items) assert.equal(round.categories.filter(category => category.id === item.category).length, 1);
-    for (const category of round.categories) assert.equal(round.items.filter(item => item.category === category.id).length, 3);
+    for (const category of round.categories) assert.equal(round.items.filter(item => item.category === category.id).length, discoveryConfig(tier).sortItemsEach);
   }
   assert.deepEqual(buildDiscoveryRound('sorting', 'maker', 0, random()).categories.map(c => c.id), ['land', 'air', 'water']);
 });
@@ -48,7 +48,7 @@ test('odd-one-out has precisely one item different in the stated property', () =
     assert.equal(different.length, 1);
     assert.equal(different[0].id, round.answer);
     assert.notEqual(round.same.id, round.different.id);
-    assert.equal(round.choices.length, discoveryConfig(tier).choices);
+    assert.equal(round.choices.length, discoveryConfig(tier).oddCount);
   }
 });
 
@@ -97,4 +97,14 @@ test('all seven advertised discovery identifiers have generators; unknown routes
   assert.equal(DISCOVERY_IDS.length, 7);
   DISCOVERY_IDS.forEach(id => assert.equal(buildDiscoveryRound(id, 'little', 0, random()).id, id));
   assert.throws(() => buildDiscoveryRound('missing'), /Unknown discovery activity/);
+});
+
+test('nine exact-age configurations stay finite and every generator supports them',()=>{
+  const signatures=new Set();
+  for(let age=2;age<=10;age++){
+    const config=discoveryConfig(age);signatures.add(JSON.stringify(config));
+    for(const [key,value] of Object.entries(config))if(key!=='tier')assert.ok(Number.isSafeInteger(value)&&value>0,`${age}:${key}`);
+    for(const id of DISCOVERY_IDS){const round=buildDiscoveryRound(id,age,1,random(age));assert.equal(round.age,age);if(round.choices)assert.equal(round.choices.filter(item=>item.id===round.answer).length,1);}
+  }
+  assert.equal(signatures.size,9);
 });

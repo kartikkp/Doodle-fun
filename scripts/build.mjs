@@ -2,9 +2,10 @@ import {build} from 'esbuild';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {ACTIVITIES} from '../catalog.js';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const result=await build({absWorkingDir:root,entryPoints:['app.js'],bundle:true,write:false,format:'iife',target:['safari15','chrome100'],minify:true,legalComments:'none'});
-let html=await readFile(new URL('../index.html',import.meta.url),'utf8');
+let html=await readFile(new URL('../app-shell.html',import.meta.url),'utf8');
 const styles=[...html.matchAll(/<link rel="stylesheet" href="([^"]+)">/g)];
 for(const [,file] of styles)html=html.replace(`<link rel="stylesheet" href="${file}">`,`<style>${await readFile(new URL('../'+file,import.meta.url),'utf8')}</style>`);
 const icon=await readFile(new URL('../icon.svg',import.meta.url),'utf8');
@@ -36,4 +37,8 @@ self.addEventListener('fetch',event=>{
 });
 `;
 await writeFile(new URL('sw.js',output),worker);
-console.log(`Built standalone Doodle Fun (${version}): ${Math.round(Buffer.byteLength(html)/1024)} KB, all 24 activities included.`);
+// GitHub Pages also serves the repository root in its existing branch-based
+// configuration. Publish the same tested bundle there without changing Pages.
+await writeFile(new URL('../index.html',import.meta.url),html);
+await writeFile(new URL('../sw.js',import.meta.url),worker);
+console.log(`Built standalone Doodle Fun (${version}): ${Math.round(Buffer.byteLength(html)/1024)} KB, all ${ACTIVITIES.length} activities included.`);

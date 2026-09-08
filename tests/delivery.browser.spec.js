@@ -6,7 +6,7 @@ import {ACTIVITIES} from '../catalog.js';
 async function openEveryCard(page) {
   for(const activity of ACTIVITIES) {
     await page.locator(`#card-${activity.id}`).click();
-    const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view'}[activity.engine]);
+    const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view'}[activity.engine]);
     await expect(view).toBeVisible();
     await expect(view.getByRole('heading',{level:1})).toBeVisible();
     await page.keyboard.press('Escape');
@@ -19,7 +19,7 @@ test('first launch of every card works after home loads and the network disconne
   test.setTimeout(90000);
   const errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text());});
   await page.goto('/');
-  await expect(page.locator('.activity-card')).toHaveCount(24);
+  await expect(page.locator('.activity-card')).toHaveCount(ACTIVITIES.length);
   // Do not open any game or wait for service-worker install before disconnecting.
   await context.setOffline(true);
   await openEveryCard(page);
@@ -41,7 +41,7 @@ test('offline cache restores the app after its actual server stops',async({page}
     await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}));});
     await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
     await page.reload();
-    await expect(page.locator('.activity-card')).toHaveCount(24);
+    await expect(page.locator('.activity-card')).toHaveCount(ACTIVITIES.length);
     await page.locator('#card-maze').click();
     await page.reload();
     await expect(page.locator('#discovery-view')).toBeVisible();
@@ -49,13 +49,13 @@ test('offline cache restores the app after its actual server stops',async({page}
   } finally {if(server.listening){server.close();server.closeAllConnections();}}
 });
 
-test('downloadable standalone HTML launches all 24 cards without a server',async({browser})=>{
+test('downloadable standalone HTML launches all 30 cards without a server',async({browser})=>{
   test.setTimeout(90000);
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   const page=await context.newPage();
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(new URL('../dist/index.html',import.meta.url).href);
-  await expect(page.locator('.activity-card')).toHaveCount(24);
+  await expect(page.locator('.activity-card')).toHaveCount(ACTIVITIES.length);
   await openEveryCard(page);
   expect(errors).toEqual([]);
   await context.close();
@@ -63,7 +63,7 @@ test('downloadable standalone HTML launches all 24 cards without a server',async
 
 test('category filters show the complete library and preserve navigation',async({page})=>{
   await page.goto('/');
-  for(const [category,count] of [['create',2],['letters',6],['numbers',9],['discover',7],['all',24]]) {
+  for(const [category,count] of [['create',2],['letters',6],['numbers',10],['discover',12],['all',30]]) {
     await page.locator(`[data-filter="${category}"]`).click();
     await expect(page.locator('.activity-card')).toHaveCount(count);
     await expect(page.locator('#activity-count')).toHaveText(`${count} activities`);

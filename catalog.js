@@ -24,6 +24,12 @@ export const ACTIVITIES = [
   {id:'ten-frame', title:'Fill the frame', category:'numbers', icon:'▦', description:'Make an amount, one dot at a time.', skill:'Five & ten structure', engine:'challenges'},
   {id:'letter-match', title:'Letter buddies', category:'letters', icon:'Aa', description:'Pair big letters with little ones.', skill:'Letter case recognition', engine:'challenges'},
   {id:'word-build', title:'Build a word', category:'letters', icon:'🧱', description:'Choose letters to make a word.', skill:'Letter order & spelling', engine:'challenges'},
+  {id:'size-order', title:'Growing garden', category:'discover', icon:'🌱', description:'Arrange flowers from small to big.', skill:'Size & ordering', engine:'adventures'},
+  {id:'picture-sequence', title:'Story steps', category:'discover', icon:'📖', description:'Put a familiar story in order.', skill:'Sequence & explain', engine:'adventures'},
+  {id:'directions', title:'Follow the arrows', category:'discover', icon:'↗', description:'Follow clues, one move at a time.', skill:'Directions & planning', engine:'adventures'},
+  {id:'make-a-shape', title:'Shape builder', category:'discover', icon:'⬡', description:'Join corners to build an outline.', skill:'Geometry & spatial reasoning', engine:'adventures'},
+  {id:'rhythm', title:'Tap the pattern', category:'discover', icon:'🥁', description:'Copy a sequence at your own pace.', skill:'Sequence memory', engine:'adventures'},
+  {id:'sharing', title:'Fair shares', category:'numbers', icon:'🍓', description:'Give each friend an equal share.', skill:'Sharing & remainders', engine:'adventures'},
 ];
 export const CATEGORIES = [
   {id:'all',label:'All activities',icon:'✦'},
