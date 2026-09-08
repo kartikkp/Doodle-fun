@@ -30,6 +30,47 @@ for (const [id, answer] of [['shape-match', 'circle'], ['color-match', 'red']]) 
   });
 }
 
+for (const age of [2, 10]) {
+  test(`age ${age}: shape model uses a neutral clue until a hint reveals the correct shape`, async ({ page }) => {
+    await open(page, 'shape-match', age);
+    const model = page.locator('.discover-model');
+    const marker = model.locator('.discover-model-spark');
+    const picture = model.locator('.discover-shape');
+    await expect(model.locator('strong')).toHaveText('Circle');
+    await expect(model.locator('p')).toHaveText('It is round, with no corners.');
+    await expect(page.locator('[data-choice]')).toHaveCount(age === 2 ? 2 : 6);
+    if (age === 2) {
+      await expect(marker).toHaveCount(0);
+      await expect(picture.locator('svg circle')).toHaveCount(1);
+    } else {
+      await expect(picture).toHaveCount(0);
+      await expect(marker).toHaveText('?');
+      await expect(marker).toHaveAttribute('aria-hidden', 'true');
+    }
+
+    await page.locator('.discover-hint').tap();
+    await expect(marker).toHaveCount(0);
+    await expect(picture).toHaveCount(1);
+    await expect(picture.locator('svg circle')).toHaveCount(1);
+    await expect(page.locator('.discover-status')).toContainText('It is round, with no corners.');
+    await page.locator('.discover-hint').tap();
+    await expect(picture).toHaveCount(1);
+    await expect(marker).toHaveCount(0);
+    await page.locator('[data-choice="circle"]').tap();
+    await expectSuccess(page);
+
+    await page.locator('.discover-next').tap();
+    await expect(model.locator('strong')).toHaveText('Square');
+    await expect(picture).toHaveCount(age === 2 ? 1 : 0);
+    await expect(marker).toHaveCount(age === 2 ? 0 : 1);
+    await page.locator('.discover-hint').tap();
+    await expect(marker).toHaveCount(0);
+    await expect(picture).toHaveCount(1);
+    await expect(picture.locator('svg rect')).toHaveCount(1);
+    await expect(picture.locator('svg circle')).toHaveCount(0);
+  });
+}
+
 test('pattern parade explains retry and accepts the next repeating picture', async ({ page }) => {
   await open(page, 'patterns');
   const first = (await page.locator('.discover-pattern-token').first().getAttribute('aria-label')).split(': ')[1];
