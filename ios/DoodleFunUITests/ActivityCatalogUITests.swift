@@ -71,7 +71,17 @@ final class ActivityCatalogUITests: XCTestCase {
         XCTAssertLessThan(frame.width, frame.height, "The catalog pass starts in portrait")
         hasHomeIndicator = frame.height / frame.width > 1.9
         let statusBar = app.statusBars.firstMatch
-        portraitTopInset = statusBar.exists ? max(0, statusBar.frame.maxY - frame.minY) : (hasHomeIndicator ? 64 : 20)
+        if statusBar.exists {
+            portraitTopInset = max(0, statusBar.frame.maxY - frame.minY)
+        } else if abs(frame.width - 402) < 1 && abs(frame.height - 874) < 1 {
+            // The isolated iPhone QA pilot reports a 402×874 window and the
+            // env(safe-area-inset-top)-positioned Coach at y=62. iOS 26 does
+            // not expose a StatusBar in this app's AX tree. The old guessed
+            // 64pt fallback falsely rejected this observed 62pt boundary.
+            portraitTopInset = 62
+        } else {
+            XCTFail("No native StatusBar frame or verified safe-area geometry for \(frame.size)")
+        }
         XCTAssertEqual(Self.activities.count, 30)
         XCTAssertEqual(Set(Self.activities.map(\.id)).count, 30)
     }
@@ -128,12 +138,17 @@ final class ActivityCatalogUITests: XCTestCase {
     private func reveal(_ target: XCUIElement, toward preferred: ScrollDirection = .up,
                         inCoach: Bool = false, entireTarget: Bool = true,
                         file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        var previousFrame: CGRect?
+        var stationaryAttempts = 0
         for _ in 0..<28 {
             let bounds = safeTapBounds
             if target.exists && target.isHittable {
                 let fits = entireTarget ? bounds.contains(target.frame) : bounds.contains(CGPoint(x: target.frame.midX, y: target.frame.midY))
                 if fits { return target }
+                stationaryAttempts = previousFrame == target.frame ? stationaryAttempts + 1 : 0
+                if stationaryAttempts >= 3 { break }
             }
+            previousFrame = target.exists ? target.frame : nil
             var direction = preferred
             if target.exists && !target.frame.isEmpty {
                 if target.frame.minY < bounds.minY { direction = .down }
@@ -151,7 +166,12 @@ final class ActivityCatalogUITests: XCTestCase {
                                                     dy: (direction == .up ? upper : lower) - web.frame.minY))
             start.press(forDuration: 0.05, thenDragTo: finish)
         }
-        XCTFail("Could not bring '\(target.label)' fully inside the phone tap area", file: file, line: line)
+        capture("Unreachable target - \(target.label)")
+        let accessibility = XCTAttachment(string: app.debugDescription)
+        accessibility.name = "Accessibility for unreachable \(target.label)"
+        accessibility.lifetime = .keepAlways
+        add(accessibility)
+        XCTFail("Could not bring '\(target.label)' fully inside the phone tap area. Target: \(target.frame); allowed: \(safeTapBounds)", file: file, line: line)
         return target
     }
 
@@ -227,7 +247,11 @@ final class ActivityCatalogUITests: XCTestCase {
                 let coach = reveal(control(["Coach"], identifier: "coach-open"), toward: .down)
                 assertTapTarget(coach)
                 coach.tap()
-                XCTAssertTrue(text("Your play coach").waitForExistence(timeout: 10))
+                XCTAssertTrue(control(["Close coach"]).waitForExistence(timeout: 10))
+                // renderCoach() replaces the shell placeholder with the
+                // catalog activity title whenever this dialog is opened.
+                XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
+                reveal(text(activity.title), toward: .down, inCoach: true)
                 XCTAssertTrue(text("Start here").exists)
                 XCTAssertTrue(text("Try a strategy").exists)
                 let hint = reveal(control(["Show a hint in this game →"], identifier: "coach-hint"), inCoach: true)
