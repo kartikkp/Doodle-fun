@@ -27,12 +27,48 @@ final class DrawingRecoveryUITests: XCTestCase {
     }
 
     private func openDrawing() {
-        let card = app.links.matching(NSPredicate(format: "label CONTAINS[c] 'Doodle studio'")).firstMatch
+        // iOS 26 exposes both an aggregate card link and its title link. The
+        // observed title frame is the reliable touch target for this card.
+        let card = app.links.matching(NSPredicate(format: "label == 'Doodle studio'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 30), "The bundled activity catalog should open.")
-        card.tap()
+        let web = app.webViews.firstMatch
+        waitFor("The activity title should have a visible layout frame.") { card.frame.width > 0 && card.frame.height > 0 }
+        for _ in 0..<3 {
+            if web.frame.insetBy(dx: 12, dy: 60).contains(card.frame) { break }
+            // Scroll only when the observed title is outside the usable viewport.
+            if card.frame.midY > web.frame.midY { web.swipeUp() } else { web.swipeDown() }
+        }
+        var previousFrame = CGRect.zero
+        var unchangedSince: Date?
+        waitFor("The exact activity title should settle in a hittable position.") {
+            let frame = card.frame
+            guard card.isHittable, frame.width > 0, frame.height > 0,
+                  web.frame.insetBy(dx: 12, dy: 60).contains(frame) else {
+                unchangedSince = nil
+                return false
+            }
+            if abs(frame.minX - previousFrame.minX) > 1 || abs(frame.minY - previousFrame.minY) > 1 ||
+                abs(frame.width - previousFrame.width) > 1 || abs(frame.height - previousFrame.height) > 1 {
+                previousFrame = frame
+                unchangedSince = Date()
+                return false
+            }
+            if unchangedSince == nil { unchangedSince = Date() }
+            return Date().timeIntervalSince(unchangedSince!) >= 0.35
+        }
+        card.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 15))
         XCTAssertTrue(paper.waitForExistence(timeout: 15), "The visible drawing canvas must be accessible by its label.")
         XCTAssertTrue(paper.isHittable)
+    }
+
+    private func selectSupply(_ label: String) {
+        // aria-pressed buttons are exposed as Switch elements in native WebKit.
+        let control = app.webViews.firstMatch.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == %@", label)).firstMatch
+        XCTAssertTrue(control.waitForExistence(timeout: 10), "The \(label) art supply should be available.")
+        XCTAssertTrue(control.isHittable)
+        control.tap()
     }
 
     private func waitFor(_ label: String, timeout: TimeInterval = 10, _ condition: @escaping () -> Bool) {
@@ -64,8 +100,10 @@ final class DrawingRecoveryUITests: XCTestCase {
     }
 
     private func drawMark() {
-        app.buttons["Coral"].tap()
-        let brush = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Large brush'")).firstMatch
+        selectSupply("Pen")
+        selectSupply("Coral")
+        let brush = app.webViews.firstMatch.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Large brush'")).firstMatch
         XCTAssertTrue(brush.exists)
         brush.tap()
         // Coordinates are relative to the canvas's observed accessibility frame,
@@ -160,7 +198,8 @@ final class DrawingRecoveryUITests: XCTestCase {
             XCTAssertLessThan(outline.inkCount, 32_000, "\(name) must leave usable space to color.")
             XCTAssertTrue(fingerprints.insert(outline.ink).inserted, "\(name) must render a distinct picture.")
             XCTAssertLessThan(outline.coralCount, 20)
-            app.buttons["Coral"].tap()
+            selectSupply("Fill")
+            selectSupply("Coral")
             paper.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             let colored = try snapshot("\(name) after fill touch")
             XCTAssertGreaterThan(colored.coralCount, 20, "Tapping \(name) should visibly apply the selected paint.")
