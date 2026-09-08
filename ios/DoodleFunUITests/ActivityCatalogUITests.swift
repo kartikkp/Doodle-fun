@@ -74,11 +74,14 @@ final class ActivityCatalogUITests: XCTestCase {
         if statusBar.exists {
             portraitTopInset = max(0, statusBar.frame.maxY - frame.minY)
         } else if abs(frame.width - 402) < 1 && abs(frame.height - 874) < 1 {
-            // The isolated iPhone QA pilot reports a 402×874 window and the
-            // env(safe-area-inset-top)-positioned Coach at y=62. iOS 26 does
-            // not expose a StatusBar in this app's AX tree. The old guessed
-            // 64pt fallback falsely rejected this observed 62pt boundary.
+            // Independent native gameplay reports confirm UIKit window/view
+            // insets of top62/bottom34 for this 402×874 iPhone. iOS 26 may
+            // omit StatusBar from the app AX tree; no generic inset is guessed.
             portraitTopInset = 62
+        } else if abs(frame.width - 375) < 1 && abs(frame.height - 667) < 1 {
+            // NATIVE_SAFE_AREA reports for the SE3 / iOS18.6 QA run confirm
+            // top20/bottom0 in this 375×667 window (no home indicator).
+            portraitTopInset = 20
         } else {
             XCTFail("No native StatusBar frame or verified safe-area geometry for \(frame.size)")
         }
@@ -94,9 +97,10 @@ final class ActivityCatalogUITests: XCTestCase {
     private var web: XCUIElement { app.webViews.firstMatch }
 
     /// XCUI exposes native window/status-bar frames, but not safeAreaInsets.
-    /// Reserve the phone's status-bar region and conservative home-indicator /
-    /// landscape notch margins, then check the entire interactive target. The
-    /// retained screenshots provide the complementary visual safe-area review.
+    /// Use the measured native status bar or the two independently verified
+    /// QA-phone profiles: 402×874 top62/bottom34; 375×667 top20/bottom0.
+    /// Reserve landscape notch/home-indicator margins only on the taller phone.
+    /// Screenshots complement these full-target geometry assertions.
     private var safeTapBounds: CGRect {
         let frame = app.windows.firstMatch.frame
         let side: CGFloat = landscape && hasHomeIndicator ? max(44, portraitTopInset) : 0
