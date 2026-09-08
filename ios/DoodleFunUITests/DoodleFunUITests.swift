@@ -14,6 +14,17 @@ final class DoodleFunUITests: XCTestCase {
     private func openDrawing() {
         let card = app.links["Doodle studio"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
+        let web = app.webViews.firstMatch
+        // Compact phones place this title below the first viewport. Bring its
+        // observed frame into view before expecting a hittable coordinate.
+        for _ in 0..<20 {
+            let frame = card.frame
+            let bounds = app.windows.firstMatch.frame.insetBy(dx: 12, dy: 40)
+            if card.isHittable && bounds.contains(frame) { break }
+            let down = !frame.isEmpty && frame.minY < bounds.minY
+            web.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: down ? 0.35 : 0.7))
+                .press(forDuration: 0.05, thenDragTo: web.coordinate(withNormalizedOffset: CGVector(dx: 0.04, dy: down ? 0.7 : 0.35)))
+        }
         let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: card)
         XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 10), .completed)
         card.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()

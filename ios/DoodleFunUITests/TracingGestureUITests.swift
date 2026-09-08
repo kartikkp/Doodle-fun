@@ -18,24 +18,37 @@ final class TracingGestureUITests: XCTestCase {
         app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
     }
 
-    private func reveal(_ element: XCUIElement) {
+    private func reveal(_ element: XCUIElement, drawingSurface: Bool = false) {
         let web = app.webViews.firstMatch
         for _ in 0..<24 {
-            let bounds = app.frame
-            if element.exists, element.isHittable,
-               element.frame.minY > bounds.minY + 100,
-               element.frame.maxY < bounds.maxY - 35 { return }
-            let downward = element.exists && element.frame.minY < bounds.minY + 100
-            // Scroll in the page margin, outside the board's touch-action:none.
-            web.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: downward ? 0.25 : 0.8))
-                .press(forDuration: 0.05, thenDragTo: web.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: downward ? 0.8 : 0.25)))
+            let window = app.windows.firstMatch.frame
+            let top: CGFloat = window.height / window.width > 1.9 ? 62 : 20
+            let bottom: CGFloat = window.height / window.width > 1.9 ? 34 : 0
+            let bounds = CGRect(x: window.minX + 12, y: window.minY + top + 8,
+                                width: window.width - 24, height: window.height - top - bottom - 16)
+            let frame = element.frame
+            if element.exists, !frame.isEmpty, bounds.contains(frame),
+               drawingSurface || element.isHittable { return }
+            let downward = element.exists && frame.minY < bounds.minY
+            // A long swipe oscillated past the otherwise visible SE board.
+            // Keep the entire board within measured phone margins using short
+            // page-gutter gestures. Actual stroke/completion checks prove input.
+            let distance = min(CGFloat(220), max(CGFloat(70), abs(frame.midY - bounds.midY)))
+            let origin = web.coordinate(withNormalizedOffset: .zero)
+            let upper = origin.withOffset(CGVector(dx: 12, dy: bounds.midY - distance / 2))
+            let lower = origin.withOffset(CGVector(dx: 12, dy: bounds.midY + distance / 2))
+            (downward ? upper : lower).press(forDuration: 0.05, thenDragTo: downward ? lower : upper)
         }
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Unreachable tracing target - \(element.label)"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
         XCTFail("Could not bring \(element.label) fully into view.")
     }
 
     private func stroke(_ start: CGVector, _ end: CGVector) {
         let board = named("Trace the guide with a finger or Pencil")
-        reveal(board)
+        reveal(board, drawingSurface: true)
         board.coordinate(withNormalizedOffset: start).press(forDuration: 0.05, thenDragTo: board.coordinate(withNormalizedOffset: end))
     }
 
@@ -49,7 +62,7 @@ final class TracingGestureUITests: XCTestCase {
         card.tap()
         let board = named("Trace the guide with a finger or Pencil")
         XCTAssertTrue(board.waitForExistence(timeout: 15))
-        reveal(board)
+        reveal(board, drawingSurface: true)
         board.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
         let check = app.buttons["Check tracing"]
         reveal(check)
@@ -71,7 +84,7 @@ final class TracingGestureUITests: XCTestCase {
         stroke(CGVector(dx: 0.2, dy: 0.5), CGVector(dx: 0.8, dy: 0.5))
         XCTAssertTrue(success.waitForExistence(timeout: 10), "Both trusted strokes must complete the cross.")
         XCTAssertTrue(named("Cross, practiced").exists)
-        reveal(board)
+        reveal(board, drawingSurface: true)
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Age \(age) — completed native finger tracing"
         attachment.lifetime = .keepAlways
