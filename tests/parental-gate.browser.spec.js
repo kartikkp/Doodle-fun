@@ -32,6 +32,32 @@ test('privacy is complete offline, matches the public policy and returns to sett
   await expect(page.locator('#grownups-dialog [data-open-info="privacy"]')).toBeFocused();
 });
 
+test('scrolling nested dialogs leaves the activity page in its original position', async ({ page }) => {
+  await page.setViewportSize({width:375,height:667});
+  await page.goto('/');
+  await page.locator('#grownups-open').click();
+  const settings = page.locator('#grownups-dialog');
+  await settings.evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await settings.hover();
+  await page.mouse.wheel(0, 2400);
+  await page.locator('#grownups-dialog [data-open-info="privacy"]').click();
+  const privacy = page.locator('#privacy-dialog');
+  await privacy.evaluate(el => { el.scrollTop = el.scrollHeight; });
+  await privacy.hover();
+  await page.mouse.wheel(0, 2400);
+  await page.locator('#privacy-dialog [aria-label="Close privacy policy"]').click();
+  await settings.hover();
+  await page.mouse.wheel(0, 2400);
+  await page.locator('#settings-done').click();
+  await expect(settings).not.toBeVisible();
+  await expect(page.locator('#grownups-open')).toBeInViewport();
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  // Closing the last dialog must restore normal page scrolling.
+  await page.mouse.move(180, 500);
+  await page.mouse.wheel(0, 700);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(100);
+});
+
 test('embedded policy has no context-menu link bypass and its buttons require approval', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(()=>{window.opened=[];window.open=(...args)=>window.opened.push(args);});
@@ -115,7 +141,7 @@ test('support leaves the app only after approval and only for an allowed destina
   await page.getByRole('button',{name:'Visit support website'}).click();
   await approve(page);
   expect(await page.evaluate(()=>window.opened)).toEqual([{args:['https://kartikkp.github.io/Doodle-fun/support.html','_blank','noopener,noreferrer'],active:true}]);
-  await page.locator('[data-external-url]').evaluate(el=>el.dataset.externalUrl='https://example.com/unapproved');
+  await page.locator('#support-dialog [data-external-url]').evaluate(el=>el.dataset.externalUrl='https://example.com/unapproved');
   await page.getByRole('button',{name:'Visit support website'}).click();
   await expect(page.locator('#parent-gate')).not.toBeVisible();
   expect(await page.evaluate(()=>window.opened.length)).toBe(1);

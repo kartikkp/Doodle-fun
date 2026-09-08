@@ -70,6 +70,9 @@ body dialog[open]{inset:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area
 .policy-links button{border:0;background:transparent;min-height:44px;padding:8px 0;color:var(--primary);text-decoration:underline;text-underline-offset:3px;font-size:.8125rem;font-weight:650}
 .home-footer{align-items:center;flex-wrap:wrap}
 .settings-policy-links{margin:0 0 14px}
+/* Keep touch scrolling inside the top modal, including nested policy panels. */
+html:has(dialog[open]){overflow:hidden;overscroll-behavior:none}
+.settings-dialog{overscroll-behavior:contain}
 .information-dialog{width:min(660px,calc(100vw - 28px))}
 .information-dialog .dialog-heading{position:sticky;top:-28px;background:#fff;padding:12px 0;z-index:1}
 .policy-content{font-size:.9375rem;line-height:1.65;overflow-wrap:anywhere}

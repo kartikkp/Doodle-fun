@@ -64,14 +64,21 @@ final class DoodleFunUITests: XCTestCase {
     private func revealInfoControl(_ control: XCUIElement, towardTop: Bool = false) {
         XCTAssertTrue(control.waitForExistence(timeout: 10))
         let web = app.webViews.firstMatch
+        func isVisible() -> Bool {
+            // Use the actual viewport: the SE's fully visible Done button sits
+            // within its bottom 70 points. A fixed inset kept swiping past it.
+            let bounds = web.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 2, dy: 2)
+            let frame = control.frame
+            return control.isHittable && !frame.isEmpty && bounds.contains(frame)
+        }
         for _ in 0..<14 {
-            let bounds = app.windows.firstMatch.frame.insetBy(dx: 12, dy: 70)
-            if control.isHittable && bounds.contains(CGPoint(x: control.frame.midX, y: control.frame.midY)) { return }
+            if isVisible() { return }
             let start = web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: towardTop ? 0.35 : 0.7))
             let end = web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: towardTop ? 0.7 : 0.35))
             start.press(forDuration: 0.05, thenDragTo: end)
         }
-        XCTAssertTrue(control.isHittable)
+        capture("Information control could not be revealed: \(control.label)")
+        XCTAssertTrue(isVisible(), "The information control must be fully visible and hittable.")
     }
 
     func testOfflinePrivacyAndSupportWebsiteRequiresNativeApproval() {
@@ -105,10 +112,21 @@ final class DoodleFunUITests: XCTestCase {
         let closeSupport = app.buttons["Close help and support"]
         revealInfoControl(closeSupport, towardTop: true)
         closeSupport.tap()
-        let closeSettings = app.buttons["Close grown-up settings"]
-        revealInfoControl(closeSettings, towardTop: true)
-        closeSettings.tap()
-        XCTAssertTrue(grownups.isHittable)
+        XCTAssertTrue(closeSupport.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(support.isHittable, "Closing support returns to the grown-up settings.")
+        // The parent dialog retains its scroll position when nested information
+        // closes. Use its nearby Done action rather than scrolling past the
+        // interactive settings controls to the off-screen header.
+        let done = app.webViews.firstMatch.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Let’s play")).firstMatch
+        revealInfoControl(done)
+        // Overscroll the settings deliberately: scrolling a modal at its end
+        // must not move the home page underneath it.
+        for _ in 0..<3 { app.webViews.firstMatch.swipeUp() }
+        revealInfoControl(done)
+        done.tap()
+        XCTAssertTrue(done.waitForNonExistence(timeout: 10))
+        let homeReady = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: grownups)
+        XCTAssertEqual(XCTWaiter.wait(for: [homeReady], timeout: 10), .completed)
     }
 
     func testOfflineLaunchCoachAndNavigation() {
