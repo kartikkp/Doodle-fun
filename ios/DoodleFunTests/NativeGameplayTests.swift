@@ -515,6 +515,22 @@ final class NativeLayoutTests: NativeGameplayCase {
                   throw new Error(`Timed out: ${label}`);
                 };
                 const shown = node => Boolean(node && node.getClientRects().length && !node.closest('[hidden]'));
+                const scrollToStableVisibleRect = async (button, label) => {
+                  button.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+                  const end = performance.now() + 4000;
+                  let previous = null, stableFrames = 0, rect;
+                  while (performance.now() < end) {
+                    await frame(); await pause(20);
+                    rect = button.getBoundingClientRect();
+                    const visible = shown(button) && rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= innerHeight;
+                    const coordinates = [rect.left,rect.right,rect.top,rect.bottom];
+                    const stable = previous && coordinates.every((value,index) => Math.abs(value - previous[index]) < 0.5);
+                    stableFrames = visible && stable ? stableFrames + 1 : 0;
+                    if (stableFrames >= 3) return rect;
+                    previous = coordinates;
+                  }
+                  throw new Error(`Control did not become visible and stable after scrolling: ${label}; rect=${JSON.stringify(rect?.toJSON())}; viewport=${innerWidth}x${innerHeight}; scrollY=${scrollY}`);
+                };
                 const cssInsets = () => {
                   const probe = document.createElement('div');
                   probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left)';
@@ -544,9 +560,7 @@ final class NativeLayoutTests: NativeGameplayCase {
                   if (buttons.length < 2) throw new Error(`Missing lower controls for ${route.id}`);
                   const activity = {id:route.id,cssInsets:cssInsets(),viewportWidth:innerWidth,pageScrollWidth:document.documentElement.scrollWidth,controls:[]};
                   for (const button of buttons) {
-                    button.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
-                    await settle();
-                    const rect = button.getBoundingClientRect();
+                    const rect = await scrollToStableVisibleRect(button, `${route.id} / ${button.textContent.trim()}`);
                     activity.controls.push({label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
                   }
                   output.activities.push(activity);
