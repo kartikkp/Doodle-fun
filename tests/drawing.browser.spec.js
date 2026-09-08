@@ -107,24 +107,73 @@ test('stamps, clear, and page replacement preserve recoverable artwork', async (
   expect(await snapshot(page)).toBe(coloringPage);
 });
 
-test('all nine coloring templates render and accept a fill', async ({ page }) => {
-  test.setTimeout(90000); // All nine full-resolution pages are checked in this case.
-  for (const [index, name] of ['Sunshine', 'Rainbow', 'House', 'Butterfly', 'Rocket', 'Cat', 'Flower', 'Fish', 'Dino'].entries()) {
+// Interior targets are selected from the visible line art, away from its edges.
+// They match the physical-touch native regression so neither suite can pass by
+// recoloring an outline or the empty background instead of a coloring region.
+const coloringRegions = [
+  { name: 'Sunshine', point: [.50, .32] },
+  { name: 'Rainbow', point: [.50, .39] },
+  { name: 'House', point: [.50, .52] },
+  { name: 'Butterfly', point: [.32, .64] },
+  { name: 'Rocket', point: [.50, .45] },
+  { name: 'Cat', point: [.50, .25] },
+  { name: 'Flower', point: [.50, .40] },
+  { name: 'Fish', point: [.50, .50] },
+  { name: 'Dino', point: [.46, .57] },
+];
+
+async function coloringMetrics(page, beforePNG, point) {
+  return canvas(page).evaluate(async (el, { beforePNG, point }) => {
+    const image = new Image();
+    await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = beforePNG; });
+    const original = document.createElement('canvas'); original.width = el.width; original.height = el.height;
+    original.getContext('2d').drawImage(image, 0, 0);
+    const before = original.getContext('2d').getImageData(0, 0, el.width, el.height).data;
+    const after = el.getContext('2d').getImageData(0, 0, el.width, el.height).data;
+    const isWhite = (r, g, b) => Math.min(r, g, b) > 240;
+    const isCoral = (r, g, b) => r > 175 && g < 175 && b < 195 && r - g > 45;
+    function fraction(pixels, at, predicate) {
+      const cx = Math.round(el.width * at[0]), cy = Math.round(el.height * at[1]);
+      const radius = Math.max(1, Math.floor(el.width * .008));
+      let matched = 0, count = 0;
+      for (let y = cy - radius; y <= cy + radius; y++) {
+        for (let x = cx - radius; x <= cx + radius; x++) {
+          const i = (y * el.width + x) * 4; count++;
+          if (predicate(pixels[i], pixels[i + 1], pixels[i + 2])) matched++;
+        }
+      }
+      return matched / count;
+    }
+    let dark = 0, preserved = 0;
+    for (let i = 0; i < before.length; i += 4) {
+      if (Math.max(before[i], before[i + 1], before[i + 2]) >= 80) continue;
+      dark++;
+      if (Math.max(after[i], after[i + 1], after[i + 2]) < 80) preserved++;
+    }
+    return { interiorBefore: fraction(before, point, isWhite), exteriorBefore: fraction(before, [.06, .10], isWhite),
+      interiorAfter: fraction(after, point, isCoral), exteriorAfter: fraction(after, [.06, .10], isWhite),
+      dark, retained: preserved / dark };
+  }, { beforePNG, point });
+}
+
+test('all nine coloring templates keep interior fills inside dark outlines', async ({ page }) => {
+  test.setTimeout(90000);
+  for (const [index, { name, point }] of coloringRegions.entries()) {
     await page.locator('.draw-templates').click();
     await expect(page.locator('.draw-template-card')).toHaveCount(9);
     await page.getByRole('button', { name: new RegExp(`Color ${name}`) }).click();
     if (index) await page.getByRole('button', { name: 'Start fresh', exact: true }).click();
     await expect(page.locator('.draw-paper-name')).toContainText(name);
-    const darkPixels = await canvas(page).evaluate(el => {
-      const pixels = el.getContext('2d').getImageData(0, 0, el.width, el.height).data;
-      let count = 0;
-      for (let i = 0; i < pixels.length; i += 4) if (pixels[i] < 80 && pixels[i + 1] < 80 && pixels[i + 2] < 80) count++;
-      return count;
-    });
-    expect(darkPixels).toBeGreaterThan(100);
     const initial = await snapshot(page);
-    await tapPaper(page, .04, .04);
-    expect(await snapshot(page)).not.toBe(initial);
+    await page.getByRole('button', { name: 'Coral', exact: true }).click();
+    await tapPaper(page, ...point);
+    const metrics = await coloringMetrics(page, initial, point);
+    expect(metrics.interiorBefore, `${name}: chosen region starts empty`).toBeGreaterThan(.95);
+    expect(metrics.exteriorBefore, `${name}: exterior starts empty`).toBeGreaterThan(.95);
+    expect(metrics.interiorAfter, `${name}: fill colors the intended interior`).toBeGreaterThan(.95);
+    expect(metrics.exteriorAfter, `${name}: fill must not leak into the exterior`).toBeGreaterThan(.95);
+    expect(metrics.dark, `${name}: substantial line art is visible`).toBeGreaterThan(100);
+    expect(metrics.retained, `${name}: filling keeps dark outlines`).toBeGreaterThan(.99);
     await page.getByRole('button', { name: 'Undo last action', exact: true }).click();
     expect(await snapshot(page)).toBe(initial);
   }

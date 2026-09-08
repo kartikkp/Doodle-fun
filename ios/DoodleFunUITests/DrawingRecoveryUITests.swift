@@ -208,9 +208,24 @@ final class DrawingRecoveryUITests: XCTestCase {
     }
 
     func testAllNineColoringPagesRenderAcceptFillAndUndo() throws {
-        let names = ["Sunshine", "Rainbow", "House", "Butterfly", "Rocket", "Cat", "Flower", "Fish", "Dino"]
+        // Known empty interior regions, read from each visible picture. A center
+        // tap landed on the Sunshine smile and Rainbow/Flower outlines, masking
+        // whether their enclosed coloring regions actually accepted paint.
+        let regions: [(name: String, point: CGVector)] = [
+            ("Sunshine", CGVector(dx: 0.50, dy: 0.32)),
+            ("Rainbow", CGVector(dx: 0.50, dy: 0.39)),
+            ("House", CGVector(dx: 0.50, dy: 0.52)),
+            ("Butterfly", CGVector(dx: 0.32, dy: 0.64)),
+            ("Rocket", CGVector(dx: 0.50, dy: 0.45)),
+            ("Cat", CGVector(dx: 0.50, dy: 0.25)),
+            ("Flower", CGVector(dx: 0.50, dy: 0.40)),
+            ("Fish", CGVector(dx: 0.50, dy: 0.50)),
+            ("Dino", CGVector(dx: 0.46, dy: 0.57))
+        ]
+        let exterior = CGVector(dx: 0.06, dy: 0.10)
         var fingerprints = Set<[Bool]>()
-        for (index, name) in names.enumerated() {
+        for (index, region) in regions.enumerated() {
+            let name = region.name
             app.buttons["Choose a coloring page"].tap()
             let choice = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Color \(name) ")).firstMatch
             XCTAssertTrue(choice.waitForExistence(timeout: 10), "\(name) should be offered in the page picker.")
@@ -225,11 +240,16 @@ final class DrawingRecoveryUITests: XCTestCase {
             XCTAssertLessThan(outline.inkCount, 32_000, "\(name) must leave usable space to color.")
             XCTAssertTrue(fingerprints.insert(outline.ink).inserted, "\(name) must render a distinct picture.")
             XCTAssertLessThan(outline.coralCount, 20)
+            XCTAssertGreaterThan(outline.whiteFraction(near: region.point), 0.95, "\(name)'s chosen interior must start empty.")
+            XCTAssertGreaterThan(outline.whiteFraction(near: exterior), 0.95, "\(name)'s exterior must start empty.")
             selectSupply("Fill")
             selectSupply("Coral")
-            paper.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            let colored = try snapshot("\(name) after fill touch")
+            paper.coordinate(withNormalizedOffset: region.point).tap()
+            let colored = try snapshot("\(name) enclosed region after fill")
             XCTAssertGreaterThan(colored.coralCount, 20, "Tapping \(name) should visibly apply the selected paint.")
+            XCTAssertGreaterThan(colored.coralFraction(near: region.point), 0.95, "\(name)'s intended interior must receive the paint.")
+            XCTAssertGreaterThan(colored.whiteFraction(near: exterior), 0.95, "\(name)'s fill must not escape into the background.")
+            XCTAssertGreaterThan(outline.darkRetention(in: colored), 0.99, "\(name)'s dark outlines must survive the fill.")
             app.buttons["Undo last action"].tap()
             let recovered = try snapshot("\(name) undo fill")
             XCTAssertLessThan(recovered.coralCount, 20, "Undo should remove the applied color.")
@@ -243,6 +263,9 @@ final class DrawingRecoveryUITests: XCTestCase {
         let ink: [Bool]
         let inkCount: Int
         let coralCount: Int
+        let dark: [Bool]
+        let coral: [Bool]
+        let white: [Bool]
 
         init(image: UIImage) throws {
             // XCUI landscape PNGs can carry EXIF rotation (orientation 8).
@@ -270,19 +293,51 @@ final class DrawingRecoveryUITests: XCTestCase {
             }
             XCTAssertTrue(rendered)
             var mask = [Bool](repeating: false, count: Self.side * Self.side)
-            var coral = 0
+            var coralPixels = [Bool](repeating: false, count: Self.side * Self.side)
+            var darkPixels = coralPixels
+            var whitePixels = coralPixels
+            var coralTotal = 0
             // Ignore the outer 4% where the rounded paper edge/shadow may appear.
             for y in 10..<(Self.side - 10) {
                 for x in 10..<(Self.side - 10) {
                     let index = y * Self.side + x, byte = index * 4
                     let r = rgba[byte], g = rgba[byte + 1], b = rgba[byte + 2]
                     mask[index] = min(r, g, b) < 220
-                    if r > 175 && g < 175 && b < 195 && Int(r) - Int(g) > 45 { coral += 1 }
+                    darkPixels[index] = max(r, g, b) < 80
+                    whitePixels[index] = min(r, g, b) > 240
+                    coralPixels[index] = r > 175 && g < 175 && b < 195 && Int(r) - Int(g) > 45
+                    if coralPixels[index] { coralTotal += 1 }
                 }
             }
             ink = mask
             inkCount = mask.reduce(0) { $0 + ($1 ? 1 : 0) }
-            coralCount = coral
+            coralCount = coralTotal
+            dark = darkPixels
+            coral = coralPixels
+            white = whitePixels
+        }
+
+        private func fraction(_ mask: [Bool], near point: CGVector) -> Double {
+            let cx = Int((point.dx * CGFloat(Self.side)).rounded())
+            let cy = Int((point.dy * CGFloat(Self.side)).rounded())
+            var matched = 0, count = 0
+            // Sample a small patch, not one fragile antialiased edge pixel.
+            for y in (cy - 2)...(cy + 2) {
+                for x in (cx - 2)...(cx + 2) {
+                    guard (0..<Self.side).contains(x), (0..<Self.side).contains(y) else { continue }
+                    count += 1
+                    if mask[y * Self.side + x] { matched += 1 }
+                }
+            }
+            return Double(matched) / Double(max(1, count))
+        }
+
+        func coralFraction(near point: CGVector) -> Double { fraction(coral, near: point) }
+        func whiteFraction(near point: CGVector) -> Double { fraction(white, near: point) }
+
+        func darkRetention(in other: InkSnapshot) -> Double {
+            let reference = dark.indices.filter { dark[$0] }
+            return Double(reference.filter { other.dark[$0] }.count) / Double(max(1, reference.count))
         }
 
         func coverage(by other: InkSnapshot) -> Double {
