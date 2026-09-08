@@ -248,6 +248,9 @@ final class ActivityCatalogUITests: XCTestCase {
 
                 let playControl = reveal(control(activity.controlLabels))
                 assertTapTarget(playControl)
+                if keepScreenshots && activity.id == "word-tracing" {
+                    capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-scrolled-controls")
+                }
                 let coach = reveal(control(["Coach"], identifier: "coach-open"), toward: .down)
                 assertTapTarget(coach)
                 coach.tap()
