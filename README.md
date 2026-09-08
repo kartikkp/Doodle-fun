@@ -13,7 +13,7 @@ Browse Create, Letters, Numbers, and Discover. Each card opens its specific task
 
 The original uppercase/lowercase alphabets, digits, and coloring pages remain inside these activities. Individual glyphs are practice items, not inflated game counts. See the [activity catalog](docs/activity-catalog.md) for every learning objective and support level.
 
-Each age from 2 through 10 has its own starting configuration. The **Coach** offers a starting step, current-game hints, strategy, conversation and real-object activities. **A little easier / harder** remembers a separate adjustment for each game. Optional read-aloud and support changes preserve work. Young children can explore words and arithmetic with a grown-up. See the [game-by-game age review](docs/coached-play-review.md) for actual defaults, playthrough findings and limits.
+Each age from 2 through 10 has its own starting configuration. The **Coach** offers a starting step, current-game hints, strategy, conversation and real-object activities. **A little easier / harder** remembers a separate adjustment for each game. Optional read-aloud preserves work. Changing the challenge may begin a fresh round; drawing edits remain recoverable. Young children can explore words and arithmetic with a grown-up. See the [game-by-game age review](docs/coached-play-review.md) for actual defaults, playthrough findings and limits.
 
 ## iPhone and iPad app
 

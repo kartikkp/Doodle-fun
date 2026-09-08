@@ -4,16 +4,16 @@
 
 ## Build and run
 
-From the repository root:
+The bundled activities are already included. To try the app, open **ios/DoodleFun.xcodeproj** in Xcode, select the shared **DoodleFun** scheme and an iPhone or iPad simulator, then Run. Node.js is not needed for this step.
+
+For your own iPhone or iPad, select your development team under **Signing & Capabilities** and choose the connected device, then Run. A unique bundle identifier may be needed for your team. No signing identity or account is included. This project has not been submitted to the App Store.
+
+Only after changing the web app, update its bundled copy from the repository root:
 
 ```sh
 npm ci
-npm run build
-node scripts/sync-ios.mjs
-open ios/DoodleFun.xcodeproj
+npm run ios:sync
 ```
-
-In Xcode, select the shared **DoodleFun** scheme and an iPhone or iPad simulator, then Run. For an actual device, select your development team under Signing & Capabilities and choose the connected device. A unique bundle identifier may be needed for your team. No signing identity or account is included in the repository. Signing and device installation are separate from the unsigned simulator build; this project has not been submitted to the App Store.
 
 The sync command copies the self-contained generated root `index.html` to the app's Resources directory. It rejects an unbuilt page or external script/stylesheet dependencies and writes the build fingerprint and SHA-256 into `BundleManifest.json`. Run it after each web build. The bundled resource is committed so the Xcode project can also open without Node.js.
 

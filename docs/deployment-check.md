@@ -1,5 +1,7 @@
 # Merged-site deployment check — September 6, 2026
 
+This is the historical check of the merged 24-activity release. PR #3 now also contains the 30-activity coaching/iPhone expansion. Current software validation is in [qa-report.md](qa-report.md); the expanded release must be verified on the public URL after its merge.
+
 Public URL: https://kartikkp.github.io/Doodle-fun/
 
 Checked after PR #2 merged as `2463a45b634ee804cff1cd6c29aaa3c73cfed0dc` and GitHub Pages reported successful deployment.
@@ -24,6 +26,6 @@ Online activities work because their modules load initially. The missing worker 
 
 Keep the existing Pages configuration and URL. Move editable HTML to `app-shell.html`; the build generates identical self-contained `index.html` and `sw.js` in both `dist/` and the repository root. Commit the root copies for branch-based publication. CI rebuilds them and fails if the checked-in copies are stale.
 
-The game runtime remains unchanged. The intended standalone fingerprint remains `387b68987e207d18`. A dedicated browser regression serves only the committed root pair beneath `/Doodle-fun/`, checks worker scope and absence of external modules/styles, stops the server, reloads, and opens all 24 cards in both engines.
+At the time of this publishing-only correction, the game runtime was unchanged and its intended fingerprint was `387b68987e207d18`. A dedicated browser regression serves only the committed root pair beneath `/Doodle-fun/`, checks worker scope and absence of external modules/styles, stops the server, reloads, and opens all 24 cards in both engines.
 
 This publishing correction requires a follow-up merge before it can be described as verified live. After deployment, recheck the public build fingerprint and worker response, then offline reload.

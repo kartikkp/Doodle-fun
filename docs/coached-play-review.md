@@ -69,7 +69,7 @@ All 30 activities were exercised at every starting age from 2 through 10 in Chro
 
 The final UI review captured 90 phone screenshots at ages 2, 6 and 10, reviewed every activity type, and corrected invalid age-10 sharing values, answer-revealing size labels, conflicting older math instructions and narrow-phone word layout. Unit tests also exercise every tracing practice item across all nine input profiles.
 
-The native iPhone/iPad app passed 16 simulator test runs, followed by six affected checks on the final dialog-spacing build. That final build also passed 63 JavaScript unit tests and 38 affected browser scenarios. See the [QA report](qa-report.md) for precise scope and limitations and [iPhone instructions](iphone-app.md) for native evidence. These are adult software playthroughs and design judgments; no child enjoyment or learning outcome was measured.
+The native iPhone/iPad app passed 16 simulator test runs, followed by six affected checks on the final dialog-spacing build. That dialog-spacing build also passed 63 JavaScript unit tests and 38 affected browser scenarios. An independent run then exposed a native-share feedback race; the corrected final build passed 63 unit tests, all 42 drawing/coaching browser scenarios (including two new regressions per engine), and four affected native runs. The complete suite now contains 512 browser scenarios. See the [QA report](qa-report.md) for precise scope and limitations and [iPhone instructions](iphone-app.md) for native evidence. These are adult software playthroughs and design judgments; no child enjoyment or learning outcome was measured.
 
 ## Basis for the approach
 

@@ -1,6 +1,6 @@
 # Doodle Fun QA — coached play and iPhone app
 
-Tested September 8, 2026. Final release fingerprint: **87f8df15e211c1db**. The complete gameplay baseline was **030d813f25b61b2d**; the final change only adjusts dialog safe-area positioning and received the affected browser/native rechecks below. The committed Pages HTML, dist HTML and native bundled HTML are byte-identical. This report describes software verification and adult playthrough judgment, not observed testing with children.
+Tested September 8, 2026. Final release fingerprint: **ee99aaf12c5dbcac**. The complete local gameplay baseline was **030d813f25b61b2d**; subsequent changes correct dialog safe-area positioning and a native-share feedback race, with affected browser/native rechecks described below. The committed Pages HTML, dist HTML and native bundled HTML are byte-identical. This report describes software verification and adult playthrough judgment, not observed testing with children.
 
 ## Results
 
@@ -10,8 +10,9 @@ Tested September 8, 2026. Final release fingerprint: **87f8df15e211c1db**. The c
 - **900 responsive card launches:** 30 cards × 3 age presets × 5 viewport sizes × 2 engines. These check actual rendered activity headings, back navigation, no page overflow and no JavaScript/console errors. Additional gameplay checks cover exact ages 2 through 10 and 320px dense layouts.
 - **90 final phone screenshots captured** at ages 2, 6 and 10; visible content was checked for invalid numeric values. The visual review covered all 30 activity types and inspected corrections separately.
 - **16 native simulator test runs passed, zero failures/skips:** eight tests each on iPhone 17 Pro/iOS 26.5 and iPad Air 11-inch (M4)/iPadOS 26.5, built with Xcode 26.6. Five tests cover local navigation, PNG validation, route bounds, packaged SHA integrity, and real WebKit reload with saved route/data. Three UI tests cover Coach/home navigation, settings after relaunch, and two actual Save→native share→cancel→reopen cycles. An earlier iOS 18.6 run also passed the native integration checks and share flow.
-- **Final safe-area recheck: 63 unit tests, 38 affected browser scenarios and six native test runs passed.** The browser checks cover coaching and drawing in both engines. Each native device repeated bundle integrity, Coach/navigation, and picture sharing plus the New picture confirmation. Final screenshots show the Coach clear of the iPhone status bar and visible confirmation choices.
-- GitHub Actions also builds the unsigned iPhone app on macOS, verifies generated release integrity and runs the full web suite on Linux. Current independent results are available on [PR #3](https://github.com/kartikkp/Doodle-fun/pull/3/checks).
+- **Safe-area recheck on 87f8df15e211c1db: 63 unit tests, 38 affected browser scenarios and six native test runs passed.** The browser checks cover coaching and drawing in both engines. Each native device repeated bundle integrity, Coach/navigation, and picture sharing plus the New picture confirmation. Final screenshots show the Coach clear of the iPhone status bar and visible confirmation choices.
+- **Final sharing-fix recheck on ee99aaf12c5dbcac: 63 unit tests, all 42 drawing/coaching browser scenarios and four native runs passed.** Both engines passed deterministic failed/completed sharing feedback checks. Both native devices repeated packaged integrity and real share/cancel/reopen/New picture flows. The full browser suite now contains 512 scenarios.
+- GitHub Actions also builds the unsigned iPhone app on macOS, verifies generated release integrity and runs the full web suite on Linux. The first independent full run passed 507 of 508 scenarios and exposed the feedback race described below; it was corrected with a deterministic regression. Current independent results are available on [PR #3](https://github.com/kartikkp/Doodle-fun/pull/3/checks).
 
 ## Problems found and corrected
 
@@ -23,7 +24,8 @@ Tested September 8, 2026. Final release fingerprint: **87f8df15e211c1db**. The c
 6. **Sound changes could disturb current practice or a shown hint.** Controllers update audio controls without rebuilding in-progress boards, counted dots, selected tiles, ink or active hint state. Per-activity difficulty changes remain separate.
 7. **The native screen applied notch spacing twice.** The Coach bar now owns the top safe area; activity headers sit directly below it, and drawing accounts for the bar height. Actual simulator screenshots confirm the drawing tools remain visible.
 8. **The Coach dialog could sit under the native status bar.** All dialogs now respect each safe-area inset and retain scrollable content. Affected browser and native checks passed on the final bundle.
-9. **Test selectors assumed desktop-style share UI and incomplete coloring-page names.** Tests now use the actual accessible labels and observed iOS system share process; those were test harness corrections, not evidence of successful product behavior by themselves.
+9. **A delayed draft save overwrote native share failure feedback.** Independent Linux/WebKit CI exposed the race. A clock-controlled test reproduced it in both engines at the 650 ms debounce boundary. Explicit feedback now survives background persistence until the next edit; invalidated export results cannot overwrite feedback after New picture or navigation. The original PNG/error assertion and both new regressions passed in both engines after the fix.
+10. **Test selectors assumed desktop-style share UI and incomplete coloring-page names.** Tests now use the actual accessible labels and observed iOS system share process; those were test harness corrections, not evidence of successful product behavior by themselves.
 
 ## Offline and persistence checks
 
