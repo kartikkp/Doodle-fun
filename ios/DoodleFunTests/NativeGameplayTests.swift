@@ -2,7 +2,7 @@
 // No production project, bundled HTML or signing settings are changed.
 // Each age has its own class for scheduling, and every activity has an explicit
 // method/result. DOM/synthetic-pointer integration is distinct from XCUITest
-// physical touches, native sharing, orientation and app lifecycle coverage.
+// trusted simulator finger gestures, native sharing, orientation and lifecycle.
 import XCTest
 import UIKit
 import WebKit
@@ -48,6 +48,28 @@ class NativeGameplayCase: XCTestCase {
         add(attachment)
     }
 
+    private func nativeGeometry(_ controller: DoodleViewController, window: UIWindow) -> [String: Any] {
+        window.layoutIfNeeded()
+        controller.view.layoutIfNeeded()
+        controller.webView.layoutIfNeeded()
+        func insets(_ value: UIEdgeInsets) -> [String: Double] {
+            ["top": Double(value.top), "left": Double(value.left), "bottom": Double(value.bottom), "right": Double(value.right)]
+        }
+        func bounds(_ value: CGRect) -> [String: Double] {
+            ["x": Double(value.origin.x), "y": Double(value.origin.y), "width": Double(value.width), "height": Double(value.height)]
+        }
+        return [
+            "unit": "UIKit points",
+            "viewSafeAreaInsets": insets(controller.view.safeAreaInsets),
+            "windowSafeAreaInsets": insets(window.safeAreaInsets),
+            "viewBounds": bounds(controller.view.bounds),
+            "windowBounds": bounds(window.bounds),
+            "viewFrameInWindow": bounds(controller.view.convert(controller.view.bounds, to: window)),
+            "webViewBounds": bounds(controller.webView.bounds),
+            "webViewFrameInWindow": bounds(controller.webView.convert(controller.webView.bounds, to: window))
+        ]
+    }
+
     func exercise(_ id: String, age: Int) async throws {
         let caseName = "age \(age) / \(id)"
         let controller = DoodleViewController()
@@ -58,6 +80,7 @@ class NativeGameplayCase: XCTestCase {
         } else {
             window = UIWindow(frame: UIScreen.main.bounds)
         }
+        var geometry: [String: Any] = [:]
         defer {
             controller.onContentReady = nil
             controller.webView?.stopLoading()
@@ -86,6 +109,11 @@ class NativeGameplayCase: XCTestCase {
             try await loadReady(controller, label: "\(caseName): reload exact age") {
                 controller.webView.reload()
             }
+            geometry = nativeGeometry(controller, window: window)
+            if let data = try? JSONSerialization.data(withJSONObject: geometry, options: [.sortedKeys]),
+               let line = String(data: data, encoding: .utf8) {
+                print("NATIVE_SAFE_AREA age=\(age) id=\(id) \(line)")
+            }
             _ = try await evaluate(NativeQAFixtures.script, in: controller.webView, label: "\(caseName): test-only fixture load")
             let finished = expectation(description: "\(caseName): full gameplay")
             var outcome: Result<Any, Error>?
@@ -99,7 +127,8 @@ class NativeGameplayCase: XCTestCase {
             await fulfillment(of: [finished], timeout: 45)
             guard let outcome else { throw GameplayError(message: "\(caseName): gameplay timed out") }
             let value = try outcome.get()
-            guard let report = value as? [String: Any] else { throw GameplayError(message: "\(caseName): invalid fixture report \(value)") }
+            guard var report = value as? [String: Any] else { throw GameplayError(message: "\(caseName): invalid fixture report \(value)") }
+            report["nativeGeometry"] = geometry
             attachReport(report, name: "Native gameplay age \(age) - \(id)")
             XCTAssertEqual(report["status"] as? String, "passed", "\(caseName): \(report["error"] ?? "No explanatory result")")
             XCTAssertEqual(report["id"] as? String, id, caseName)
@@ -107,7 +136,7 @@ class NativeGameplayCase: XCTestCase {
             XCTAssertGreaterThan(report["assertions"] as? Int ?? 0, 10, "\(caseName): a launch-only check is insufficient")
             XCTAssertGreaterThanOrEqual((report["steps"] as? [String])?.count ?? 0, 4, "\(caseName): learning and recovery stages must execute")
         } catch {
-            attachReport(["id": id, "age": age, "status": "failed", "nativeError": error.localizedDescription], name: "Native gameplay failure age \(age) - \(id)")
+            attachReport(["id": id, "age": age, "status": "failed", "nativeError": error.localizedDescription, "nativeGeometry": geometry], name: "Native gameplay failure age \(age) - \(id)")
             throw GameplayError(message: "\(caseName): \(error.localizedDescription)")
         }
     }
@@ -409,4 +438,3 @@ final class NativeGameplayAge10Tests: NativeGameplayCase {
     func testRhythm() async throws { try await exercise("rhythm", age: 10) }
     func testSharing() async throws { try await exercise("sharing", age: 10) }
 }
-

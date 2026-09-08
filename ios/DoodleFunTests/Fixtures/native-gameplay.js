@@ -320,7 +320,7 @@ globalThis.__doodleNativeQA=async({id,age})=>{
     await qa.waitFor(()=>visible(document.querySelector(`#card-${id}`))&&!visible(document.querySelector('#coach-open')),'return to activity catalog');
     qa.check('return navigation');
     qa.assert(runtimeErrors.length===0,`No uncaught browser errors: ${runtimeErrors.join('; ')}`);
-    return {id,age,status:'passed',assertions:qa.assertions,steps:qa.steps,elapsedMs:Math.round(performance.now()-begin),interaction:'Native WKWebView DOM actions; drawing/tracing use synthetic pointers with scoped capture adapter, not physical gestures'};
+    return {id,age,status:'passed',assertions:qa.assertions,steps:qa.steps,elapsedMs:Math.round(performance.now()-begin),interaction:'Native WKWebView DOM actions; drawing/tracing use synthetic pointers with scoped capture adapter. Trusted simulator finger gestures are tested separately.'};
   } catch(error) {
     return {id,age,status:'failed',assertions:qa.assertions,steps:qa.steps,error:String(error.message||error),stack:error.stack,runtimeErrors,route:location.hash,visibleText:document.body.innerText.slice(0,6000),elapsedMs:Math.round(performance.now()-begin)};
   } finally {removeEventListener('error',recordError);removeEventListener('unhandledrejection',recordError);}
