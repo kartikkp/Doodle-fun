@@ -103,10 +103,10 @@ final class ActivityCatalogUITests: XCTestCase {
         } else {
             predicate = NSPredicate(format: "label IN %@", labels)
         }
-        let button = web.buttons.matching(predicate).firstMatch
-        // WebKit accessibility can expose the same semantic control as Other
-        // on a different iOS version. Use its actual accessible name there.
-        return button.exists ? button : web.descendants(matching: .any).matching(predicate).firstMatch
+        // iOS 26 exposes aria-pressed controls (ages, tools, trace choices) as
+        // Switch rather than Button. Match the actual accessible name without
+        // restricting the native type; regular buttons still match here.
+        return web.descendants(matching: .any).matching(predicate).firstMatch
     }
 
     private func text(_ label: String) -> XCUIElement {
@@ -116,7 +116,10 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func card(_ activity: Activity) -> XCUIElement {
-        web.links.matching(NSPredicate(format: "identifier == %@ OR label CONTAINS[c] %@", "card-\(activity.id)", activity.title)).firstMatch
+        // Native WebKit also exposes an aggregate card Link containing all its
+        // text. Pilot taps on that aggregate did not navigate. The nested title
+        // Link is the actual, observed hit target on iOS 26.
+        web.links.matching(NSPredicate(format: "label == %@", activity.title)).firstMatch
     }
 
     private enum ScrollDirection { case up, down }
@@ -190,6 +193,7 @@ final class ActivityCatalogUITests: XCTestCase {
         let ageButton = reveal(control(["Age \(age)"]), toward: .down)
         assertTapTarget(ageButton)
         ageButton.tap()
+        XCTAssertEqual(ageButton.value as? String, "1", "The native age switch is selected")
         if inLandscape {
             XCUIDevice.shared.orientation = .landscapeLeft
             let rotated = NSPredicate { _, _ in self.app.windows.firstMatch.frame.width > self.app.windows.firstMatch.frame.height }
@@ -198,8 +202,8 @@ final class ActivityCatalogUITests: XCTestCase {
         }
         for activity in Self.activities {
             XCTContext.runActivity(named: "Age \(age) · \(inLandscape ? "landscape" : "portrait") · \(activity.title)") { _ in
-                // Cards may be taller than a compact viewport. Their touch
-                // center must be visible; individual buttons must fit fully.
+                // Tap the card's observed title link. Its center must be
+                // visible; full-size game controls are checked separately.
                 let link = reveal(card(activity), entireTarget: false)
                 XCTAssertTrue(link.isHittable)
                 link.tap()
