@@ -22,3 +22,5 @@ Success: every visible card launches and plays, the downloaded HTML works indepe
 1. Thirty activities, nine starting difficulties, contextual coaching and reversible per-game support.
 2. Offline SwiftUI/WKWebView app with native picture sharing.
 3. Age-configured completed playthroughs, browser regressions, native simulator validation and reviewable delivery.
+
+4. Complete native iPhone QA across all 30 activities and ages 2–10 on current and compact phones; fix observed defects and retain versioned touch, screenshot and gameplay evidence.

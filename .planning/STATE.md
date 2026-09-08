@@ -1,15 +1,17 @@
 # Current state
 
-Phase 4 is implemented and verified on `codex/pages-built-app`, in [PR #3](https://github.com/kartikkp/Doodle-fun/pull/3). Final runtime fingerprint: `ee99aaf12c5dbcac`.
+Phase 4 is delivered in merged [PR #3](https://github.com/kartikkp/Doodle-fun/pull/3). The owner's Xcode project and signing team are configured. Full native iPhone QA and four corrective fixes are in [PR #4](https://github.com/kartikkp/Doodle-fun/pull/4), branch `codex/full-iphone-qa`. Final tested runtime: `c492e0448081570e`.
 
-- 30 activities, exact ages 2–10, a shared Coach, contextual in-game hints, per-activity challenge adjustment and optional native/browser read-aloud.
-- Every activity exercised at all nine starting ages in Chromium and WebKit. All 508 browser scenarios passed across the complete baseline run and two unchanged timeout rechecks; 63 unit tests passed. The dialog correction passed another 38 affected browser scenarios. Independent CI then exposed a draft-save/share-feedback race; the corrected final build passed all 42 drawing/coaching scenarios, including four new regression cases. The full suite now has 512 scenarios.
-- Offline SwiftUI/WKWebView iPhone/iPad app with persistent local data and native PNG sharing. Full native baseline passed eight tests per device; the dialog correction passed three affected tests per device and the final sharing correction passed two per device. No failures or skips in those native runs.
-- Generated Pages root HTML/worker and native HTML are committed and synchronized. GitHub Actions checks source/build identity, all web tests and an unsigned iPhone build.
-- Game-by-game age/challenge review and exact software QA evidence are in docs/coached-play-review.md, docs/qa-report.md and docs/iphone-app.md. No children participated; enjoyment and age-fit remain design judgments.
+- 30 activities, exact ages 2–10, shared Coach, contextual hints, per-activity challenge adjustment, and optional native/browser read-aloud.
+- Full iPhone QA completed on dedicated iPhone 17 Pro/iOS 26.5 and iPhone SE 3/iOS 18.6 simulators. All 540 unique age/activity gameplay flows passed on the final packaged app. Both final gameplay/drawing runs passed 279/279 without failures or skips.
+- All 580 planned case/device combinations have passing evidence across completed runs and relevant fix rechecks: 552 native gameplay/bridge/layout cases plus 28 native UI cases. Trusted UI coverage includes 240 full catalog visits, drawing and tracing gestures, sharing, saved settings, rotation and relaunch, nine bounded coloring fills, and 60 additional landscape archive openings. This is not a claim of one 290-test run per phone.
+- Native screenshot review covers all activity types in portrait and landscape. Fixed status-bar overlap, landscape safe-area margins, conflicting shape clues and a dinosaur coloring fill leak. Remaining scroll/discoverability refinements are in ISSUES.md.
+- Independent CI for the final app bundle passed 70 unit tests, 516 Chromium/WebKit scenarios, an unsigned iPhone Release build and 276 native tests. Subsequent screenshot helper changes passed native archive runs on both phones and local unit/source checks; their PR CI is running.
+- Generated web and native HTML remain synchronized. Expanded native QA runs through `npm run test:iphone` using copied projects; test helpers are not shipped in the application. The regular Xcode Test action remains the original smaller suite.
+- The owner's source project file, signing changes, existing simulator and saved artwork were preserved. Detailed versioned evidence and limits are in docs/iphone-qa-report.md; raw xcresults, screenshots and per-game reports remain in the workspace's work directory.
 
 ## Delivery and next state
 
-PR #3 requires the owner's merge. The existing public Pages site remains the previously merged 24-activity release until then. After merge, verify the public build fingerprint, worker response and an offline reload before claiming production delivery.
+PR #4 awaits the owner's review and merge. Rebuild/run the owner's Xcode project to load the corrected app; the existing running app was deliberately preserved. No App Store submission or physical-device installation was performed.
 
-The iPhone project is ready for Xcode simulator use. Physical-device installation requires the owner's Apple signing team; no signing account, App Store submission or production merge was performed. Device-specific Pencil/VoiceOver/share destinations and observed child playtesting remain follow-up validation.
+Physical iPhone, Pencil, VoiceOver, audible speech, real sharing destinations and observed child playtesting remain separate validation. Software playthroughs establish the tested behavior, not child enjoyment or developmental outcomes.
