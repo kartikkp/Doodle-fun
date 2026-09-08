@@ -99,13 +99,15 @@ final class ActivityCatalogUITests: XCTestCase {
     /// XCUI exposes native window/status-bar frames, but not safeAreaInsets.
     /// Use the measured native status bar or the two independently verified
     /// QA-phone profiles: 402×874 top62/bottom34; 375×667 top20/bottom0.
-    /// Reserve landscape notch/home-indicator margins only on the taller phone.
+    /// Native layout checks measured 62pt left/right and 20pt bottom in the
+    /// taller phone's landscape view; the compact phone has zero landscape insets.
     /// Screenshots complement these full-target geometry assertions.
     private var safeTapBounds: CGRect {
         let frame = app.windows.firstMatch.frame
         let side: CGFloat = landscape && hasHomeIndicator ? max(44, portraitTopInset) : 0
         let top: CGFloat = landscape ? 0 : portraitTopInset
-        let bottom: CGFloat = hasHomeIndicator ? (landscape ? 21 : 34) : 0
+        let landscapeBottom: CGFloat = abs(frame.width - 874) < 1 && abs(frame.height - 402) < 1 ? 20 : 21
+        let bottom: CGFloat = hasHomeIndicator ? (landscape ? landscapeBottom : 34) : 0
         return CGRect(x: frame.minX + side, y: frame.minY + top,
                       width: frame.width - side * 2, height: frame.height - top - bottom)
     }
@@ -163,7 +165,13 @@ final class ActivityCatalogUITests: XCTestCase {
             // the safe viewport. The page gutter avoids tracing canvases;
             // inside the coach, drag the modal body instead.
             let x = inCoach ? bounds.midX : bounds.minX + 12
-            let distance = min(300, bounds.height - 96)
+            var distance = min(300, bounds.height - 96)
+            if target.exists && !target.frame.isEmpty {
+                // A fixed full-height pan skipped past the compact landscape
+                // Color & create home link in alternating directions. Aim for
+                // the viewport center when the remaining distance is shorter.
+                distance = min(distance, max(44, abs(target.frame.midY - bounds.midY)))
+            }
             let lower = bounds.midY + distance / 2
             let upper = bounds.midY - distance / 2
             let origin = web.coordinate(withNormalizedOffset: .zero)
@@ -171,7 +179,8 @@ final class ActivityCatalogUITests: XCTestCase {
                                                    dy: (direction == .up ? lower : upper) - web.frame.minY))
             let finish = origin.withOffset(CGVector(dx: x - web.frame.minX,
                                                     dy: (direction == .up ? upper : lower) - web.frame.minY))
-            start.press(forDuration: 0.05, thenDragTo: finish)
+            // Hold at the endpoint before lifting to limit scroll momentum.
+            start.press(forDuration: 0.05, thenDragTo: finish, withVelocity: .default, thenHoldForDuration: 0.15)
         }
         capture("Unreachable target - \(target.label)")
         let accessibility = XCTAttachment(string: app.debugDescription)
