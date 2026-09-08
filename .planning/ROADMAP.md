@@ -16,3 +16,9 @@ Success: every original capability retained; all activities accessible at all ag
 3. Complete each game, inspect actual delivered browser, expand phone/tablet QA, update draft PR.
 
 Success: every visible card launches and plays, the downloaded HTML works independently of the preview server, and the delivered preview retains activities after network loss.
+
+## Phase 4 — Coached play and iPhone delivery
+
+1. Thirty activities, nine starting difficulties, contextual coaching and reversible per-game support.
+2. Offline SwiftUI/WKWebView app with native picture sharing.
+3. Age-configured completed playthroughs, browser regressions, native simulator validation and reviewable delivery.
