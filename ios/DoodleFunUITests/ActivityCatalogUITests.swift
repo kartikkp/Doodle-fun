@@ -158,11 +158,14 @@ final class ActivityCatalogUITests: XCTestCase {
                 if target.frame.minY < bounds.minY { direction = .down }
                 else if target.frame.maxY > bounds.maxY { direction = .up }
             }
-            // Outside the coach, drag the page gutter rather than a tracing
-            // canvas or touch-controlled puzzle. In the modal, drag its body.
-            let x = inCoach ? bounds.midX : bounds.minX + 7
-            let lower = bounds.maxY - 45
-            let upper = bounds.minY + 48
+            // Native event synthesis intermittently timed out on the old
+            // 685pt near-edge pan. Keep each scroll short and centered inside
+            // the safe viewport. The page gutter avoids tracing canvases;
+            // inside the coach, drag the modal body instead.
+            let x = inCoach ? bounds.midX : bounds.minX + 12
+            let distance = min(300, bounds.height - 96)
+            let lower = bounds.midY + distance / 2
+            let upper = bounds.midY - distance / 2
             let origin = web.coordinate(withNormalizedOffset: .zero)
             let start = origin.withOffset(CGVector(dx: x - web.frame.minX,
                                                    dy: (direction == .up ? lower : upper) - web.frame.minY))
