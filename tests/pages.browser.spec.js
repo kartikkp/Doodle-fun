@@ -19,7 +19,7 @@ test('branch-published root bundle works under the GitHub project path and reloa
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   try{
     await page.goto(`http://127.0.0.1:${server.address().port}/Doodle-fun/`);
-    await expect(page.locator('.activity-card')).toHaveCount(24);
+    await expect(page.locator('.activity-card')).toHaveCount(ACTIVITIES.length);
     await expect(page.locator('meta[name="doodle-build"]')).toHaveAttribute('content',/^[a-f0-9]{16}$/);
     await expect(page.locator('script[src],link[rel="stylesheet"]')).toHaveCount(0);
     const script=await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener('controllerchange',resolve,{once:true}));return navigator.serviceWorker.controller.scriptURL;});
@@ -27,10 +27,10 @@ test('branch-published root bundle works under the GitHub project path and reloa
     expect(unexpected).toEqual([]);
     await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
     await page.reload();
-    await expect(page.locator('.activity-card')).toHaveCount(24);
+    await expect(page.locator('.activity-card')).toHaveCount(ACTIVITIES.length);
     for(const activity of ACTIVITIES){
       await page.locator('#card-'+activity.id).click();
-      const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view'}[activity.engine]);
+      const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view'}[activity.engine]);
       await expect(view).toBeVisible();await expect(view.locator('h1')).toBeVisible();
       await page.keyboard.press('Escape');
       await view.getByRole('button',{name:/Back to (home|activities)/}).click();

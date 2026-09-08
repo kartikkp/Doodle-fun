@@ -17,11 +17,18 @@ const STAMPS = [
   ['🌟', 'Shining star'], ['🔥', 'Flame'], ['👾', 'Alien'], ['🦊', 'Fox'],
   ['🍦', 'Ice cream'], ['🎸', 'Guitar'], ['🌊', 'Wave'], ['🦁', 'Lion'],
 ];
-const CHALLENGES = {
-  little: ['Make big circles in your favorite color.', 'Can you draw a happy face?', 'Try dots, then long wiggly lines.', 'Make a sunny sky with two colors.', 'Add three stars. Count them together!'],
-  explorer: ['Draw an animal made from circles and triangles.', 'Make a garden with five different flowers.', 'Draw a rainbow. Can you name its colors?', 'Invent a friendly creature and give it a name.', 'Make a repeating pattern: circle, star, circle, star.'],
-  maker: ['Design a new planet and the creatures who live there.', 'Draw a scene with a foreground and a background.', 'Make a butterfly with matching patterns on both wings.', 'Tell a tiny story in three pictures.', 'Use warm and cool colors to show two different moods.'],
+export const DRAWING_IDEAS = {
+  2:['Make a big mark. Try another color beside it.','Tap to make dots, then slide to make a line.','Make a long line and a short line together.'],
+  3:['Make a big circle and a little circle.','Draw a face with eyes and a mouth.','Make three colorful dots. Count them together.'],
+  4:['Build a flower with a circle and lines.','Draw a person. Tell someone what they are doing.','Make a pattern of dots and lines.'],
+  5:['Build an animal from circles and triangles.','Draw a garden with five different flowers.','Make a picture with something above and something below.'],
+  6:['Invent a friendly creature. Add details that show where it lives.','Draw the same tree in two different seasons.','Make a repeating border around a picture.'],
+  7:['Draw a place with something near and something far away.','Show what happens before and after a surprise in two pictures.','Make both butterfly wings follow the same pattern.'],
+  8:['Design a planet. Add details that help its creatures live there.','Tell a story in three pictures: beginning, middle, end.','Use warm and cool colors to show two different moods.'],
+  9:['Show the same place from above and from the side.','Design an invention and label the parts that make it work.','Make a creature whose outline is symmetrical, then add a surprise.'],
+  10:['Plan a three-panel comic. Show emotion through poses and details.','Draw a landscape with foreground, middle ground, and background.','Design a helpful invention. Show a problem and how your idea solves it.'],
 };
+export function drawingIdeas(age) { return DRAWING_IDEAS[Math.max(2,Math.min(10,Math.round(age)||6))]; }
 
 /** Flood a connected region, comparing its visible color against white paper.
  * The fixed-size queue prevents repeated neighbor allocations on large fills.
@@ -313,7 +320,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     $('.draw-stamp-grid').append(button);
   });
   function updateChallenge() {
-    const ideas = CHALLENGES[profile.tier] || CHALLENGES.explorer;
+    const ideas = drawingIdeas(profile.challengeAge || profile.age);
     $('.draw-challenge').textContent = ideas[challengeIndex % ideas.length];
   }
   function settingsChanged() {
@@ -366,6 +373,11 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       const out = output.getContext('2d'); out.fillStyle = '#fff'; out.fillRect(0, 0, SIDE, SIDE); out.drawImage(art, 0, 0);
       const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('Could not create picture');
+      const native = globalThis.webkit?.messageHandlers?.doodleNative;
+      if (native) {
+        native.postMessage({type:'shareImage',dataURL:output.toDataURL('image/png'),name:'my-doodle.png'});
+        return;
+      }
       const file = new File([blob], 'my-doodle.png', { type: 'image/png' });
       if (navigator.canShare?.({ files: [file] })) {
         try { await navigator.share({ files: [file], title: 'My doodle' }); tell('Your picture is ready to keep!'); }
@@ -373,6 +385,10 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       } else showExport(blob);
     } catch { tell('Your drawing is safe here. Please try Save again.'); }
     finally { button.disabled = false; }
+  });
+  window.addEventListener('doodle-native-share', event => {
+    if(event.detail?.status==='failed') tell('Your drawing is safe here. Please try Save again.');
+    else if(event.detail?.status==='completed') tell('Your picture is ready to keep!');
   });
   document.addEventListener('keydown', event => {
     if (!active || container.querySelector('dialog[open]') || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return;

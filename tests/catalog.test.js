@@ -1,14 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ACTIVITIES,CATEGORIES,getActivity} from '../catalog.js';
-test('24 distinct activity routes resolve to specific supported experiences',()=>{
-  assert.equal(ACTIVITIES.length,24);
-  assert.equal(new Set(ACTIVITIES.map(a=>a.id)).size,24);
+test('30 distinct activity routes resolve to specific supported experiences',()=>{
+  assert.equal(ACTIVITIES.length,30);
+  assert.equal(new Set(ACTIVITIES.map(a=>a.id)).size,30);
   for(const activity of ACTIVITIES){
     assert.equal(getActivity(activity.id),activity);
     assert.ok(CATEGORIES.some(category=>category.id===activity.category));
     assert.ok(activity.description && activity.skill && activity.title);
-    assert.ok(['drawing','learning','discovery','challenges'].includes(activity.engine));
+    assert.ok(['drawing','learning','discovery','challenges','adventures'].includes(activity.engine));
   }
   assert.equal(ACTIVITIES.filter(a=>a.engine==='discovery').length,7);
   assert.equal(ACTIVITIES.filter(a=>a.engine==='challenges').length,7);

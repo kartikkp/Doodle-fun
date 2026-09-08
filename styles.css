@@ -29,3 +29,28 @@
 .activity-card .card-footnote{margin-top:15px;min-height:34px}
 .card-topline .skill-tag{text-transform:uppercase}
 @media(max-width:650px){.activity-filters{margin-right:-18px;padding-right:18px}.activity-filter{font-size:.8125rem;padding:9px 13px}.activity-guidance{font-size:.8125rem;margin-bottom:15px}.activity-card .card-picture{height:75px}.catalog-icon{font-size:43px}.catalog-word{font-size:32px}.activity-card .card-bottom h3{font-size:1rem;letter-spacing:-.3px}.activity-card .card-bottom p{font-size:.8125rem}.activity-card .card-footnote{font-size:.75rem;min-height:45px}.card-topline .card-arrow{display:flex;width:25px;height:25px;font-size:17px}}
+/* Exact ages remain starting points; each activity has its own gentle adjustment. */
+.age-picker{flex-direction:column;align-items:stretch;gap:14px}
+.age-picker-label{display:flex;flex-direction:row;justify-content:space-between;gap:12px}
+.age-picker-label>span{max-width:none}
+.age-options{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px;width:100%}
+.age-option{min-height:64px;min-width:48px;padding:8px 4px;display:flex;flex-direction:column;justify-content:center;gap:2px;text-align:center}
+.age-option strong{font-size:1.125rem}.age-option small{font-size:.75rem}
+.activity-coach-bar{display:flex;align-items:center;gap:12px;padding:8px max(16px,env(safe-area-inset-right)) 8px max(16px,env(safe-area-inset-left));padding-top:max(8px,env(safe-area-inset-top));border-bottom:1px solid #e2e3f2;background:#f0f0fc}
+.activity-coach-bar>span{flex:1;font-size:.8125rem;line-height:1.4;color:#535374}
+.coach-open{border-color:#d6d3ef;color:#4e47a6;background:#fff}
+.coach-open>span{color:#8572cc}
+.coach-dialog{width:min(550px,calc(100vw - 28px))}
+.coach-dialog h3{font-size:.9375rem}.coach-dialog p{line-height:1.55;font-size:.9375rem}
+.coach-together{margin:18px 0;color:var(--muted)}
+.coach-tip{display:flex;gap:12px;margin:19px 0}
+.coach-tip>span{display:grid;place-items:center;flex-shrink:0;width:30px;height:30px;background:#ecebfa;border-radius:10px;color:#6154ad;font-size:.8125rem;font-weight:800}
+.coach-tip p{margin-top:5px;color:var(--muted)}
+.coach-challenge{padding:16px;border:1px solid var(--line);border-radius:16px;margin-top:20px}
+.coach-challenge>p{margin-top:7px;color:var(--muted)}
+.coach-adjust{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:13px 0}
+.coach-adjust .button{padding:10px 6px;font-size:.8125rem}
+.coach-reset{display:block;min-height:48px;border:0;background:none;text-decoration:underline;color:var(--primary);font-size:.8125rem}
+.coach-challenge .coach-small{font-size:.75rem}.coach-dialog>#coach-done{width:100%;margin-top:12px}
+.coach-dialog>#coach-hear{width:100%}
+@media(max-width:650px){.age-options{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.age-picker-label strong{font-size:.8125rem}.age-option{min-height:59px}.age-option strong{font-size:1.0625rem}.age-picker-label>span{display:block;font-size:.75rem;text-align:right;max-width:155px}.activity-coach-bar{gap:8px}.activity-coach-bar>span{font-size:.75rem}.coach-open{padding:10px 12px}}
