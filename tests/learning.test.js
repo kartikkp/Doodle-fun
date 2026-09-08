@@ -15,13 +15,28 @@ test('all uppercase, lowercase and decimal digits have complete in-bounds tracin
 });
 test('all 76 activities pass when each real guide path is followed at every age level',()=>{
   assert.equal(SHAPES.length+WORDS.length+Object.keys(STROKES).length,76);
-  for(const age of [2,6,10]) {
+  for(const age of [2,3,4,5,6,7,8,9,10]) {
     const profile=getProfile({age});
     for(const set of ['shapes','upper','lower','nums','words'])for(const item of getLearningItems(set)) {
       const result=evaluateTrace(item.strokes,item.strokes,{tolerance:profile.traceTolerance*(set==='words'?.55:1),coverage:profile.traceCoverage,precision:profile.tracePrecision});
       assert.equal(result.passed,true,`${age}: ${set} ${item.ch}: ${result.reason}`);
     }
   }
+});
+test('round letters and zero have smooth dense arcs while straight corners stay intact',()=>{
+  for(const letter of ['0','O','Q','o','a','g','C','c']) {
+    const curve=STROKES[letter][0];
+    assert.ok(curve.length>=50,letter);
+    for(let i=1;i<curve.length-1;i++) {
+      const before=Math.atan2(curve[i][1]-curve[i-1][1],curve[i][0]-curve[i-1][0]);
+      const after=Math.atan2(curve[i+1][1]-curve[i][1],curve[i+1][0]-curve[i][0]);
+      const turn=Math.abs(Math.atan2(Math.sin(after-before),Math.cos(after-before)));
+      assert.ok(turn<.18,`${letter}: sharp bend ${turn}`);
+    }
+    if(!['C','c'].includes(letter))assert.deepEqual(curve[0],curve.at(-1),letter);
+  }
+  assert.deepEqual(STROKES.L,[[[.28,.15],[.28,.85],[.68,.85]]]);
+  assert.deepEqual(STROKES.Z,[[[.28,.15],[.72,.15],[.28,.85],[.72,.85]]]);
 });
 test('empty input and background taps do not receive completion credit',()=>{
   for(const set of ['shapes','upper','lower','nums','words'])for(const item of getLearningItems(set)) {
@@ -66,6 +81,14 @@ test('smaller learners get more generous spatial support without locking any set
   assert.equal(evaluateTrace(target,offset,{tolerance:maker.traceTolerance,coverage:maker.traceCoverage,precision:maker.tracePrecision}).passed,false);
   assert.equal(getLearningItems('nums').length,10);
 });
+test('the same wobbly path receives more motor forgiveness with supportive settings',()=>{
+  // Synthetic geometry checks the tolerance contract; it does not model a child.
+  const target=[[[.5,.2],[.5,.8]]];
+  const wobble=[Array.from({length:61},(_,i)=>[.5+Math.sin(i/60*Math.PI*4)*.047,.2+i/60*.6])];
+  const resultFor=age=>{const profile=getProfile({age});return evaluateTrace(target,wobble,{tolerance:profile.traceTolerance,coverage:profile.traceCoverage,precision:profile.tracePrecision});};
+  assert.equal(resultFor(3).passed,true);
+  assert.equal(resultFor(9).passed,false);
+});
 test('malformed ink is ignored and invalid targets cannot pass',()=>{
   assert.equal(evaluateTrace([],[]).passed,false);
   assert.equal(evaluateTrace([[[NaN,.5],[.5,.5]]],STROKES.A).passed,false);
@@ -93,4 +116,16 @@ test('addition varies its operands and equal groups remain visual and inside the
     assert.ok(question.answer<=max);
   }
   assert.ok(Array.from({length:20},(_,i)=>buildQuantityQuestion(0,'groups',20,i)).some(question=>question.answer===20));
+});
+
+test('every exact age gets valid bounded quantity questions and age ten combines three addends',()=>{
+  for(let age=2;age<=10;age++) {
+    const profile=getProfile({age});
+    for(let round=0;round<30;round++)for(const mode of ['count','add','groups']) {
+      const question=buildQuantityQuestion(round% (profile.numberMax+1),mode,profile.numberMax,round,age);
+      assert.ok(question.answer>=0&&question.answer<=profile.numberMax);
+      if(mode==='add'){assert.equal(question.operands.reduce((sum,value)=>sum+value,0),question.answer);assert.equal(question.operands.length,age===10?3:2);}
+      assert.ok(question.strategy.length>20);
+    }
+  }
 });

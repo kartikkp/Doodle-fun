@@ -1,4 +1,5 @@
 import {getProfile, readStore, writeStore} from './core.js';
+import {canSpeak,speak as speakText,stopSpeaking} from './speech.js';
 import {getLearningItems, evaluateTrace, samplePath, pathLength, buildQuantityQuestion} from './learning-data.js';
 
 const SVG_NS='http://www.w3.org/2000/svg';
@@ -31,17 +32,14 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   let animation=0,demoRunning=false,profile=getProfile(getSettings()),saved=safeProgress();
   let svg,inkLayer,guideLayer,markers,trail,status,checkButton,showButton,clearButton,prevButton,nextButton,picker,itemLabel,example;
   let countValue=0,countMode='count',countRound=0,countAnswered=false,countMarked=new Map(),countButtons=[];
-  let pageMode='trace';
+  let pageMode='trace',countQuestion=null;
   const report=()=>onProgress({completedCount:Object.keys(saved).length});
   const item=()=>getLearningItems(set)[index];
   const key=()=>`${set}:${item().ch}`;
   const mark=progressKey=>{if(!saved[progressKey]){saved[progressKey]=true;writeStore(STORE_KEY,saved);report();}};
-  const speak=text=>{
-    if(!getSettings().sound || !('speechSynthesis' in window))return;
-    window.speechSynthesis.cancel();
-    const speech=new SpeechSynthesisUtterance(text);speech.rate=.82;speech.lang='en-US';window.speechSynthesis.speak(speech);
-  };
-  const stopSpeech=()=>{if('speechSynthesis' in window)window.speechSynthesis.cancel();};
+  const speak=text=>{if(getSettings().sound&&canSpeak())speakText(text);};
+  const stopSpeech=()=>stopSpeaking();
+  function speechButton(label,action) {const node=button(label,'button learn-listen',action);node.dataset.learningSpeech='';node.hidden=!getSettings().sound||!canSpeak();return node;}
   function stopDemo() {
     cancelAnimationFrame(animation);animation=0;demoRunning=false;
     if(trail)trail.replaceChildren();
@@ -66,7 +64,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     const header=element('header','activity-header learn-header');
     const back=button('← Home','button learn-back',()=>{close();onBack();});back.setAttribute('aria-label','Back to home');
     const heading=element('div','learn-heading');heading.append(element('p','learn-eyebrow',kind==='numbers'?'COUNT • NOTICE • LEARN':'TRACE • DISCOVER • GROW'),element('h1','',kind==='numbers'?'Number explorers':'Letter adventures'));
-    const support=element('span','learn-support',`${profile.name} · No rush`);
+    const support=element('span','learn-support',`Practice ${profile.challengeAge} · No rush`);
     header.append(back,heading,support);container.append(header);
     const body=element('div','activity-body learn-body');
     if(kind==='numbers') {
@@ -108,7 +106,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       const choice=button(current.label||current.ch,'learn-choice',()=>selectItem(i));choice.dataset.learnItem=current.ch;picker.append(choice);
     });side.append(picker);
     const help=element('div','learn-help');help.append(element('span','learn-help-icon','✦'),element('h3','','Small steps, big discoveries'),element('p','',set==='words'?'Trace each letter, then say the whole word. Lift your finger between numbered strokes.':'Follow one path at a time. Lift your finger between strokes. A little practice is a big win.'));
-    if(getSettings().sound && 'speechSynthesis' in window)help.append(button('♪ Hear it','button learn-listen',()=>speak(set==='shapes'?item().word:set==='words'?`The word is ${item().word}. ${[...item().ch].join(', ')}.`:`${item().ch}. ${item().word}.`)));
+    help.append(speechButton('♪ Hear it',()=>speak(set==='shapes'?item().word:set==='words'?`The word is ${item().word}. ${[...item().ch].join(', ')}.`:`${item().ch}. ${item().word}.`)));
     side.append(help);
     const navigation=element('div','learn-navigation');
     prevButton=button('← Previous','button',()=>selectItem(index-1));nextButton=button('Next →','button button-primary',()=>selectItem(index+1));navigation.append(prevButton,nextButton);side.append(navigation);
@@ -195,7 +193,11 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     if(explicit) {
       if(result.reason==='precision'||result.reason==='extra-ink')updateStatus('Good exploring! Tap Start again, then follow the soft paths slowly.');
       else if(!ink.length||result.reason==='keep-going')updateStatus('You can do it. Start at 1 and follow the path all the way.');
-      else updateStatus(`${result.completed} of ${item().strokes.length} paths traced. Follow the remaining soft paths to finish.`);
+      else {
+        const next=result.coverage.findIndex((value,i)=>value<profile.traceCoverage||(result.traversal?.[i]??0)<profile.traceCoverage*.8);
+        if(next>=0)guideLayer.children[next].setAttribute('stroke','#f0d39b');
+        updateStatus(`${result.completed} of ${item().strokes.length} paths traced. Start at ${Math.max(0,next)+1} and follow the warm-colored path all the way. Lift your finger before the next number.`);
+      }
     } else if(result.completed)updateStatus(`${result.completed} of ${item().strokes.length} paths traced. Keep going at your own pace.`);
   }
   function showDemo() {
@@ -224,7 +226,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     animation=requestAnimationFrame(tick);
   }
   function nextCount() {
-    countRound++;countValue=(countValue+(profile.numberMax<=5?1:5))%(profile.numberMax+1);countAnswered=false;countMarked.clear();render();
+    countRound++;countValue=(countValue+1)%(profile.numberMax+1);countAnswered=false;countMarked.clear();render();
   }
   function renderCount(body) {
     const layout=element('div','learn-count-layout'),card=element('section','learn-count-card'),side=element('aside','learn-count-side');
@@ -233,8 +235,8 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
     }
     card.append(modeButtons);
-    const variant=countRound+(profile.tier==='maker'&&countMode==='groups'?7:0);
-    const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,variant);
+    const variant=countRound+(countMode==='groups'?Math.max(0,profile.challengeAge-6)*2+(profile.challengeAge>=9?1:0):0);
+    const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,variant,profile.challengeAge);countQuestion=question;
     card.append(element('p','learn-eyebrow',`NUMBER DETECTIVE · ROUND ${countRound+1}`),element('h2','learn-count-prompt',question.prompt));
     const frames=element('div','learn-count-frames');frames.dataset.testid='quantity-frame';frames.dataset.quantity=String(question.answer);
     let dotOffset=0;
@@ -255,10 +257,13 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       for(let group=0;group<question.groups;group++) {
         const wrapper=element('div','learn-equal-group');wrapper.append(element('p','',`Group ${group+1}`),frame(question.each));frames.append(wrapper);
       }
-    }else if(countMode==='add'){frames.classList.add('learn-add-frames');frames.append(frame(question.left),element('span','learn-count-plus','+'),frame(question.right));}else frames.append(frame(question.answer));
+    }else if(countMode==='add'){
+      frames.classList.add('learn-add-frames');if(question.operands.length===3)frames.classList.add('learn-three-addends');
+      question.operands.forEach((amount,i)=>{if(i)frames.append(element('span','learn-count-plus','+'));frames.append(frame(amount));});
+    }else frames.append(frame(question.answer));
     card.append(frames,element('p','learn-count-hint',question.answer===0?'An empty group has zero things.':'Tip: tap each dot as you count.'));
     const answers=element('div','learn-answers');answers.setAttribute('role','group');answers.setAttribute('aria-label','Choose your answer');
-    const choiceCount=profile.tier==='little'?3:4,values=new Set([question.answer]);
+    const choiceCount=profile.choiceCount,values=new Set([question.answer]);
     for(let distance=1;values.size<choiceCount;distance++) {
       for(const candidate of [question.answer-distance,question.answer+distance])if(candidate>=0&&candidate<=profile.numberMax&&values.size<choiceCount)values.add(candidate);
     }
@@ -266,32 +271,41 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     countButtons=choices.map(value=>{
       const answer=button(String(value),'learn-answer',()=>{
         if(countAnswered)return;
-        if(value===question.answer){countAnswered=true;answer.classList.add('is-correct');countButtons.forEach(button=>button.disabled=true);mark(`${countMode}:${question.answer}`);updateStatus(`${value} — you found it! ${countMode==='add'?`${question.left} + ${question.right} = ${value}.`:countMode==='groups'?`${question.groups} × ${question.each} = ${value}.`:'Great counting.'}`,true);}
-        else{answer.disabled=true;answer.classList.add('is-retry');updateStatus('Let’s count together. Tap the dots one by one, then try another number.');}
+        if(value===question.answer){countAnswered=true;answer.classList.add('is-correct');countButtons.forEach(button=>button.disabled=true);mark(`${countMode}:${question.answer}`);updateStatus(`${value} — you found it! ${countMode==='add'?`${question.operands.join(' + ')} = ${value}.`:countMode==='groups'?`${question.groups} × ${question.each} = ${value}.`:'One dot for each count — that is the whole group.'}`,true);}
+        else{answer.classList.add('is-retry');updateStatus(`You chose ${value}. ${question.strategy} Use Show counting steps, then try another number.`);}
       });answer.setAttribute('aria-label',`Answer ${value}`);if(countAnswered){answer.disabled=true;answer.classList.toggle('is-correct',value===question.answer);}answers.append(answer);return answer;
     });card.append(answers);
     status=element('p','learn-feedback');status.setAttribute('role','status');status.setAttribute('aria-live','polite');card.append(status);
     updateStatus(countAnswered?`${question.answer} — you found it! Great counting.`:'Choose a number. There’s plenty of time.',countAnswered);
-    card.append(button('Next puzzle →','button button-primary learn-next-puzzle',nextCount));
-    const help=element('div','learn-help');help.append(element('span','learn-help-icon','✿'),element('h2','','Numbers are everywhere'),element('p','',countMode==='groups'?'Each group has the same number. Try counting by groups, then tap every dot to check your total.':countMode==='add'?'Count the first group. Count the second group. How many are there altogether?':'Touch one dot for each number you say. The last number tells you how many.'));
-    if(getSettings().sound&&'speechSynthesis' in window)help.append(button('♪ Read the question','button',()=>speak(question.spoken)));
+    card.append(button('Show counting steps','button learn-count-coach',hint),button('Next puzzle →','button button-primary learn-next-puzzle',nextCount));
+    const help=element('div','learn-help');help.append(element('span','learn-help-icon','✿'),element('h2','','Numbers are everywhere'),element('p','',countMode==='groups'?'Each group has the same number. Try counting by groups, then tap every dot to check your total.':countMode==='add'?question.operands.length===3?'Count the first two groups together. Then count on with the third group. How many are there altogether?':'Count the first group. Count the second group. How many are there altogether?':'Touch one dot for each number you say. The last number tells you how many.'));
+    help.append(speechButton('♪ Read the question',()=>speak(question.spoken)));
     side.append(help);
-    const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${profile.numberMax}`),element('p','',`Gentle practice for ${profile.name.toLowerCase()}. Change the practice level from Home whenever you like.`));side.append(range);
+    const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${profile.numberMax}`),element('p','',profile.challengeAge<=4?'Explore together: point and count with a grown-up. Every picture and hint is here to help.':`Practice for age ${profile.challengeAge}. A strategy matters more than speed. Use the help or adjust this activity whenever you like.`));side.append(range);
     side.append(button('Try writing a number →','button',()=>{set='nums';index=Math.min(countValue,9);pageMode='trace';ink=[];done=false;render();}));
     layout.append(card,side);body.append(layout);
   }
   function open(requestedKind='letters',options={}) {
     profile=getProfile(getSettings());opened=true;kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
-    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=profile.tier==='little'?0:profile.tier==='maker'?8:3;countRound=0;countAnswered=false;countMarked.clear();}
+    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];countRound=0;countAnswered=false;countMarked.clear();}
     else{set=SETS.some(([value])=>value===profile.defaultSet)?profile.defaultSet:'upper';index=0;pageMode='trace';}
     if(SETS.some(([value])=>value===options.set)){set=options.set;index=0;pageMode='trace';}
     if(kind==='numbers'&&['count','add','groups'].includes(options.mode)){countMode=options.mode;pageMode='count';}
     ink=[];done=false;render();report();
   }
   function close() {opened=false;clearTransient();}
-  function settingsChanged() {
-    profile=getProfile(getSettings());if(!opened)return;
-    countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();done=false;render();
+  function hint() {
+    if(!opened)return;
+    if(pageMode==='trace'){showDemo();return;}
+    if(countAnswered||!countQuestion)return;
+    countMarked.clear();container.querySelectorAll('.learn-count-dot').forEach((dot,i)=>{countMarked.set(i,i+1);dot.textContent=String(i+1);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${i+1}`);});
+    updateStatus(`${countQuestion.strategy} ${countQuestion.answer?`The last dot is ${countQuestion.answer}.`:'Zero means none.'}`);
   }
-  return {open,close,settingsChanged};
+  function settingsChanged() {
+    const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;
+    if(changed){countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();done=false;render();}
+    else container.querySelectorAll('[data-learning-speech]').forEach(node=>node.hidden=!getSettings().sound||!canSpeak());
+    if(!getSettings().sound)stopSpeech();
+  }
+  return {open,close,settingsChanged,hint};
 }
