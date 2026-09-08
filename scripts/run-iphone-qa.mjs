@@ -27,6 +27,21 @@ const testSources = [
   'DoodleFunUITests/DoodleFunUITests.swift', 'DoodleFunUITests/ActivityCatalogUITests.swift',
   'DoodleFunUITests/DrawingRecoveryUITests.swift', 'DoodleFunUITests/TracingGestureUITests.swift',
 ];
+// Xcode silently ignores unknown method filters; fail before preparing a run
+// so a typo cannot be mistaken for completed coverage.
+const testSourceText = (await Promise.all(testSources.map(file =>
+  readFile(path.join(root, 'ios', file), 'utf8')
+))).join('\n');
+for (let i = 0; i < args.length; i++) {
+  if (args[i] !== '--only' && args[i] !== '--skip') continue;
+  const selection = args[++i];
+  if (!selection) throw new Error('A test target/class/method is required after --only or --skip.');
+  const method = selection.split('/')[2]?.replace(/\(\)$/, '');
+  if (method && (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(method) ||
+      !new RegExp(`\\bfunc\\s+${method}\\s*\\(`).test(testSourceText))) {
+    throw new Error(`Unknown native test method: ${selection}`);
+  }
+}
 const testSourceSHA256 = Object.fromEntries(await Promise.all(testSources.map(async file =>
   [file, sha(await readFile(path.join(root, 'ios', file)))]
 )));
