@@ -1,73 +1,53 @@
-# Activity catalog and independent acceptance checklist
+# Thirty activity acceptance checklist
 
-This is the acceptance checklist for the 24 activity choices, not a record of passed tests. Record actual run results separately. Every home card must launch its named activity in the delivered preview before its internal checks count as complete. Support adjustments were checked against `catalog.js`, `core.js`, `draw.js`, `learning.js`, `learning-data.js`, `discovery.js`, and `challenges.js` on 6 September 2026.
+The current library has 30 visible activity choices. Individual letters, coloring pages and puzzle rounds are practice content within an activity. This checklist describes required behavior; completed results belong in [the QA report](qa-report.md).
 
-Age is a suggested starting point. The support profiles are **Little learner** (normally ages 2–4), **Explorer** (5–7), and **Big thinker** (8–10); adults can choose support independently of age. No activity is age-locked. Some early reading and arithmetic activities need a grown-up's help for younger children even at the easiest setting. Completion records practice, not a developmental or academic assessment.
+The [coached play review](coached-play-review.md) records each activity's age-fit assessment and the nine starting configurations. All activities stay available; literacy and arithmetic at ages 2–4 are shared exploration with visible support.
 
-## Meaningful choice
+| Activity | Direct route | Learning purpose | Engine |
+| --- | --- | --- | --- |
+| Doodle studio | `#draw` | Creative expression | drawing |
+| Color & create | `#coloring` | Color & fine motor play | drawing |
+| Line & shape trails | `#prewriting` | Control & coordination | learning |
+| Big letter trails | `#uppercase` | Uppercase handwriting | learning |
+| Little letter trails | `#lowercase` | Lowercase handwriting | learning |
+| Word trails | `#word-tracing` | Word handwriting | learning |
+| Number trails | `#number-tracing` | Numeral formation | learning |
+| Count with me | `#counting` | One-to-one counting | learning |
+| Add together | `#addition` | Adding with objects | learning |
+| Equal groups | `#equal-groups` | Repeated equal quantities | learning |
+| Shape detective | `#shape-match` | Shape recognition | discovery |
+| Color buddies | `#color-match` | Color recognition | discovery |
+| Pattern parade | `#patterns` | Patterns & prediction | discovery |
+| Sort it out | `#sorting` | Classifying & grouping | discovery |
+| Spot the difference | `#odd-one-out` | Observe & compare | discovery |
+| Memory garden | `#memory` | Visual memory | discovery |
+| Little pathfinder | `#maze` | Planning & spatial thinking | discovery |
+| More, less, same | `#compare` | Comparing quantities | challenges |
+| Number stepping stones | `#number-order` | Number sequences | challenges |
+| Take away | `#subtraction` | Subtracting with objects | challenges |
+| Missing number | `#number-bonds` | Part–whole relationships | challenges |
+| Fill the frame | `#ten-frame` | Five & ten structure | challenges |
+| Letter buddies | `#letter-match` | Letter case recognition | challenges |
+| Build a word | `#word-build` | Letter order & spelling | challenges |
+| Growing garden | `#size-order` | Size & ordering | adventures |
+| Story steps | `#picture-sequence` | Sequence & explain | adventures |
+| Follow the arrows | `#directions` | Directions & planning | adventures |
+| Shape builder | `#make-a-shape` | Geometry & spatial reasoning | adventures |
+| Tap the pattern | `#rhythm` | Sequence memory | adventures |
+| Fair shares | `#sharing` | Sharing & remainders | adventures |
 
-The catalog contains creative work, several distinct tracing sets, number reasoning, visual reasoning, and memory/navigation. Call these **24 activities**: the tracing sets share a drawing mechanic while addressing different symbols and purposes. Shape matching, sorting, and odd-one-out must differ in what the child does: find one matching shape, classify several objects, and identify the exception to a stated property. Counting, ten-frames, and number bonds must respectively connect objects to quantity, expose five/ten structure, and connect a whole with its parts.
+## Completion and recovery
 
-Open creative activity remains available without correctness scoring. Optional prompts give older children richer purposes such as patterns, symmetry, design, and storytelling. Primary educational guidance and its limits are documented in [Age, activity, and touch guidance](age-guidance.md), including [NAEYC's guidance on individual differences](https://www.naeyc.org/node/3812) and [kindergarten counting](https://www.thecorestandards.org/Math/Content/K/CC/).
+- Tracing: a full real path must pass; taps, disconnected marks and excessive scribbling must not. Check every separate stroke and all 76 practice items. Rounded guides, demonstrations and validation must use the same geometry.
+- Number and word puzzles: require the requested mathematical relationship or complete ordered word, preserve duplicate letter tiles, and keep retries available. A hint must teach the current step. Older inverse questions need matching instructions.
+- Discovery: one valid match/exception, accurate categories, complete card pairs, and connected mazes. Mismatches remain visible until the child is ready. Undo must not grant duplicate maze credit.
+- Adventures: size labels must not reveal the answer; stories follow the stated order; directions stay on the board; both perimeter directions can build a shape; visual beats are untimed; fair shares require equal amounts and correct leftovers.
+- Creative activities: pen, eraser, fill, stamps, all nine coloring pages, bounded undo/redo, reload recovery and full-resolution PNG export remain available. Color is a creative choice, never a pass/fail criterion.
+- Coaching: every activity has useful starting, strategy, conversation and real-object prompts. Per-game support persists independently. Sound toggles preserve work and hints.
 
-## Verified shared support settings
+## Launch and device gate
 
-Values below were read from implementation. They describe assistance settings rather than scientifically validated difficulty thresholds.
+Click every card from home in the actual release bundle. Verify the named activity, complete a meaningful round, return home and reopen. Cover ages 2 through 10 in the gameplay suites, and phone/tablet portrait/landscape in the layout suite. Check 48-pixel child controls, scrolling, error-free navigation and no page-level horizontal overflow.
 
-| Setting | Little learner | Explorer | Big thinker |
-|---|---|---|---|
-| Drawing default brush; available sizes | 28; 14, 28, 44 | 14; 6, 14, 28 | 7; 3, 7, 14, 28 |
-| Visible paint colors | 8 | 12 | 15 |
-| Tracing distance tolerance, relative to square board | 0.065 | 0.045 | 0.032 |
-| Required target coverage / ink precision | 72% / 50% | 80% / 60% | 88% / 70% |
-| Counting/addition maximum | 5 | 10 | 20 |
-
-Word tracing multiplies the distance tolerance by 0.55 because letters are smaller. Tracing also checks actual travel along each guide, ignores stationary marks when measuring long-path coverage, and rejects excessive ink. These are practice checks; no timer or prescribed stroke order determines success.
-
-## Activity-by-activity checks
-
-“Pass” in this table means the condition that a tester must demonstrate. It does not mean the condition has already passed.
-
-| Activity | Learning objective | Actual support adjustments | Completion criteria |
-|---|---|---|---|
-| 1. Doodle studio (`draw`) | Explore marks, tools, and visual storytelling. | Shared brush/color settings; five prompts per profile progress from dots/faces to scenes/patterns and then design/storytelling. | Pen, eraser, fill, and stamps each work. Undo/redo restores one action. Rotation, home/return, reload, and PNG export preserve the intended picture. Blank paper and optional prompts are both available; artwork is not graded. |
-| 2. Color & create (`coloring`) | Explore color and intentional placement within a picture. | Same brush/color support. All nine templates stay available; Little learner lists Sunshine, Fish, and Flower first. Template geometry is shared across profiles. | Open all nine pages, select and fill a closed region, undo it, and export. Cancelling replacement preserves the old picture. Verify boundaries, background, and small regions; do not require a fixed palette or full completion. |
-| 3. Line & shape trails (`prewriting`) | Practice directional marks, curves, and simple shapes. | Eight paths for every profile; shared tracing tolerance/coverage settings. This is the Little learner default writing set when opening the general writing area. | Every full guide can complete; blank taps and unrelated scribbling cannot. Down, across, circle, cross, square, triangle, waves, and zigzag remain inside the board. Demonstration stops on navigation. |
-| 4. Big letter trails (`uppercase`) | Practice recognizable capital letter forms. | All 26 capitals; shared tracing settings. Explorer's default set in the general writing area. | Test all capitals; full paths succeed and omitted essential parts fail. A/B/D/F/P/R shared starts must not hide start labels. Retry and previous/next work at both ends of the set. |
-| 5. Little letter trails (`lowercase`) | Practice lowercase bodies, ascenders, descenders, and dots. | All 26 lowercase letters; shared tracing settings. | Test all letters, especially b/d, i/j, and g/j/p/q/y. No descender clips the board. Target form, start markers, demonstration, and feedback agree. |
-| 6. Word trails (`word-tracing`) | Combine letter formation into a short familiar word. | Six three-letter words at every profile; reduced word-scale tolerance. Big thinker's default set in the general writing area. | Complete cat, sun, dog, map, box, and red. Missing a letter must fail. Word guide lines align with the scaled letters; all markers remain legible. Younger children may copy the visible model with adult support. |
-| 7. Number trails (`number-tracing`) | Practice numeral forms separately from knowing a quantity. | Digits 0–9 remain available at every profile; shared tracing support. Counting maxima do not remove digit choices. | Full 0–9 guides succeed; absent curves/crossbars cannot pass. Zero's caption describes an empty group. This screen must open directly when its card is chosen. |
-| 8. Count with me (`counting`) | Connect each counted object with one number and a total. | Ranges 0–5 / 0–10 / 0–20; 3 / 4 / 4 answer choices. Each dot can be marked once and retains its tap ordinal. | Include zero and every range endpoint. Displayed quantity equals the answer. Repeated taps cannot increase the count; switching panels preserves ordinals. An incorrect answer permits retry; a correct answer cannot award twice. |
-| 9. Add together (`addition`) | Combine two groups to find a total. | Same 5 / 10 / 20 maximum and answer-choice support; operands vary with the round. | Both visible groups sum to the printed/spoken answer, including zero operands. Test multiple decompositions of a total, one wrong answer, the correct answer, and next puzzle. |
-| 10. Equal groups (`equal-groups`) | Connect equal-size groups with a total. | Enumerates 2–4 groups of 1–5 objects, restricted by profile maximum 5 / 10 / 20. | Every group has the stated size; total equals groups × size. Test all permitted combinations, tap order across groups, and retry. Younger children may count the objects individually. |
-| 11. Shape detective (`shape-match`) | Find a shape by its defining form. | 3 / 4 / 6 choices from pools of 3 / 6 / 8 shapes. Little learner sees a model; older profiles get a name and shape-property clue. | Picture/clue and choices use an unambiguous rule. Exactly one option matches; neither size nor color accidentally changes correctness. Test every shape, wrong/correct/next, and profile extremes. |
-| 12. Color buddies (`color-match`) | Notice and match a presented color. | 3 / 4 / 6 choices from 6 / 8 / 10 named colors. Target swatch and color names stay visible. | Exactly one choice matches the target. Labels support children using names rather than hue discrimination; correct/incorrect feedback is not conveyed by color alone. Test every named color. |
-| 13. Pattern parade (`patterns`) | Predict the next item from a repeating rule. | Little learner: AB with 4–5 shown items and 3 choices. Explorer: AB/AAB/ABC with two repetitions and 4 choices. Big thinker: AAB/ABC/AABB/ABBC with two repetitions and 4 choices. | Each sequence shows enough repetitions to identify its rule; exactly one continuation is correct. Check every pattern form, answer permutations, and next round. |
-| 14. Sort it out (`sorting`) | Classify multiple objects by one stated attribute. | 6 items in 2 animal/fruit categories; 9 items in 3 animal/fruit/vehicle categories; 9 vehicles classified by land/air/water travel. Tap an item, then a basket. | The rule and destinations are visible. Every item belongs to one offered category and is depicted accurately. Completion requires sorting all items once; wrong baskets and already-sorted items cannot corrupt progress. |
-| 15. Spot the difference (`odd-one-out`) | Identify the exception to an explicit property. | Little learner: color, 3 cards. Explorer: alternating color/shape, 4 cards. Big thinker: alternating shape/dot-count, 6 cards. The requested property is named. | Exactly one item breaks the stated property; incidental differences do not make another answer equally defensible. Test each property and answer position. |
-| 16. Memory garden (`memory`) | Remember where matching pictures are hidden. | 2 / 4 / 6 pairs, meaning 4 / 8 / 12 cards. An unmatched pair remains visible until the child chooses “Turn them over.” | Board contains exact pairs. A card cannot match itself; a third flip cannot interfere with an unresolved pair. Matched pairs stay found, explicit mismatch reset works, and completion requires every pair. |
-| 17. Little pathfinder (`maze`) | Plan and follow a route through a spatial problem. | 4×4 / 5×5 / 6×6 boards; connected maze, farthest reachable goal, highlighted legal neighbors, arrows, and one-step undo for every profile. | Start and destination are clear. Generated mazes are solvable. Walls, row-wrap, and off-board moves do nothing; valid moves work by tap/keyboard. Reaching the goal completes once, including after undo. No time limit. |
-| 18. More, less, same (`compare`) | Relate quantities as more, fewer, or equal. | Quantities 0–5 / 0–10 / 0–20 with visible dots and numerals. Little learner asks for more; older profiles alternate more/fewer. All include equal cases and a “Same amount” choice. | Visual groups and symbols agree. Include equal values and both unequal directions; correctness follows the requested relationship. A tied comparison must accept equality. |
-| 19. Number stepping stones (`number-order`) | Put numbers in an increasing sequence. | 3 / 5 / 6 tiles; Big thinker alternates consecutive numbers with steps of two. Little learner sees the full slot model and a next-number hint. Ranges remain inside 0–5 / 0–10 / 0–20. | Direction is explicit; tiles are unique. All ordered items are required. A wrong selection leaves the remaining sequence intact. Test zero, the maximum, and both maker sequence types. |
-| 20. Take away (`subtraction`) | Understand taking away and the amount remaining. | Starts of 3–5 / 5–10 / 12–20. Youngest removes 1–2 or all objects; older profiles can remove any generated amount from zero through the start. Crossed-out pictures remain visible. | Removed and remaining objects are distinct. Operands and result agree and stay nonnegative. Include taking away all, taking away none where generated, an incorrect answer, and retry. |
-| 21. Missing number (`number-bonds`) | Find a missing part of a known whole. | Totals 3–5 / 6–10 / 11–20. Concrete filled/empty-dot hint is shown initially for Little learner and available on demand for every profile. Numeric choices: 3 / 4 / 4. | Whole = shown part + missing part. Whole/part diagram and hint agree. Include zero parts and an incorrect attempt; opening a hint must not award completion. |
-| 22. Fill the frame (`ten-frame`) | Construct quantities using five/ten structure. | A five-cell row / ten-cell frame / two ten-cell frames. Target cycles cover 0–5 / 0–10 / 0–20. Cells toggle; live count and explicit Check support self-correction. | Rows have five cells, with ten in each full ten-frame. Count and target agree. Check zero, five, ten, and twenty where supported; test overfill and taking a dot away. Dispersed cells must not trigger a false claim that a frame is full. |
-| 23. Letter buddies (`letter-match`) | Connect uppercase and lowercase forms. | 2 / 4 / 6 pairs. Youngest cards include their opposite-case model; maker order emphasizes potentially confusable b/d/p/q/m/n forms. | Every uppercase has one lowercase partner. Choices are unique; either side can be selected first. Wrong pairs reset selection, matched pairs stay disabled, and all pairs are required for completion. |
-| 24. Build a word (`word-build`) | Construct a modeled or pictured word from letters. | 3-letter words / 4-letter words / 5–6-letter words. Little learner sees model and letter-filled slots; others can reveal a hint, which also appears after an incorrect choice. Picture and clue accompany the word. | Every required tile exists with correct multiplicity, including moon/apple/rabbit repeated letters. Wrong tiles leave slots intact; correct tiles become used once. Retry restarts cleanly. Younger children can copy the visible model with adult/read-aloud support. |
-
-## Launch and recovery gate
-
-1. Use the actual delivered preview, then the normal local HTTP entry point, with a fresh browser profile. Click each of the 24 visible cards; do not substitute direct route manipulation for this test.
-2. For every card, wait for its distinctive heading and usable first control, perform one meaningful interaction, return home, and launch the next card. A correct URL alone is insufficient.
-3. Repeat at ages 2, 4, 5, 7, 8, and 10 and with an explicit support override. Check the selected profile survives age changes when a manual override is intended. Direct-load and reload each supported activity route as a separate check.
-4. Exercise back/forward, repeat clicks, and failed initial/asset requests. Where loading is asynchronous, a stale result must not hide the current activity. Required scripts must resolve to executable JavaScript with the correct content type in the delivered environment. Check both the normal served build and any standalone preview artifact actually delivered.
-5. At 320/390-pixel phone widths, phone landscape, and iPad portrait/landscape, verify all controls remain reachable, page scrolling works, dialogs close, and content does not overflow horizontally. Actual iPhone/iPad safe areas, Safari, Pencil, and VoiceOver remain physical-device checks.
-6. Test unavailable/full storage and malformed saved values. Gameplay remains usable, a failed write preserves the latest current-session state, and notices accurately describe persistence limits.
-
-## Cross-activity review risks
-
-- **Reading burden:** a short sentence does not make a task nonreading. Youngest practice needs a visible model or concrete demonstration, recognisable symbols, and optional grown-up/read-aloud help. Verify picture meaning; do not label unfamiliar or ambiguous emoji as self-explanatory.
-- **Ambiguous correctness:** inspect every generated answer, not just one random round. Category overlap, equal comparisons, multiple possible pattern rules, repeated letters, and repeated shape/color options need explicit handling.
-- **Difficulty meaning:** vary memory load, number range, sequence rule, or reasoning demand. Smaller hit targets and denser typography are not educational progression.
-- **Motor access:** use large tap choices for menus and puzzles. Continuous drawing is intrinsic to tracing; sorting, word building, ordering, and maze navigation must not depend solely on precision dragging.
-- **Honest reporting:** record completed test cases, browser/viewport, date, exact served version, and remaining device limitations. Previous green tests do not establish that a newly delivered preview launches correctly.
+Repeat entry with the network disconnected, open the standalone HTML without a server, and stop the actual HTTP server before reloading the cached app. Verify committed Pages files, dist files and native bundled HTML are identical. On iOS, exercise the real Save/share/cancel flow and app relaunch; physical Pencil and VoiceOver checks remain separate from simulator tests.
