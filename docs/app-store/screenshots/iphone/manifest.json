@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "family": "iphone",
+  "sourceBundle": {
+    "fingerprint": "05facec229a9211d",
+    "sha256": "f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9"
+  },
+  "nativeSourceSHA256": {
+    "DoodleFunApp.swift": "c0fd1e348ec1df5bd1db3f20378b5e670fce8ff9da07159bd38e7f67db9ebf4a",
+    "DoodleViewController.swift": "c0c934d610249ce37dacb9b4f0f3a85ec31868060cd847513fb9b8963fa3d2f9",
+    "Info.plist": "911413069e45a69a68ae5dca0f3d6f6f0d16bb6731243a9993d3d9dc74775824",
+    "NativeBridgePolicy.swift": "7e507c76dab630a74d5493cdac70ec95229241a2ac2bcafde534a68868369506",
+    "PrivacyInfo.xcprivacy": "a38c9f3ae98f05056b9a49a459b034089d02e5b7f62c2c15e8d4d6ef772d1b1a"
+  },
+  "sourceProjectSHA256": "bd176defe8efbb0185dc1f6a46249abc36317269bc03e885c9daffd54b56a445",
+  "captureSourceSHA256": "930c1f2d5439839dadc7ea1dfec2d6a45165dd3b7741f9e363df9489f74fae9b",
+  "device": {
+    "name": "Doodle App Store iPhone",
+    "udid": "891D238F-4A0F-4CF1-9514-0915C4E64EE5",
+    "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max",
+    "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5"
+  },
+  "method": "Actual bundled native app, XCUI taps and finger drags, XCUIScreen.main.screenshot. Original PNG bytes; no crop, resize, compositing, or generated imagery.",
+  "captureResult": "capture-2026-09-08T22-51-56-537Z.xcresult",
+  "attachmentDirectory": "attachments-SpDAXo",
+  "preparedAt": "2026-09-08T22:51:56.537Z",
+  "age": 6,
+  "statusBar": "9:41, full Wi-Fi, 100% battery (simulator override)",
+  "reproducibility": "The scene flow is reproducible. Pattern token selection follows the app’s normal random generator, so exact picture choices can differ on a rerun.",
+  "screenshots": [
+    {
+      "id": "01-library",
+      "title": "A library of 30 activities",
+      "interaction": "Select age 6 using the home age control.",
+      "file": "01-library.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "sha256": "633f5874663c521312198d4c17c7dc1d120bf431a6eeebc21b639a62ce95172f",
+      "attachment": "4CBB0C1D-7D91-489C-A8EF-557B7DD581CE.png",
+      "capturedAt": "2026-09-08T22:53:37.599Z"
+    },
+    {
+      "id": "02-coloring",
+      "title": "Color and create",
+      "interaction": "Open Color & create, choose Rainbow, select six colors and fill six enclosed bands with native taps.",
+      "file": "02-coloring.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "sha256": "32ad0f47dde5e593bfd1e2ed0be6c848bd2f390204486211117cf6b6b3d29708",
+      "attachment": "9A9055CC-7A46-4F57-9A5F-0890BAD3C2DE.png",
+      "capturedAt": "2026-09-08T22:54:11.574Z"
+    },
+    {
+      "id": "03-tracing",
+      "title": "Practice letter paths",
+      "interaction": "Open Big letter trails and trace A’s three numbered paths with trusted native finger drags on the visible guide.",
+      "file": "03-tracing.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "sha256": "e2505ffcc27bc7698b53f6cdb32522c8dd053ed63d1361b2d82a854fccd047aa",
+      "attachment": "42C94185-0AB8-442A-B173-B93DC728AE0D.png",
+      "capturedAt": "2026-09-08T22:54:21.962Z"
+    },
+    {
+      "id": "04-patterns",
+      "title": "Notice what repeats",
+      "interaction": "Open Pattern parade and move to the third age-6 round, an ABC repeating pattern.",
+      "file": "04-patterns.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "sha256": "81281bdc932953d225ebf903181cf34369f544b86bbf8e17ee0c0b6782bd690f",
+      "attachment": "2361F6CD-89E7-41FA-B580-4B441F5DC671.png",
+      "capturedAt": "2026-09-08T22:54:42.068Z"
+    },
+    {
+      "id": "05-coach",
+      "title": "A little help along the way",
+      "interaction": "Open the visible Coach control for Pattern parade.",
+      "file": "05-coach.png",
+      "width": 1320,
+      "height": 2868,
+      "alpha": false,
+      "sha256": "0fe6b1003287f082671bb242ef4501214eb2e9c2128266476e37225548b052c1",
+      "attachment": "703D0B81-3022-4901-87E0-208198ECD6FA.png",
+      "capturedAt": "2026-09-08T22:54:46.018Z"
+    }
+  ]
+}

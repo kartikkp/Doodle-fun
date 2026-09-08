@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "family": "ipad",
+  "sourceBundle": {
+    "fingerprint": "05facec229a9211d",
+    "sha256": "f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9"
+  },
+  "nativeSourceSHA256": {
+    "DoodleFunApp.swift": "c0fd1e348ec1df5bd1db3f20378b5e670fce8ff9da07159bd38e7f67db9ebf4a",
+    "DoodleViewController.swift": "c0c934d610249ce37dacb9b4f0f3a85ec31868060cd847513fb9b8963fa3d2f9",
+    "Info.plist": "911413069e45a69a68ae5dca0f3d6f6f0d16bb6731243a9993d3d9dc74775824",
+    "NativeBridgePolicy.swift": "7e507c76dab630a74d5493cdac70ec95229241a2ac2bcafde534a68868369506",
+    "PrivacyInfo.xcprivacy": "a38c9f3ae98f05056b9a49a459b034089d02e5b7f62c2c15e8d4d6ef772d1b1a"
+  },
+  "sourceProjectSHA256": "bd176defe8efbb0185dc1f6a46249abc36317269bc03e885c9daffd54b56a445",
+  "captureSourceSHA256": "930c1f2d5439839dadc7ea1dfec2d6a45165dd3b7741f9e363df9489f74fae9b",
+  "device": {
+    "name": "Doodle App Store iPad",
+    "udid": "75FB53FE-B47A-41C0-9677-4861214B0986",
+    "deviceTypeIdentifier": "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB",
+    "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-5"
+  },
+  "method": "Actual bundled native app, XCUI taps and finger drags, XCUIScreen.main.screenshot. Original PNG bytes; no crop, resize, compositing, or generated imagery.",
+  "captureResult": "capture-2026-09-08T22-56-17-918Z.xcresult",
+  "attachmentDirectory": "attachments-LDZzYk",
+  "preparedAt": "2026-09-08T22:56:17.918Z",
+  "age": 6,
+  "statusBar": "9:41, full Wi-Fi, 100% battery (simulator override)",
+  "reproducibility": "The scene flow is reproducible. Pattern token selection follows the app’s normal random generator, so exact picture choices can differ on a rerun.",
+  "screenshots": [
+    {
+      "id": "01-library",
+      "title": "A library of 30 activities",
+      "interaction": "Select age 6 using the home age control.",
+      "file": "01-library.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "sha256": "9dfa0df8dd25ae52f63cbdef77f3a3235744c374fa45d7c436b0d090e6be383e",
+      "attachment": "ED1EDA5B-8886-479F-B7B8-0BD8845911A2.png",
+      "capturedAt": "2026-09-08T22:57:13.136Z"
+    },
+    {
+      "id": "02-coloring",
+      "title": "Color and create",
+      "interaction": "Open Color & create, choose Rainbow, select six colors and fill six enclosed bands with native taps.",
+      "file": "02-coloring.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "sha256": "c3ea562b9745e2696723fc96a098a4ec41c94018e57ced421275bae3d83f2faa",
+      "attachment": "F3D7148A-C802-4777-ACD2-C560025F5407.png",
+      "capturedAt": "2026-09-08T22:57:45.040Z"
+    },
+    {
+      "id": "03-tracing",
+      "title": "Practice letter paths",
+      "interaction": "Open Big letter trails and trace A’s three numbered paths with trusted native finger drags on the visible guide.",
+      "file": "03-tracing.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "sha256": "526da793e04cc73e94fcee3820a053e8fac79a725d31e1021ff68e9eeccab97e",
+      "attachment": "E0E2E09E-1299-475F-8E7C-17BA202A1DFC.png",
+      "capturedAt": "2026-09-08T22:57:56.561Z"
+    },
+    {
+      "id": "04-patterns",
+      "title": "Notice what repeats",
+      "interaction": "Open Pattern parade and move to the third age-6 round, an ABC repeating pattern.",
+      "file": "04-patterns.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "sha256": "e3ed52cf8256d59b74a241f18a5766221e53dcdd457c26ad55f898ff45cd5c4e",
+      "attachment": "C7A71865-5738-4191-BC68-D0FE26301449.png",
+      "capturedAt": "2026-09-08T22:58:15.145Z"
+    },
+    {
+      "id": "05-coach",
+      "title": "A little help along the way",
+      "interaction": "Open the visible Coach control for Pattern parade.",
+      "file": "05-coach.png",
+      "width": 2064,
+      "height": 2752,
+      "alpha": false,
+      "sha256": "1587a45dafa4f6e62c388a1b305cb9617a88e775282232a64013526bd720c5c8",
+      "attachment": "1B72F1A3-E071-4921-971B-B7454E6BB276.png",
+      "capturedAt": "2026-09-08T22:58:18.801Z"
+    }
+  ]
+}
