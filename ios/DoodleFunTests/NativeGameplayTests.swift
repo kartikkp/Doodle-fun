@@ -15,7 +15,7 @@ class NativeGameplayCase: XCTestCase {
         var errorDescription: String? { message }
     }
 
-    private func loadReady(_ controller: DoodleViewController, label: String, action: () -> Void) async throws {
+    fileprivate func loadReady(_ controller: DoodleViewController, label: String, action: () -> Void) async throws {
         let ready = expectation(description: label)
         var loaded = false
         controller.onContentReady = { [weak controller] in
@@ -28,7 +28,7 @@ class NativeGameplayCase: XCTestCase {
         guard loaded else { throw GameplayError(message: "Timed out waiting for \(label)") }
     }
 
-    private func evaluate(_ script: String, in webView: WKWebView, label: String) async throws -> Any {
+    fileprivate func evaluate(_ script: String, in webView: WKWebView, label: String) async throws -> Any {
         let finished = expectation(description: label)
         var result: Result<Any, Error>?
         webView.evaluateJavaScript(script) { value, error in
@@ -40,7 +40,7 @@ class NativeGameplayCase: XCTestCase {
         return try result.get()
     }
 
-    private func attachReport(_ report: [String: Any], name: String) {
+    fileprivate func attachReport(_ report: [String: Any], name: String) {
         guard let data = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) else { return }
         let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
         attachment.name = name
@@ -48,7 +48,7 @@ class NativeGameplayCase: XCTestCase {
         add(attachment)
     }
 
-    private func nativeGeometry(_ controller: DoodleViewController, window: UIWindow) -> [String: Any] {
+    fileprivate func nativeGeometry(_ controller: DoodleViewController, window: UIWindow) -> [String: Any] {
         window.layoutIfNeeded()
         controller.view.layoutIfNeeded()
         controller.webView.layoutIfNeeded()
@@ -437,4 +437,176 @@ final class NativeGameplayAge10Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 10) }
     func testRhythm() async throws { try await exercise("rhythm", age: 10) }
     func testSharing() async throws { try await exercise("sharing", age: 10) }
+}
+
+// Uses UIKit's public geometry request, then measures both native layout and
+// CSS env() in the packaged page. This is a layout test, not a touch simulation.
+final class NativeLayoutTests: NativeGameplayCase {
+    private struct LayoutError: LocalizedError {
+        let message: String
+        var errorDescription: String? { message }
+    }
+
+    private func orient(_ orientation: UIInterfaceOrientation, scene: UIWindowScene, controller: DoodleViewController, window: UIWindow) async throws {
+        let mask: UIInterfaceOrientationMask = orientation == .portrait ? .portrait : .landscapeLeft
+        var requestError: Error?
+        controller.setNeedsUpdateOfSupportedInterfaceOrientations()
+        scene.requestGeometryUpdate(.iOS(interfaceOrientations: mask)) { requestError = $0 }
+        let deadline = Date().addingTimeInterval(12)
+        while Date() < deadline {
+            if let requestError { throw requestError }
+            window.layoutIfNeeded()
+            controller.view.layoutIfNeeded()
+            let isLandscape = window.bounds.width > window.bounds.height
+            if scene.interfaceOrientation == orientation && isLandscape == orientation.isLandscape {
+                // UIKit can report the orientation before its transition ends.
+                if controller.transitionCoordinator == nil {
+                    try await Task.sleep(nanoseconds: 100_000_000)
+                    window.layoutIfNeeded()
+                    controller.view.layoutIfNeeded()
+                    if scene.interfaceOrientation == orientation && (window.bounds.width > window.bounds.height) == orientation.isLandscape { return }
+                }
+            }
+            try await Task.sleep(nanoseconds: 50_000_000)
+        }
+        throw LayoutError(message: "Geometry request did not reach \(orientation.rawValue); actual orientation \(scene.interfaceOrientation.rawValue), bounds \(window.bounds)")
+    }
+
+    func testLandscapeSafeAreasAndLowerActivityControls() async throws {
+        guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first(where: { $0.activationState == .foregroundActive }) else {
+            throw LayoutError(message: "A foreground UIWindowScene is required for real geometry updates")
+        }
+        let controller = DoodleViewController()
+        let window = UIWindow(windowScene: scene)
+        window.frame = scene.coordinateSpace.bounds
+        var report: [String: Any] = ["test": "landscape safe areas and lower controls", "age": 6, "interaction": "Public UIKit geometry update plus native WKWebView DOM layout measurements"]
+        var testError: Error?
+        defer {
+            controller.onContentReady = nil
+            controller.webView?.stopLoading()
+            window.isHidden = true
+            window.rootViewController = nil
+        }
+        do {
+            try await loadReady(controller, label: "layout: packaged page ready") {
+                window.rootViewController = controller
+                window.makeKeyAndVisible()
+                controller.loadViewIfNeeded()
+            }
+            _ = try await evaluate("""
+                (() => {
+                  for (const key of Object.keys(localStorage)) if (key.startsWith('doodle-fun:v2:')) localStorage.removeItem(key);
+                  localStorage.setItem('doodle-fun:v2:settings', JSON.stringify({age:6,level:'auto',sound:false,challengeOffset:0}));
+                  return true;
+                })()
+                """, in: controller.webView, label: "layout: exact age six settings")
+            try await loadReady(controller, label: "layout: reload settings") { controller.webView.reload() }
+            try await orient(.landscapeLeft, scene: scene, controller: controller, window: window)
+            report["nativeLandscape"] = nativeGeometry(controller, window: window)
+            report["interfaceOrientation"] = scene.interfaceOrientation.rawValue
+
+            let script = #"""
+                const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+                const settle = async () => { await frame(); await frame(); };
+                const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+                const wait = async (predicate, label) => {
+                  const end = performance.now() + 4000;
+                  while (performance.now() < end) { if (predicate()) return; await pause(20); }
+                  throw new Error(`Timed out: ${label}`);
+                };
+                const shown = node => Boolean(node && node.getClientRects().length && !node.closest('[hidden]'));
+                const cssInsets = () => {
+                  const probe = document.createElement('div');
+                  probe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left)';
+                  document.body.append(probe);
+                  try {
+                    const value = getComputedStyle(probe);
+                    return {top:parseFloat(value.paddingTop),right:parseFloat(value.paddingRight),bottom:parseFloat(value.paddingBottom),left:parseFloat(value.paddingLeft)};
+                  } finally { probe.remove(); }
+                };
+                await settle();
+                if (location.protocol !== 'file:' || innerWidth <= innerHeight) throw new Error('Expected the packaged page in landscape');
+                const output = {viewport:{width:innerWidth,height:innerHeight,scale:visualViewport?.scale},cssInsets:cssInsets(),activities:[]};
+                const routes = [
+                  {id:'shape-match',controls:'.discover-footer button',back:'.discover-back'},
+                  {id:'size-order',controls:'.adventure-footer button',back:'.adventure-back'},
+                  {id:'uppercase',controls:'.learn-tools button,.learn-navigation button',back:'.learn-back'},
+                  {id:'counting',controls:'.learn-count-coach,.learn-next-puzzle',back:'.learn-back'},
+                  {id:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'}
+                ];
+                for (const route of routes) {
+                  const card = document.querySelector(`#card-${route.id}`);
+                  if (!shown(card)) throw new Error(`Missing visible catalog card ${route.id}`);
+                  card.click();
+                  await wait(() => location.hash === `#${route.id}` && [...document.querySelectorAll(route.controls)].some(shown), route.id);
+                  await settle();
+                  const buttons = [...document.querySelectorAll(route.controls)].filter(shown);
+                  if (buttons.length < 2) throw new Error(`Missing lower controls for ${route.id}`);
+                  const activity = {id:route.id,cssInsets:cssInsets(),viewportWidth:innerWidth,pageScrollWidth:document.documentElement.scrollWidth,controls:[]};
+                  for (const button of buttons) {
+                    button.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+                    await settle();
+                    const rect = button.getBoundingClientRect();
+                    activity.controls.push({label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
+                  }
+                  output.activities.push(activity);
+                  const back = document.querySelector(route.back);
+                  if (!shown(back)) throw new Error(`Missing back control ${route.id}`);
+                  back.click();
+                  await wait(() => shown(document.querySelector(`#card-${route.id}`)), `${route.id} return`);
+                }
+                return output;
+                """#
+            let finished = expectation(description: "layout: landscape DOM measurements")
+            var outcome: Result<Any, Error>?
+            controller.webView.callAsyncJavaScript(script, arguments: [:], in: nil, in: .page) { result in
+                outcome = result
+                finished.fulfill()
+            }
+            await fulfillment(of: [finished], timeout: 35)
+            guard let outcome else { throw LayoutError(message: "Landscape DOM measurements timed out") }
+            guard let web = try outcome.get() as? [String: Any] else { throw LayoutError(message: "Landscape DOM measurements returned no report") }
+            report["webLandscape"] = web
+            let safe = controller.view.safeAreaInsets
+            let nativeInsets = ["left":Double(safe.left),"right":Double(safe.right),"top":Double(safe.top),"bottom":Double(safe.bottom)]
+            let nativeWindowInsets = ["left":Double(window.safeAreaInsets.left),"right":Double(window.safeAreaInsets.right),"top":Double(window.safeAreaInsets.top),"bottom":Double(window.safeAreaInsets.bottom)]
+            let nativeWidth = Double(controller.view.bounds.width)
+            XCTAssertGreaterThan(controller.view.bounds.width, controller.view.bounds.height, "The regression must actually run in landscape")
+            guard let css = web["cssInsets"] as? [String: Double], let viewport = web["viewport"] as? [String: Double], let activities = web["activities"] as? [[String: Any]] else { throw LayoutError(message: "Incomplete measured layout report") }
+            XCTAssertEqual(viewport["width"] ?? -1, nativeWidth, accuracy: 0.5, "Web CSS pixels must map to native points")
+            for edge in ["left","right","top","bottom"] {
+                XCTAssertEqual(css[edge] ?? -1, nativeInsets[edge]!, accuracy: 0.5, "CSS env(\(edge)) must match the actual native safe area")
+                XCTAssertEqual(nativeWindowInsets[edge]!, nativeInsets[edge]!, accuracy: 0.5, "Window and edge-to-edge controller safe areas must agree")
+            }
+            XCTAssertEqual(activities.count, 5, "Discovery, adventures, both learning layouts and challenges must be measured")
+            for activity in activities {
+                let id = activity["id"] as? String ?? "unknown"
+                guard let controls = activity["controls"] as? [[String: Any]], let routeInsets = activity["cssInsets"] as? [String: Double] else { throw LayoutError(message: "Missing control measurements for \(id)") }
+                XCTAssertLessThanOrEqual(activity["pageScrollWidth"] as? Double ?? .infinity, nativeWidth + 1, "\(id) has no horizontal page overflow")
+                for edge in ["left","right","top","bottom"] { XCTAssertEqual(routeInsets[edge] ?? -1, nativeInsets[edge]!, accuracy: 0.5, "\(id): CSS safe area stays aligned") }
+                for control in controls {
+                    let label = control["label"] as? String ?? "unknown"
+                    XCTAssertEqual(control["visible"] as? Bool, true, "\(id) / \(label) is visible after scrolling")
+                    XCTAssertGreaterThanOrEqual(control["width"] as? Double ?? 0, 48, "\(id) / \(label) keeps its touch width")
+                    XCTAssertGreaterThanOrEqual(control["left"] as? Double ?? -.infinity, nativeInsets["left"]! - 0.5, "\(id) / \(label) stays right of the actual left unsafe edge")
+                    XCTAssertLessThanOrEqual(control["right"] as? Double ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "\(id) / \(label) stays left of the actual right unsafe edge")
+                }
+            }
+        } catch { testError = error; report["error"] = error.localizedDescription }
+
+        // Restoration is awaited even after a measurement or assertion failure.
+        // Other gameplay/UI cases must never inherit this test's landscape state.
+        do {
+            try await orient(.portrait, scene: scene, controller: controller, window: window)
+            report["restoredPortrait"] = nativeGeometry(controller, window: window)
+            XCTAssertEqual(scene.interfaceOrientation, .portrait, "Restore portrait before the next native test")
+        } catch {
+            report["portraitRestoreError"] = error.localizedDescription
+            XCTFail("Could not restore portrait after landscape regression: \(error.localizedDescription)")
+            if testError == nil { testError = error }
+        }
+        attachReport(report, name: "Native landscape UIKit and CSS safe area regression")
+        if let data = try? JSONSerialization.data(withJSONObject: report, options: [.sortedKeys]), let line = String(data: data, encoding: .utf8) { print("NATIVE_LANDSCAPE_LAYOUT \(line)") }
+        if let testError { throw testError }
+    }
 }
