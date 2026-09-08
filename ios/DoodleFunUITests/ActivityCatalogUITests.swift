@@ -216,7 +216,8 @@ final class ActivityCatalogUITests: XCTestCase {
         }
     }
 
-    private func sweep(age: Int, inLandscape: Bool, keepScreenshots: Bool) {
+    private func sweep(age: Int, inLandscape: Bool, keepScreenshots: Bool,
+                       subset: [Activity]? = nil) {
         let ageButton = reveal(control(["Age \(age)"]), toward: .down)
         assertTapTarget(ageButton)
         ageButton.tap()
@@ -227,7 +228,7 @@ final class ActivityCatalogUITests: XCTestCase {
             XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: rotated, object: app)], timeout: 10), .completed)
             landscape = true
         }
-        for activity in Self.activities {
+        for activity in subset ?? Self.activities {
             XCTContext.runActivity(named: "Age \(age) · \(inLandscape ? "landscape" : "portrait") · \(activity.title)") { _ in
                 // Tap the card's observed title link. Its center must be
                 // visible; full-size game controls are checked separately.
@@ -268,6 +269,9 @@ final class ActivityCatalogUITests: XCTestCase {
                 assertTapTarget(hint)
                 hint.tap()
                 XCTAssertTrue(control(["Close coach"]).waitForNonExistence(timeout: 10))
+                if keepScreenshots && activity.id == "shape-match" {
+                    capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-hint-revealed")
+                }
 
                 let back = reveal(control(["Back to activities", "Back to home"]), toward: .down)
                 assertTapTarget(back)
@@ -281,4 +285,9 @@ final class ActivityCatalogUITests: XCTestCase {
     func testAge6PortraitCatalog() { sweep(age: 6, inLandscape: false, keepScreenshots: false) }
     func testAge10PortraitCatalog() { sweep(age: 10, inLandscape: false, keepScreenshots: true) }
     func testAge6LandscapeCatalog() { sweep(age: 6, inLandscape: true, keepScreenshots: true) }
+    func testAge10ShapeClueAndHint() {
+        let shapes = Self.activities.filter { $0.id == "shape-match" }
+        XCTAssertEqual(shapes.count, 1)
+        sweep(age: 10, inLandscape: false, keepScreenshots: true, subset: shapes)
+    }
 }
