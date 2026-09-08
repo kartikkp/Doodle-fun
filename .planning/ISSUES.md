@@ -1,0 +1,5 @@
+# Deferred improvements
+
+- **Small-phone activity height:** native screenshot review shows that tracing/math headers consume much of the compact landscape opening viewport; exercises and lower choices require initial scrolling. Missing number answer choices and Follow the arrows’ lower direction control also require scrolling. Full native reachability and gameplay checks cover these controls. Consider a shorter activity header or a visible scroll cue, then assess discoverability with young children. This is a usability enhancement, not a blocked game.
+- **Observed child playtesting:** verify independent comprehension, enjoyment, and challenge with children across the intended ages. Current software playthroughs and age profiles do not measure developmental outcomes.
+- **Active horizontal tab visibility:** on the compact phone, entering Number trails can leave the selected 123 tab partly outside the horizontal tab strip. The requested number activity and its controls load correctly; automatically revealing the active tab would improve orientation.

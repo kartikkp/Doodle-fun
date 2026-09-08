@@ -1,4 +1,4 @@
-const CACHE='doodle-fun-offline-ee99aaf12c5dbcac';
+const CACHE='doodle-fun-offline-c492e0448081570e';
 const HOME=new URL('./',self.location.href).href;
 self.addEventListener('install',event=>event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);

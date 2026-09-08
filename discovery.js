@@ -170,7 +170,11 @@ export function createDiscovery(container, { getSettings, onBack = () => {}, onN
       objective.textContent = currentId === 'shape-match' ? `Find the ${round.target.name.toLowerCase()}.` : `Find this color: ${round.target.name.toLowerCase()}.`;
       const model = element('div', `discover-model ${currentId === 'shape-match' && profile.tier !== 'little' ? 'discover-model-clue' : ''}`);
       if (currentId === 'color-match' || profile.tier === 'little') model.append(tokenPicture(round.target));
-      else model.append(element('span', 'discover-model-spark', '◇'));
+      else {
+        const clue = element('span', 'discover-model-spark', '?');
+        clue.setAttribute('aria-hidden', 'true');
+        model.append(clue);
+      }
       const words = element('div'); words.append(element('strong', '', currentId === 'shape-match' ? round.target.name : 'Match the swatch'), element('p', '', currentId === 'shape-match' ? round.target.clue : 'Look at the colors and their names.')); model.append(words); stage.append(model);
     } else if (currentId === 'patterns') {
       objective.textContent = 'Which picture comes next?';
@@ -304,6 +308,7 @@ export function createDiscovery(container, { getSettings, onBack = () => {}, onN
     if(currentId==='shape-match') {
       text=`${round.target.clue} Match this shape to one of the pictures.`;
       const model=play.querySelector('.discover-model');
+      model.querySelector('.discover-model-spark')?.remove();
       if(!model.querySelector('.discover-shape')) model.prepend(shapePicture(round.target));
     } else if(currentId==='color-match') text=`Look for ${round.target.name.toLowerCase()}. Compare each picture with the big swatch.`;
     else if(currentId==='patterns') {

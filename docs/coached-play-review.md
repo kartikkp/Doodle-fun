@@ -65,6 +65,8 @@ The final verification section records what ran. The expectations in this table 
 
 ## Verification
 
+The later, expanded native iPhone review is recorded in [Full iPhone simulator QA](iphone-qa-report.md), including all-age WKWebView playthroughs, native touch tests, and phone screenshots. The release evidence below predates that follow-up.
+
 All 30 activities were exercised at every starting age from 2 through 10 in Chromium and WebKit: 540 age/activity/engine play flows. Educational games were played through mistakes, relevant hints, recovery, completion and continued play; creative activities were exercised through artwork creation and recovery. The full suite contains 508 scenarios, all passing across the main run and two unchanged targeted rechecks after host timeouts.
 
 The final UI review captured 90 phone screenshots at ages 2, 6 and 10, reviewed every activity type, and corrected invalid age-10 sharing values, answer-revealing size labels, conflicting older math instructions and narrow-phone word layout. Unit tests also exercise every tracing practice item across all nine input profiles.

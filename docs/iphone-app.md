@@ -37,6 +37,28 @@ xcrun simctl install booted ios/build/Build/Products/Debug-iphonesimulator/Doodl
 xcrun simctl launch booted com.kartikkp.DoodleFun
 ```
 
+### Full iPhone QA
+
+The expanded suite runs **270 age/activity gameplay cases**, five native bridge checks, one native landscape-layout check, and fourteen UI tests. The four catalog UI tests each visit all 30 activities, including a landscape pass. An additional archive test captures all 30 landscape screens with full-device screenshots. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet.
+
+Use a dedicated simulator: the suite resets the tested app's local data. Install the Node dependencies, then supply its UDID from `xcrun simctl list devices available`:
+
+```sh
+npm ci
+npm run test:iphone -- --device YOUR_QA_SIMULATOR_UDID --output ../iphone-qa
+```
+
+The runner builds an isolated copy, retaining the source project's signing settings and producing an `.xcresult` bundle, `qa-build.json`, and the exact command. It bundles the test-only gameplay helpers into the copied XCTest target; it does not inject them into the shipped app. The regular Xcode Test action runs the smaller original suite. Use this command for the expanded suite.
+
+To run just the gameplay/bridge/layout matrix or just the touch UI suite:
+
+```sh
+npm run test:iphone -- --device YOUR_QA_SIMULATOR_UDID --output ../iphone-qa --only DoodleFunTests
+npm run test:iphone -- --device YOUR_QA_SIMULATOR_UDID --output ../iphone-qa --without-gameplay --only DoodleFunUITests
+```
+
+Do not run two jobs against the same simulator or output directory concurrently. Gameplay helpers use DOM actions inside the real native WKWebView, including synthetic pointer input where needed. The separate XCUITest suite sends trusted simulator touch gestures and operates the native share sheet. These are simulator checks, not physical-device or child playtesting.
+
 ## Native behavior
 
 - All activities load from the packaged HTML. Navigation is restricted to that exact file and its activity fragments. Network resources are blocked by a WebKit content rule. No service worker is needed for native offline launch.
@@ -60,6 +82,8 @@ postMessage({type: 'stopSpeaking'});
 The native share sheet dispatches `doodle-native-share` with `event.detail.status` equal to `completed`, `cancelled`, or `failed`. The web app requests sharing only after the child presses Save. The wrapper's own injected script sends validated `route` messages to remember the current activity for process recovery.
 
 ## Verification
+
+The expanded post-merge iPhone test matrix and corrected runtime are documented in [Full iPhone simulator QA](iphone-qa-report.md). That report distinguishes all-age native gameplay, trusted touch, visual inspection, fixes, and remaining limits. The older release checks below are retained as history.
 
 Validation on 8 September 2026 used Xcode 26.6 and bundled build `030d813f25b61b2d` (SHA-256 `3a9feb0f286f3164d2e7b470ecc217bffd4ff02ac5538f4ff3007f933c039af4`). The unsigned simulator build passed. All eight tests passed on both iPhone 17 Pro and iPad Air 11-inch (M4), running iOS/iPadOS 26.5: **16 runs, zero failures, zero skips**. The five native checks also passed on iOS 18.6. Two Node.js sync tests passed.
 

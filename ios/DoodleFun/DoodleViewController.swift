@@ -51,6 +51,21 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
             webView.topAnchor.constraint(equalTo: view.topAnchor), webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             webView.leadingAnchor.constraint(equalTo: view.leadingAnchor), webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
+        // Keep scrolling activity content from showing behind the status bar.
+        let statusBarBackground = UIView()
+        statusBarBackground.backgroundColor = view.backgroundColor
+        statusBarBackground.isOpaque = true
+        statusBarBackground.isUserInteractionEnabled = false
+        statusBarBackground.isAccessibilityElement = false
+        statusBarBackground.accessibilityElementsHidden = true
+        statusBarBackground.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(statusBarBackground)
+        NSLayoutConstraint.activate([
+            statusBarBackground.topAnchor.constraint(equalTo: view.topAnchor),
+            statusBarBackground.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            statusBarBackground.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            statusBarBackground.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        ])
         setupStatus()
         backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             self?.speaker.stopSpeaking(at: .immediate)

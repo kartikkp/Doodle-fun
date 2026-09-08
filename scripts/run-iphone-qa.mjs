@@ -1,0 +1,85 @@
+import {cp, mkdir, readFile, writeFile, appendFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {build} from 'esbuild';
+import {nativeTestSourcePaths, indexNativeTests, nativeTestSelections} from './native-test-selection.mjs';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const args = process.argv.slice(2);
+const option = name => {
+  const i = args.indexOf(name);
+  return i < 0 ? undefined : args[i + 1];
+};
+const device = option('--device');
+if (!device && !args.includes('--prepare-only')) {
+  throw new Error('Supply --device <dedicated test simulator UDID>. This suite resets its app data.');
+}
+const output = path.resolve(option('--output') || path.join(root, 'test-results', 'iphone-native'));
+if (output === root || !path.relative(path.join(root, 'ios'), output).startsWith('..')) throw new Error('Use a separate QA output directory.');
+const project = path.join(output, 'project');
+const sourceProject = path.join(root, 'ios', 'DoodleFun.xcodeproj', 'project.pbxproj');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const originalProjectHash = sha(await readFile(sourceProject));
+const withoutGameplay = args.includes('--without-gameplay');
+const testSources = await Promise.all(nativeTestSourcePaths({withoutGameplay}).map(async file =>
+  ({file, source:await readFile(path.join(root, 'ios', file), 'utf8')})
+));
+// Xcode silently ignores unknown filters. Validate the complete tuple against
+// tests included in this run before creating files or invoking Xcode.
+const selections = nativeTestSelections(args, indexNativeTests(testSources));
+const testSourceSHA256 = Object.fromEntries(testSources.map(({file, source}) => [file, sha(source)]));
+
+// Work in a copy: Xcode signing settings and an already running app stay intact.
+await mkdir(project, {recursive:true});
+await cp(path.join(root, 'ios'), path.join(project, 'ios'), {
+  recursive:true, force:true,
+  filter:src => !src.split(path.sep).some(part => ['build','DerivedData','xcuserdata'].includes(part)),
+});
+const integrationFile = path.join(project, 'ios/DoodleFunTests/NativeBridgeTests.swift');
+const uiFile = path.join(project, 'ios/DoodleFunUITests/DoodleFunUITests.swift');
+let script = '';
+if (!withoutGameplay) {
+  const bundled = await build({
+    entryPoints:[path.join(root, 'ios/DoodleFunTests/Fixtures/native-gameplay.js')],
+    bundle:true, format:'iife', platform:'browser', target:'safari17', write:false,
+  });
+  script = bundled.outputFiles[0].text;
+  const base64 = Buffer.from(script).toString('base64');
+  await appendFile(integrationFile, '\n' + await readFile(path.join(root, 'ios/DoodleFunTests/NativeGameplayTests.swift'), 'utf8'));
+  await appendFile(integrationFile, `\nenum NativeQAFixtures { static let script = String(data: Data(base64Encoded: "${base64}")!, encoding: .utf8)! }\n`);
+}
+for (const name of ['ActivityCatalogUITests.swift','DrawingRecoveryUITests.swift','TracingGestureUITests.swift']) {
+  await appendFile(uiFile, '\n' + await readFile(path.join(root, 'ios/DoodleFunUITests', name), 'utf8'));
+}
+const manifest = JSON.parse(await readFile(path.join(root, 'ios/DoodleFun/Resources/BundleManifest.json'), 'utf8'));
+const preparedAt = new Date().toISOString();
+const stamp = preparedAt.replaceAll(':','-').replaceAll('.','-');
+const metadata = {
+  device, manifest, originalProjectHash, testSourceSHA256, fixtureSHA256:sha(script),
+  preparedAt, project,
+};
+await writeFile(path.join(output,'qa-build.json'), JSON.stringify(metadata, null, 2) + '\n');
+await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify(metadata, null, 2) + '\n');
+if (sha(await readFile(sourceProject)) !== originalProjectHash) throw new Error('Original Xcode project changed during QA preparation.');
+console.log(`Prepared isolated native QA for ${manifest.fingerprint}: ${project}`);
+if (args.includes('--prepare-only')) process.exit(0);
+
+const action = args.includes('--build-only') ? 'build-for-testing' : 'test';
+const command = [
+  '-project', path.join(project,'ios/DoodleFun.xcodeproj'), '-scheme','DoodleFun',
+  '-destination',`platform=iOS Simulator,id=${device}`,
+  '-derivedDataPath',path.join(output,'DerivedData'),
+  '-resultBundlePath',path.join(output,`run-${stamp}.xcresult`),
+  '-parallel-testing-enabled','NO',
+  'CODE_SIGNING_ALLOWED=NO', action,
+];
+for (const {flag, selection} of selections) {
+  command.push(`${flag === '--only' ? '-only-testing' : '-skip-testing'}:${selection}`);
+}
+await writeFile(path.join(output,'last-command.json'), JSON.stringify(['xcodebuild',...command],null,2)+'\n');
+await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify({...metadata, command:['xcodebuild',...command]},null,2)+'\n');
+const child = spawn('caffeinate',['-i','xcodebuild',...command],{cwd:root,stdio:'inherit'});
+child.on('error',error => { console.error(error); process.exitCode=1; });
+child.on('exit',code => { process.exitCode=code ?? 1; });
