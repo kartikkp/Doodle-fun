@@ -63,6 +63,60 @@ test('drawing shares a full PNG through the native app bridge',async({page})=>{
   await expect(page.locator('.draw-undo')).toBeEnabled();
 });
 
+test('draft autosave preserves native share feedback until the next drawing change',async({page})=>{
+  await page.clock.install({time:new Date('2026-01-01T08:00:00Z')});
+  await page.addInitScript(()=>{window.nativeMessages=[];window.webkit={messageHandlers:{doodleNative:{postMessage:message=>window.nativeMessages.push(message)}}};});
+  await page.goto('/#draw');
+  await page.clock.pauseAt(new Date('2026-01-01T09:00:00Z'));
+  const canvas=page.locator('.draw-canvas'),box=await canvas.boundingBox();
+  const draft=()=>page.evaluate(()=>localStorage.getItem('doodle-fun:v2:drawing-draft-v2'));
+  const status=page.locator('.draw-draft-status');
+  for(const [index,outcome,message]of [[0,'failed','Your drawing is safe here. Please try Save again.'],[1,'completed','Your picture is ready to keep!']]) {
+    const before=await draft();
+    await page.mouse.click(box.x+box.width*(.3+index*.2),box.y+box.height*.4);
+    await page.locator('.draw-save').click();
+    await expect.poll(()=>page.evaluate(()=>nativeMessages.filter(message=>message.type==='shareImage').length)).toBe(index+1);
+    await page.evaluate(outcome=>dispatchEvent(new CustomEvent('doodle-native-share',{detail:{status:outcome}})),outcome);
+    await expect(status).toHaveText(message);
+    expect(await draft()).toBe(before);
+    // Run the pending 650ms draft debounce after the native result arrives.
+    await page.clock.runFor(650);
+    expect(await draft()).not.toBe(before);
+    await expect(status).toHaveText(message);
+  }
+  const beforeEdit=await draft();
+  await canvas.click({position:{x:box.width*.7,y:box.height*.6}});
+  await page.clock.runFor(650);
+  expect(await draft()).not.toBe(beforeEdit);
+  await expect(status).toHaveText('Draft saved on this device');
+  await expect(page.locator('.draw-undo')).toBeEnabled();
+});
+
+test('late native share results cannot replace feedback after a new picture or navigation',async({page})=>{
+  await page.addInitScript(()=>{window.nativeMessages=[];window.webkit={messageHandlers:{doodleNative:{postMessage:message=>window.nativeMessages.push(message)}}};});
+  await page.goto('/#draw');
+  for(const [index,action]of ['replace','navigate'].entries()) {
+    const box=await page.locator('.draw-canvas').boundingBox();
+    await page.mouse.click(box.x+box.width*.4,box.y+box.height*.4);
+    await page.locator('.draw-save').click();
+    await expect.poll(()=>page.evaluate(()=>nativeMessages.filter(message=>message.type==='shareImage').length)).toBe(index+1);
+    if(action==='replace') {
+      await page.locator('.draw-new').click();
+      await page.getByRole('button',{name:'Start fresh',exact:true}).click();
+    } else {
+      await page.getByRole('button',{name:'Back to activities',exact:true}).click();
+      await page.locator('#card-draw').click();
+    }
+    await page.locator('#coach-open').click();await page.locator('#coach-hint').click();
+    const message=await page.locator('.draw-draft-status').textContent();
+    expect(message).toContain('Pick Pen and a color.');
+    for(const outcome of ['failed','completed']) {
+      await page.evaluate(outcome=>dispatchEvent(new CustomEvent('doodle-native-share',{detail:{status:outcome}})),outcome);
+      await expect(page.locator('.draw-draft-status')).toHaveText(message);
+    }
+  }
+});
+
 for(let age=2;age<=10;age++)test(`age ${age}: draw and color, use coaching, recover a change and keep artwork`,async({browser})=>{
   const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
   const page=await context.newPage();

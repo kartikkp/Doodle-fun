@@ -165,8 +165,15 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   let pointer = null, beforeStroke = null, lastPoint = null, artName = '', hasWork = false;
   let revision = 0, saveTimer, pendingReplacement, challengeIndex = 0, active = false;
   let restoring = false, ready = false, exportURL;
+  let feedbackRevision = -1, exportGeneration = 0, pendingNativeShare = null;
 
-  function tell(message) { $('.draw-draft-status').textContent = message; onNotice(message); }
+  function tell(message) { feedbackRevision = revision; $('.draw-draft-status').textContent = message; onNotice(message); }
+  function draftStatus(message) {
+    // Saving still happens, but a background save must not replace the result
+    // of Save (or a coaching hint) for this same picture. A new edit releases it.
+    if (feedbackRevision !== revision) $('.draw-draft-status').textContent = message;
+  }
+  function invalidateExport() { exportGeneration++; pendingNativeShare = null; }
   function render() {
     display.clearRect(0, 0, canvas.width, canvas.height);
     display.fillStyle = '#fff'; display.fillRect(0, 0, canvas.width, canvas.height);
@@ -191,13 +198,13 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     try {
       const png = art.toDataURL('image/png');
       // Leave room for settings and learning progress in small storage quotas.
-      if (png.length > 2500000) { $('.draw-draft-status').textContent = 'Save a PNG to keep this detailed picture'; return; }
+      if (png.length > 2500000) { draftStatus('Save a PNG to keep this detailed picture'); return; }
       const stored = writeStore(DRAFT_KEY, { png, name: artName, hasWork, version: 2 });
-      $('.draw-draft-status').textContent = stored === false ? 'Save a PNG to keep your picture' : 'Draft saved on this device';
-    } catch { $('.draw-draft-status').textContent = 'Save a PNG to keep your picture'; }
+      draftStatus(stored === false ? 'Save a PNG to keep your picture' : 'Draft saved on this device');
+    } catch { draftStatus('Save a PNG to keep your picture'); }
   }
   function changed() {
-    revision++; render(); updateHistory();
+    revision++; invalidateExport(); render(); updateHistory();
     clearTimeout(saveTimer); saveTimer = setTimeout(persist, 650);
   }
   function transaction(action, { name = artName, work = true } = {}) {
@@ -380,26 +387,33 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   }
   $('.draw-save').addEventListener('click', async () => {
     finishPointer();
+    const generation = ++exportGeneration;
+    const current = () => active && generation === exportGeneration;
     const button = $('.draw-save'); button.disabled = true;
     try {
       const output = document.createElement('canvas'); output.width = output.height = SIDE;
       const out = output.getContext('2d'); out.fillStyle = '#fff'; out.fillRect(0, 0, SIDE, SIDE); out.drawImage(art, 0, 0);
       const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
+      if (!current()) return;
       if (!blob) throw new Error('Could not create picture');
       const native = globalThis.webkit?.messageHandlers?.doodleNative;
       if (native) {
+        pendingNativeShare = generation;
         native.postMessage({type:'shareImage',dataURL:output.toDataURL('image/png'),name:'my-doodle.png'});
         return;
       }
       const file = new File([blob], 'my-doodle.png', { type: 'image/png' });
       if (navigator.canShare?.({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: 'My doodle' }); tell('Your picture is ready to keep!'); }
-        catch (error) { if (error.name !== 'AbortError') showExport(blob); }
+        try { await navigator.share({ files: [file], title: 'My doodle' }); if (current()) tell('Your picture is ready to keep!'); }
+        catch (error) { if (current() && error.name !== 'AbortError') showExport(blob); }
       } else showExport(blob);
-    } catch { tell('Your drawing is safe here. Please try Save again.'); }
+    } catch { if (current()) { pendingNativeShare = null; tell('Your drawing is safe here. Please try Save again.'); } }
     finally { button.disabled = false; }
   });
   window.addEventListener('doodle-native-share', event => {
+    if (!['failed','completed','cancelled'].includes(event.detail?.status)) return;
+    const generation = pendingNativeShare; pendingNativeShare = null;
+    if (!active || generation === null || generation !== exportGeneration) return;
     if(event.detail?.status==='failed') tell('Your drawing is safe here. Please try Save again.');
     else if(event.detail?.status==='completed') tell('Your picture is ready to keep!');
   });
@@ -433,7 +447,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       requestAnimationFrame(resize);
       if (coloring) showDialog($('.draw-template-dialog'));
     },
-    close() { active = false; finishPointer(); persist(); container.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); },
+    close() { active = false; invalidateExport(); finishPointer(); persist(); container.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); },
     hint() { tell(coloringMode ? "Pick Fill, then tap inside a space. Use Pen for details and Undo to try another color." : "Pick Pen and a color. Make a line or a shape. Undo lets you try another way."); },
     settingsChanged,
   };
