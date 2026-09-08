@@ -1,12 +1,15 @@
 # Current state
 
-PR #2 merged as 2463a45. Checked live https://kartikkp.github.io/Doodle-fun/ on September 6, 2026.
+Phase 4 is implemented and verified on `codex/pages-built-app`, in [PR #3](https://github.com/kartikkp/Doodle-fun/pull/3). Final runtime fingerprint: `87f8df15e211c1db`.
 
-- 288 live launch checks passed:24 activities×3 ages×2 sizes×2 engines.
-- Published source scripts/styles match tested source, but Pages main/root omitted the ignored dist build and returned 404 for sw.js.
-- Publication correction prepared on codex/pages-built-app. Source HTML is app-shell.html; root index.html/sw.js are committed generated copies identical to dist. Existing Pages settings retained.
-- Runtime remains byte-identical to fingerprint 387b68987e207d18.
-- 40 unit checks and 2 new Pages-path/browser/server-stop regressions passed locally. Existing 40 unit/122 browser suite validated this unchanged runtime previously.
-- Follow-up PR review/merge is the next publishing step. After merge, verify live fingerprint and worker response and offline reload. Do not claim offline production is fixed before that verification.
+- 30 activities, exact ages 2–10, a shared Coach, contextual in-game hints, per-activity challenge adjustment and optional native/browser read-aloud.
+- Every activity exercised at all nine starting ages in Chromium and WebKit. All 508 browser scenarios passed across the complete baseline run and two unchanged timeout rechecks; 63 unit tests passed. The final dialog-only correction passed another 38 affected browser scenarios.
+- Offline SwiftUI/WKWebView iPhone/iPad app with persistent local data and native PNG sharing. Full native baseline passed eight tests per device; the final bundle passed three affected tests per device. No failures or skips in those native runs.
+- Generated Pages root HTML/worker and native HTML are committed and synchronized. GitHub Actions checks source/build identity, all web tests and an unsigned iPhone build.
+- Game-by-game age/challenge review and exact software QA evidence are in docs/coached-play-review.md, docs/qa-report.md and docs/iphone-app.md. No children participated; enjoyment and age-fit remain design judgments.
 
-The Mac was locked during this check; fresh isolated test browsers verified the public site. No desktop state or Pages settings changed. Physical-device and observed-child playtesting limits remain in docs/qa-report.md.
+## Delivery and next state
+
+PR #3 requires the owner's merge. The existing public Pages site remains the previously merged 24-activity release until then. After merge, verify the public build fingerprint, worker response and an offline reload before claiming production delivery.
+
+The iPhone project is ready for Xcode simulator use. Physical-device installation requires the owner's Apple signing team; no signing account, App Store submission or production merge was performed. Device-specific Pencil/VoiceOver/share destinations and observed child playtesting remain follow-up validation.

@@ -12,7 +12,7 @@ Each activity remembers its own adjustment, up to two practice steps below or ab
 
 ## Nine starting points
 
-| Starting age | Quantity ceiling | Trace path tolerance / coverage | Typical literacy task | Intended use |
+| Starting age | Counting/math ceiling | Trace path tolerance / coverage | Typical literacy task | Intended use |
 | --- | --- | --- | --- | --- |
 | 2 | 3 | 8.5% / 60% | Modelled two-letter matching | Shared exploration: marks, matching, one action at a time |
 | 3 | 4 | 7.5% / 66% | Modelled three-letter words | Name pictures and count small groups together |
@@ -24,7 +24,7 @@ Each activity remembers its own adjustment, up to two practice steps below or ab
 | 9 | 20 | 3.2% / 88% | Six-letter words and six case pairs | More complex patterns and number relationships |
 | 10 | 20 | 2.8% / 90% | Eight-letter compound words | Inverse questions, descending skip sequences and explanations |
 
-Trace tolerance is relative to the drawing board; coverage is measured along the path. Precision and excess-ink checks also apply. These are input forgiveness settings, not handwriting assessments. The oldest quantity ceiling stays at 20 to protect phone readability; challenge increases through reasoning rather than more tiny objects.
+Trace tolerance is relative to the drawing board; coverage is measured along the path. Precision and excess-ink checks also apply. These are input forgiveness settings, not handwriting assessments. Fair shares uses its own small per-friend quantities (up to 19 cookies in total). The oldest counting/math ceiling stays at 20 to protect phone readability; challenge increases through reasoning rather than more tiny objects.
 
 ## Activity-by-activity assessment
 
@@ -43,7 +43,7 @@ The final verification section records what ran. The expectations in this table 
 | Add together | Combine small visible groups with a grown-up | Count on and connect objects to equations | Larger totals and three-addend tasks, while retaining object support |
 | Equal groups | Share/count a few objects together | Repeated equal quantities | Reason about group size and total; concrete support stays available |
 | Shape detective | Match visible shapes with few choices | Recognize names and defining features | Property reasoning and vocabulary; familiar shapes remain useful warm-ups |
-| Color buddies | Match a swatch and name a color together | Distinguish a broader palette | Color relationships where offered; recognition remains a low-pressure activity |
+| Color buddies | Match a swatch and name a color together | Distinguish a broader palette | Broader palette; explicitly a recognition warm-up. Color planning belongs in Color & create |
 | Pattern parade | Say and extend short repeating patterns | Find AB, AAB and ABC units | Longer, less obvious repeat units; ask for the rule rather than rapid guessing |
 | Sort it out | Sort a few familiar pictures into two groups | Classify more objects and categories | Distinguish transport categories; explain the rule and alternative rules |
 | Spot the difference | Attend to one explicit feature | Compare shape or color | Compare quantities/features among distractors; speed is not scored |
@@ -65,7 +65,11 @@ The final verification section records what ran. The expectations in this table 
 
 ## Verification
 
-In progress. Replace this section with completed browser/native test evidence before delivery.
+All 30 activities were exercised at every starting age from 2 through 10 in Chromium and WebKit: 540 age/activity/engine play flows. Educational games were played through mistakes, relevant hints, recovery, completion and continued play; creative activities were exercised through artwork creation and recovery. The full suite contains 508 scenarios, all passing across the main run and two unchanged targeted rechecks after host timeouts.
+
+The final UI review captured 90 phone screenshots at ages 2, 6 and 10, reviewed every activity type, and corrected invalid age-10 sharing values, answer-revealing size labels, conflicting older math instructions and narrow-phone word layout. Unit tests also exercise every tracing practice item across all nine input profiles.
+
+The native iPhone/iPad app passed 16 simulator test runs, followed by six affected checks on the final dialog-spacing build. That final build also passed 63 JavaScript unit tests and 38 affected browser scenarios. See the [QA report](qa-report.md) for precise scope and limitations and [iPhone instructions](iphone-app.md) for native evidence. These are adult software playthroughs and design judgments; no child enjoyment or learning outcome was measured.
 
 ## Basis for the approach
 
