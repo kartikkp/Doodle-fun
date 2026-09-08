@@ -33,7 +33,19 @@ export const COACHING = {
 };
 
 export function coachingFor(id, age) {
-  const content=COACHING[id] || COACHING[id==='letters'?'uppercase':'counting'];
+  const content=[...(COACHING[id] || COACHING[id==='letters'?'uppercase':'counting'])];
+  if(age===10 && id==='number-order') {
+    content[0]='Read the direction. Start with the biggest or the smallest number, as the clue asks.';
+    content[1]='Check whether your path goes up or down. Look for the gap between numbers, then follow that direction.';
+  }
+  if(age===10 && id==='subtraction') {
+    content[0]='Look for the missing part: how many are left, or how many were taken away?';
+    content[1]='Crossed-out objects were taken away. Uncrossed objects are left. Count the group the question asks for.';
+  }
+  if(age===10 && id==='ten-frame') {
+    content[0]='Read the target carefully: are you making filled spaces or leaving empty spaces?';
+    content[1]='The filled and empty spaces add up to the whole frame. Use full rows of five to help you check.';
+  }
   return {start:content[0],strategy:content[1],reflect:age<=4?'Point to something you noticed. Tell a grown-up about it.':content[2],offline:content[3],together:age<=4};
 }
 
