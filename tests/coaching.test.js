@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ACTIVITIES} from '../catalog.js';
 import {COACHING,coachingFor,normalizeAdjustments} from '../coaching.js';
-import {drawingIdeas} from '../draw.js';
+import {drawingIdeas,coloringIdeas} from '../draw.js';
 import {getProfile} from '../core.js';
 
 test('every activity has a specific starting step, strategy, reflection and real-world extension',()=>{
@@ -19,6 +19,7 @@ test('each age offers distinct creative challenges and a usable brush',()=>{
   const prompts=new Set();
   for(let age=2;age<=10;age++){
     const ideas=drawingIdeas(age);assert.ok(ideas.length>=3);
+    assert.ok(coloringIdeas(age).length>=2);assert.notDeepEqual(coloringIdeas(age),ideas);
     for(const idea of ideas){assert.ok(!prompts.has(idea));prompts.add(idea);}
     const profile=getProfile({age});assert.ok(profile.sizes.includes(profile.brush));
   }

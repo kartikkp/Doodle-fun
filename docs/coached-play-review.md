@@ -8,7 +8,7 @@ This review combines software playthroughs with an adult assessment of likely re
 
 Every activity has a starting instruction, a strategy, a conversation prompt and a related activity with real objects. The in-game hint demonstrates or exposes the current step where that is meaningful. Young modes keep models visible and invite a grown-up to read and demonstrate. There are no countdowns or penalties for retries.
 
-Each activity remembers its own adjustment, up to two practice steps below or above the selected starting point, within ages 2–10. The actual age setting does not change. Changing a challenge starts a new round; drawing edits remain recoverable. Read-aloud is optional and works through the native iOS voice bridge in the app. Practice stars count activity completion; they do not measure independent mastery.
+Each activity remembers its own adjustment, up to two practice steps below or above the selected starting point, within ages 2–10. The actual age setting does not change. Changing a challenge can start a new round or restore the last round at that practice step; drawing edits remain recoverable. Read-aloud is optional and works through the native iOS voice bridge in the app. Practice stars count activity completion; they do not measure independent mastery.
 
 ## Nine starting points
 

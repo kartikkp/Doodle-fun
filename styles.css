@@ -54,3 +54,7 @@
 .coach-challenge .coach-small{font-size:.75rem}.coach-dialog>#coach-done{width:100%;margin-top:12px}
 .coach-dialog>#coach-hear{width:100%}
 @media(max-width:650px){.age-options{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.age-picker-label strong{font-size:.8125rem}.age-option{min-height:59px}.age-option strong{font-size:1.0625rem}.age-picker-label>span{display:block;font-size:.75rem;text-align:right;max-width:155px}.activity-coach-bar{gap:8px}.activity-coach-bar>span{font-size:.75rem}.coach-open{padding:10px 12px}}
+/* The coach already clears the device notch. Activity headers sit below it. */
+#activity-coach-bar:not([hidden]) ~ main{padding-top:0}
+#activity-coach-bar:not([hidden]) ~ main .activity-header{padding-top:10px}
+#activity-coach-bar:not([hidden]) ~ .drawing-screen{height:calc(100dvh - 57px - max(8px,env(safe-area-inset-top)))}

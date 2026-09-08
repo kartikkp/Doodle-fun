@@ -85,7 +85,7 @@ for(let age=2;age<=10;age++)test(`age ${age}: draw and color, use coaching, reco
   await page.locator('.draw-redo').tap();
   await page.getByRole('button',{name:'Back to activities',exact:true}).tap();
   await page.locator('#card-coloring').tap();
-  await page.getByRole('button',{name:'Color Sunshine',exact:true}).tap();
+  await page.getByRole('button',{name:/^Color Sunshine/}).tap();
   const replace=page.getByRole('button',{name:/Start new picture|Replace picture|Start fresh/i});
   if(await replace.isVisible())await replace.click();
   await page.keyboard.press('Escape');

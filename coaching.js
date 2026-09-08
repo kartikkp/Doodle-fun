@@ -34,6 +34,10 @@ export const COACHING = {
 
 export function coachingFor(id, age) {
   const content=[...(COACHING[id] || COACHING[id==='letters'?'uppercase':'counting'])];
+  if(age>=8 && id==='size-order') {
+    content[0]='Read the direction: small to big, or big to small. Compare sizes before choosing the first flower.';
+    content[1]='Keep the direction in mind. Compare two flowers at a time and choose the next size.';
+  }
   if(age===10 && id==='number-order') {
     content[0]='Read the direction. Start with the biggest or the smallest number, as the clue asks.';
     content[1]='Check whether your path goes up or down. Look for the gap between numbers, then follow that direction.';

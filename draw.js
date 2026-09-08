@@ -30,6 +30,19 @@ export const DRAWING_IDEAS = {
 };
 export function drawingIdeas(age) { return DRAWING_IDEAS[Math.max(2,Math.min(10,Math.round(age)||6))]; }
 
+export const COLORING_IDEAS = {
+  2:['Pick a color. Tap a big space. Name the color together.','Try one color, then choose another. Watch what changes.'],
+  3:['Give a big space and a little space different colors.','Find two spaces you want to make the same color.'],
+  4:['Use three colors. Tell someone what is in your picture.','Add a row of colorful dots with the Pen.'],
+  5:['Make a repeating color pattern in your picture.','Color the picture, then draw something beside it.'],
+  6:['Choose three colors that belong together in your picture.','Color a scene, then add details that tell us where it is.'],
+  7:['Use sunny colors to show a cheerful mood.','Use blue, green, and purple to make a calm color plan.'],
+  8:['Choose where the light comes from. Add a few darker details.','Give the main part a bold color and the background a quieter color.'],
+  9:['Use a small color palette. Repeat one color to connect the picture.','Add a background that makes your subject stand out.'],
+  10:['Choose a main color, a second color, and one accent. Make each one count.','Use color and extra details to turn this picture into a story.'],
+};
+export function coloringIdeas(age) { return COLORING_IDEAS[Math.max(2,Math.min(10,Math.round(age)||6))]; }
+
 /** Flood a connected region, comparing its visible color against white paper.
  * The fixed-size queue prevents repeated neighbor allocations on large fills.
  */
@@ -148,7 +161,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   const art = document.createElement('canvas'); art.width = art.height = SIDE;
   const ctx = art.getContext('2d', { willReadFrequently: true });
   const history = createPixelHistory();
-  let profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0][0];
+  let coloringMode = false, profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0][0];
   let pointer = null, beforeStroke = null, lastPoint = null, artName = '', hasWork = false;
   let revision = 0, saveTimer, pendingReplacement, challengeIndex = 0, active = false;
   let restoring = false, ready = false, exportURL;
@@ -320,7 +333,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     $('.draw-stamp-grid').append(button);
   });
   function updateChallenge() {
-    const ideas = drawingIdeas(profile.challengeAge || profile.age);
+    const ideas = (coloringMode ? coloringIdeas : drawingIdeas)(profile.challengeAge || profile.age);
     $('.draw-challenge').textContent = ideas[challengeIndex % ideas.length];
   }
   function settingsChanged() {
@@ -415,12 +428,13 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   settingsChanged(); updateHistory();
   return {
     open({ coloring = false } = {}) {
-      active = true; settingsChanged();
+      active = true; coloringMode = coloring; settingsChanged();
       $('.draw-title').textContent = coloring ? 'Color & create' : 'Doodle studio';
       requestAnimationFrame(resize);
       if (coloring) showDialog($('.draw-template-dialog'));
     },
     close() { active = false; finishPointer(); persist(); container.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); },
+    hint() { tell(coloringMode ? "Pick Fill, then tap inside a space. Use Pen for details and Undo to try another color." : "Pick Pen and a color. Make a line or a shape. Undo lets you try another way."); },
     settingsChanged,
   };
 }

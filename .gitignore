@@ -3,3 +3,10 @@ test-results/
 playwright-report/
 .DS_Store
 dist/
+
+# Local Xcode state and build products
+DerivedData/
+*.xcresult/
+xcuserdata/
+*.xcuserstate
+ios/build/
