@@ -237,7 +237,7 @@ async function creative(qa) {
   if(qa.id==='coloring') {
     if(!qa.el('.draw-template-dialog').open)qa.click('.draw-templates');
     qa.assert(qa.all('.draw-template-card').length===9,'All nine coloring pages are offered');
-    qa.click(qa.all('.draw-template-card').find(node=>node.getAttribute('aria-label')?.includes('Sunshine'))||qa.all('.draw-template-card')[0]);
+    qa.click('.draw-template-card[aria-label="Color Sunshine"]');
     if(qa.el('.draw-confirm-dialog').open)qa.click('[data-replace]');
     qa.assert(qa.text('.draw-paper-name').includes('Sunshine'),'Selected coloring page is shown');
     qa.check('coloring page chooser and rendered outline');
@@ -249,10 +249,12 @@ async function creative(qa) {
   const snapshot=()=>canvas.toDataURL('image/png');
   const before=snapshot();
   if(qa.id==='coloring') {
-    qa.click(qa.button('Fill'));
+    qa.click('[data-tool="fill"]');
+    qa.assert(qa.el('[data-tool="fill"]').getAttribute('aria-pressed')==='true','Fill becomes the selected drawing tool');
     pointerPath(qa,canvas,[[.04,.04]]);
   } else {
-    qa.click(qa.button('Pen'));
+    qa.click('[data-tool="pen"]');
+    qa.assert(qa.el('[data-tool="pen"]').getAttribute('aria-pressed')==='true','Pen becomes the selected drawing tool');
     pointerPath(qa,canvas,Array.from({length:18},(_,i)=>[.2+i*.025,.3+i*.019]));
   }
   const after=snapshot();
