@@ -235,7 +235,19 @@ final class DrawingRecoveryUITests: XCTestCase {
         let coralCount: Int
 
         init(image: UIImage) throws {
-            let source = try XCTUnwrap(image.cgImage)
+            // XCUI landscape PNGs can carry EXIF rotation (orientation 8).
+            // UIImage drawing applies that orientation; raw cgImage does not.
+            let bounds = CGRect(x: 0, y: 0, width: Self.side, height: Self.side)
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = 1
+            format.opaque = true
+            format.preferredRange = .standard
+            let upright = UIGraphicsImageRenderer(size: bounds.size, format: format).image { context in
+                UIColor.white.setFill()
+                context.fill(bounds)
+                image.draw(in: bounds)
+            }
+            let source = try XCTUnwrap(upright.cgImage)
             var rgba = [UInt8](repeating: 255, count: Self.side * Self.side * 4)
             let rendered = rgba.withUnsafeMutableBytes { buffer -> Bool in
                 guard let context = CGContext(data: buffer.baseAddress, width: Self.side, height: Self.side,
