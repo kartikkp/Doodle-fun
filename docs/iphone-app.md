@@ -61,7 +61,11 @@ The native share sheet dispatches `doodle-native-share` with `event.detail.statu
 
 ## Verification
 
-Validation on 8 September 2026: the unsigned simulator build passed with Xcode 26.6. All five native tests passed on the final bundled build `030d813f25b61b2d` on iOS 18.6; coaching/navigation and two actual system-share cancellation/reopen cycles also passed. The settings UI test initially queried an HTML toggle as a native button; the captured accessibility tree identified it as a Switch. That selector is corrected, and the final complete phone/tablet UI runs are pending.
+Validation on 8 September 2026 used Xcode 26.6 and bundled build `030d813f25b61b2d` (SHA-256 `3a9feb0f286f3164d2e7b470ecc217bffd4ff02ac5538f4ff3007f933c039af4`). The unsigned simulator build passed. All eight tests passed on both iPhone 17 Pro and iPad Air 11-inch (M4), running iOS/iPadOS 26.5: **16 runs, zero failures, zero skips**. The five native checks also passed on iOS 18.6. Two Node.js sync tests passed.
+
+After the modal safe-area adjustment, final bundle `87f8df15e211c1db` (SHA-256 `af8c43d63e9bf5f3f34e5b3573cfe4e1bf0edc0ad641d874f9930854043ba770`) passed the three affected checks on each device: bundle integrity, Coach/navigation, and drawing share/new-picture confirmation (**six additional runs, zero failures or skips**). Screenshot inspection confirmed the iPhone Coach panel clears the status bar, the confirmation choices are visible, and the iPad popover is correctly placed.
+
+The final UI runs verified Coach and return navigation, read-aloud settings across an app relaunch, and two consecutive actual PNG share/cancel/reopen cycles per device. Screenshots captured coaching, the system share sheet, and the preserved drawing after cancellation. The recovery test exercises WebKit's public termination delegate callback and verifies the reload and local storage; it does not forcibly kill the WebKit process.
 
 Native tests cover exact local navigation boundaries, PNG decoding and filename validation, oversized/malformed share inputs, bounded route messages, process-recovery reload, and local-storage persistence. UI tests exercise launch, Coach, return navigation, settings across relaunch, and two consecutive share/cancel cycles through the real drawing Save button. The sync tests reject dependencies that would prevent a self-contained native launch.
 

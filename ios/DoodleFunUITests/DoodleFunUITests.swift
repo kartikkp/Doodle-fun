@@ -60,6 +60,14 @@ final class DoodleFunUITests: XCTestCase {
             XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 10))
         }
         capture("Native drawing after sharing")
+        app.buttons["Start a new drawing"].tap()
+        let keep = app.buttons["Keep drawing"]
+        XCTAssertTrue(keep.waitForExistence(timeout: 10))
+        XCTAssertTrue(keep.isHittable)
+        XCTAssertTrue(app.buttons["Start fresh"].isHittable)
+        capture("Native new picture confirmation")
+        keep.tap()
+        XCTAssertTrue(app.buttons["Save"].isHittable)
     }
 
     func testProgressSettingsSurviveAppRelaunch() {
