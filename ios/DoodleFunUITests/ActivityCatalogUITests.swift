@@ -204,7 +204,9 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        // App-window screenshots lost landscape pixels in the native QA archive.
+        // Capture the complete device screen, including its safe-area chrome.
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
@@ -229,7 +231,7 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func sweep(age: Int, inLandscape: Bool, keepScreenshots: Bool,
-                       subset: [Activity]? = nil) {
+                       subset: [Activity]? = nil, screenshotOnly: Bool = false) {
         let ageButton = reveal(control(["Age \(age)"]), toward: .down)
         assertTapTarget(ageButton)
         ageButton.tap()
@@ -262,27 +264,29 @@ final class ActivityCatalogUITests: XCTestCase {
                 checkPracticeSelection(activity)
                 if keepScreenshots { capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-opening") }
 
-                let playControl = reveal(control(activity.controlLabels))
-                assertTapTarget(playControl)
-                if keepScreenshots && activity.id == "word-tracing" {
-                    capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-scrolled-controls")
-                }
-                let coach = reveal(control(["Coach"], identifier: "coach-open"), toward: .down)
-                assertTapTarget(coach)
-                coach.tap()
-                XCTAssertTrue(control(["Close coach"]).waitForExistence(timeout: 10))
-                // renderCoach() replaces the shell placeholder with the
-                // catalog activity title whenever this dialog is opened.
-                XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
-                reveal(text(activity.title), toward: .down, inCoach: true)
-                XCTAssertTrue(text("Start here").exists)
-                XCTAssertTrue(text("Try a strategy").exists)
-                let hint = reveal(control(["Show a hint in this game →"], identifier: "coach-hint"), inCoach: true)
-                assertTapTarget(hint)
-                hint.tap()
-                XCTAssertTrue(control(["Close coach"]).waitForNonExistence(timeout: 10))
-                if keepScreenshots && activity.id == "shape-match" {
-                    capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-hint-revealed")
+                if !screenshotOnly {
+                    let playControl = reveal(control(activity.controlLabels))
+                    assertTapTarget(playControl)
+                    if keepScreenshots && activity.id == "word-tracing" {
+                        capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-scrolled-controls")
+                    }
+                    let coach = reveal(control(["Coach"], identifier: "coach-open"), toward: .down)
+                    assertTapTarget(coach)
+                    coach.tap()
+                    XCTAssertTrue(control(["Close coach"]).waitForExistence(timeout: 10))
+                    // renderCoach() replaces the shell placeholder with the
+                    // catalog activity title whenever this dialog is opened.
+                    XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
+                    reveal(text(activity.title), toward: .down, inCoach: true)
+                    XCTAssertTrue(text("Start here").exists)
+                    XCTAssertTrue(text("Try a strategy").exists)
+                    let hint = reveal(control(["Show a hint in this game →"], identifier: "coach-hint"), inCoach: true)
+                    assertTapTarget(hint)
+                    hint.tap()
+                    XCTAssertTrue(control(["Close coach"]).waitForNonExistence(timeout: 10))
+                    if keepScreenshots && activity.id == "shape-match" {
+                        capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-hint-revealed")
+                    }
                 }
 
                 let back = reveal(control(["Back to activities", "Back to home"]), toward: .down)
@@ -297,6 +301,11 @@ final class ActivityCatalogUITests: XCTestCase {
     func testAge6PortraitCatalog() { sweep(age: 6, inLandscape: false, keepScreenshots: false) }
     func testAge10PortraitCatalog() { sweep(age: 10, inLandscape: false, keepScreenshots: true) }
     func testAge6LandscapeCatalog() { sweep(age: 6, inLandscape: true, keepScreenshots: true) }
+    // A fast, permanent visual archive complements the full landscape test;
+    // it retains actual navigation and practice checks for every activity.
+    func testAge6LandscapeScreenshotArchive() {
+        sweep(age: 6, inLandscape: true, keepScreenshots: true, screenshotOnly: true)
+    }
     func testAge10ShapeClueAndHint() {
         let shapes = Self.activities.filter { $0.id == "shape-match" }
         XCTAssertEqual(shapes.count, 1)
