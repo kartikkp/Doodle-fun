@@ -118,10 +118,11 @@ test('older children can complete a word and explore the entire 0–20 count ran
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
   await page.locator('#card-sharing').click();
   await page.locator('[data-activity-mode="equal-groups"]').click();
-  await expect(page.getByRole('button',{name:'Equal groups',exact:true})).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('[data-activity-mode="equal-groups"]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
   await expect(page.locator('.learn-count-dot')).toHaveCount(9);
-  await page.getByRole('button',{name:'Count dots',exact:true}).click();
+  await page.getByRole('button',{name:'Back to home',exact:true}).click();
+  await page.locator('#card-counting').click();
   await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity','8');
   const seen=new Set();
   for(let i=0;i<21;i++) {
