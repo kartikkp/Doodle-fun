@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="discovery.css">
   <link rel="stylesheet" href="challenges.css">
   <link rel="stylesheet" href="adventures.css">
+  <link rel="stylesheet" href="listening.css">
   <script type="module" src="app.js"></script>
 </head>
 <body>
@@ -44,7 +45,7 @@
           <button class="age-option" data-age="10" type="button" aria-label="Age 10" aria-pressed="false"><strong>10</strong><small>years</small></button>
         </div>
       </section>
-      <div class="activities-heading"><h2>Your play space</h2><span id="activity-count" aria-live="polite">30 activities</span></div>
+      <div class="activities-heading"><h2>Your play space</h2><span id="activity-count" aria-live="polite">21 activities</span></div>
       <nav id="activity-filters" class="activity-filters" aria-label="Activity categories"></nav>
       <p class="activity-guidance" id="activity-guidance">Pick a favorite. Every activity grows with you.</p>
       <section id="activity-grid" class="activity-grid" aria-label="Activities"></section>
@@ -56,11 +57,13 @@
     <span id="coach-summary"></span>
     <button id="coach-sound" class="icon-button sound-toggle" type="button" aria-label="Turn on read aloud" aria-pressed="false"></button>
   </div>
+  <nav id="activity-mode-bar" class="activity-mode-bar" aria-label="Practice modes" hidden></nav>
   <main id="adventures-view" hidden aria-label="Adventure activity"></main>
   <main id="drawing-view" hidden aria-label="Drawing activity"></main>
   <main id="learning-view" hidden aria-label="Learning activity"></main>
   <main id="discovery-view" hidden aria-label="Discovery activity"></main>
   <main id="challenges-view" hidden aria-label="Challenge activity"></main>
+  <main id="listening-view" hidden aria-label="Listening activity"></main>
   <dialog id="coach-dialog" class="settings-dialog coach-dialog" aria-labelledby="coach-title">
     <div class="dialog-heading"><div><span class="eyebrow">ONE LITTLE STEP AT A TIME</span><h2 id="coach-title">Your play coach</h2></div><button id="coach-close" class="icon-button" aria-label="Close coach" type="button">✕</button></div>
     <p id="coach-together" class="coach-together"></p>
@@ -92,7 +95,8 @@
     <div class="dialog-heading"><div><span class="eyebrow">A LITTLE HELP</span><h2 id="support-title">Help & support</h2></div><button type="button" class="icon-button" data-close-info="support" aria-label="Close help and support">✕</button></div>
     <div class="policy-content">
       <h3>Find their pace</h3><p>Choose a starting age from 2 to 10. Inside any activity, open Coach for a first step, a strategy and a hint. Use “A little easier” or “A little harder” to adjust that activity.</p>
-      <h3>Keep a picture</h3><p>In Doodle studio or Color & create, tap Save. A grown-up answers a question before choosing where the picture goes. Cancel at any point to keep drawing. Undo brings back the previous step.</p>
+      <h3>Keep a picture</h3><p>In Doodle studio, draw freely or choose Coloring pages, then tap Save. A grown-up answers a question before choosing where the picture goes. Cancel at any point to keep drawing. Undo brings back the previous step.</p>
+      <h3>Listening games</h3><p>Choose Listen on the home screen for sound matching, pitch, melody, and rhythm games. Tap Listen inside the game to begin. Game sound has its own on/off control; Read aloud controls spoken instructions. Check your device volume and Silent Mode if sounds are quiet.</p>
       <h3>Hear the clues</h3><p>Turn on Read aloud, then tap “Hear it” or open Coach. Check your device volume if you cannot hear the voice. Voice availability depends on your device.</p>
       <h3>Saved on this device</h3><p>Settings, practice progress and the latest drawing are saved locally. Browser and app copies are separate. Device backups may include this data. Save a picture you want to keep before removing the app or clearing browser data.</p>
       <h3>Need more help?</h3><p>Our support page has troubleshooting steps and a way for a grown-up to report a problem. Please do not include a child’s name, photo or other personal details in a public report.</p>

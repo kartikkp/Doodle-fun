@@ -27,13 +27,19 @@ function safeProgress() {
     /^(shapes|upper|lower|words|nums|count|add|groups):[a-zA-Z0-9-]+$/.test(key) && value===true).slice(0,250));
 }
 
-export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}) {
+export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=>{},onProgress=()=>{},getTitle=()=>null,onModeChange=()=>{}}) {
   let opened=false,kind='letters',set=null,index=0,ink=[],activePointer=null,activePath=null,done=false;
   let animation=0,demoRunning=false,profile=getProfile(getSettings()),saved=safeProgress();
   let svg,inkLayer,guideLayer,markers,trail,status,checkButton,showButton,clearButton,prevButton,nextButton,picker,itemLabel,example;
   let countValue=0,countMode='count',countRound=0,countAnswered=false,countMarked=new Map(),countButtons=[];
-  let pageMode='trace',countQuestion=null;
+  let pageMode='trace',countQuestion=null,managedModes=false;
   const report=()=>onProgress({completedCount:Object.keys(saved).length});
+  const reportMode=()=>{
+    onModeChange({set,mode:pageMode==='count'?countMode:'trace',kind,pageMode});
+    // The selected mode owns its support adjustment. Adopt that key before
+    // rendering so the game and Coach use the same effective practice age.
+    profile=getProfile(getSettings());
+  };
   const item=()=>getLearningItems(set)[index];
   const key=()=>`${set}:${item().ch}`;
   const mark=progressKey=>{if(!saved[progressKey]){saved[progressKey]=true;writeStore(STORE_KEY,saved);report();}};
@@ -63,14 +69,14 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     clearTransient();container.replaceChildren();container.classList.add('learning-screen');
     const header=element('header','activity-header learn-header');
     const back=button('← Home','button learn-back',()=>{close();onBack();});back.setAttribute('aria-label','Back to home');
-    const heading=element('div','learn-heading');heading.append(element('p','learn-eyebrow',kind==='numbers'?'COUNT • NOTICE • LEARN':'TRACE • DISCOVER • GROW'),element('h1','',kind==='numbers'?'Number explorers':'Letter adventures'));
+    const heading=element('div','learn-heading');heading.append(element('p','learn-eyebrow',kind==='numbers'?'COUNT • NOTICE • LEARN':'TRACE • DISCOVER • GROW'),element('h1','',getTitle()||(kind==='numbers'?'Number explorers':'Letter adventures')));
     const support=element('span','learn-support',`Practice ${profile.challengeAge} · No rush`);
     header.append(back,heading,support);container.append(header);
     const body=element('div','activity-body learn-body');
-    if(kind==='numbers') {
+    if(kind==='numbers'&&!managedModes) {
       const modes=element('div','learn-tabs');modes.setAttribute('role','group');modes.setAttribute('aria-label','Number activities');
       for(const [value,label]of [['count','Count & play'],['trace','Trace numbers']]) {
-        const tab=button(label,'button learn-tab',()=>{pageMode=value;ink=[];done=false;render();});tab.setAttribute('aria-pressed',String(pageMode===value));modes.append(tab);
+        const tab=button(label,'button learn-tab',()=>{pageMode=value;ink=[];done=false;reportMode();render();});tab.setAttribute('aria-pressed',String(pageMode===value));modes.append(tab);
       }
       body.append(modes);
     }
@@ -78,12 +84,14 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     if(pageMode==='count')renderCount(body);else renderTrace(body);
   }
   function renderTrace(body) {
-    const tabs=element('div','learn-tabs');tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Practice sets');
-    for(const [value,label]of SETS) {
-      const tab=button(label,'button learn-tab',()=>{set=value;index=0;ink=[];done=false;render();});
-      tab.setAttribute('aria-pressed',String(set===value));tab.dataset.learnSet=value;tabs.append(tab);
+    if(!managedModes) {
+      const tabs=element('div','learn-tabs');tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Practice sets');
+      for(const [value,label]of SETS) {
+        const tab=button(label,'button learn-tab',()=>{set=value;index=0;ink=[];done=false;reportMode();render();});
+        tab.setAttribute('aria-pressed',String(set===value));tab.dataset.learnSet=value;tabs.append(tab);
+      }
+      body.append(tabs);
     }
-    body.append(tabs);
     const layout=element('div','learn-trace-layout'),workspace=element('section','learn-trace-card'),side=element('aside','learn-side');
     workspace.setAttribute('aria-label','Tracing practice');
     const top=element('div','learn-card-heading');itemLabel=element('h2','learn-item-title');example=element('p','learn-example');top.append(itemLabel,example);workspace.append(top);
@@ -230,11 +238,13 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   }
   function renderCount(body) {
     const layout=element('div','learn-count-layout'),card=element('section','learn-count-card'),side=element('aside','learn-count-side');
-    const modeButtons=element('div','learn-tabs');modeButtons.setAttribute('role','group');modeButtons.setAttribute('aria-label','Choose number challenge');
-    for(const [mode,label]of [['count','Count dots'],['add','Add together'],['groups','Equal groups']]) {
-      const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
+    if(!managedModes) {
+      const modeButtons=element('div','learn-tabs');modeButtons.setAttribute('role','group');modeButtons.setAttribute('aria-label','Choose number challenge');
+      for(const [mode,label]of [['count','Count dots'],['add','Add together'],['groups','Equal groups']]) {
+        const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();reportMode();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
+      }
+      card.append(modeButtons);
     }
-    card.append(modeButtons);
     const variant=countRound+(countMode==='groups'?Math.max(0,profile.challengeAge-6)*2+(profile.challengeAge>=9?1:0):0);
     const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,variant,profile.challengeAge);countQuestion=question;
     card.append(element('p','learn-eyebrow',`NUMBER DETECTIVE · ROUND ${countRound+1}`),element('h2','learn-count-prompt',question.prompt));
@@ -282,15 +292,22 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     help.append(speechButton('♪ Read the question',()=>speak(question.spoken)));
     side.append(help);
     const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${profile.numberMax}`),element('p','',profile.challengeAge<=4?'Explore together: point and count with a grown-up. Every picture and hint is here to help.':`Practice for age ${profile.challengeAge}. A strategy matters more than speed. Use the help or adjust this activity whenever you like.`));side.append(range);
-    side.append(button('Try writing a number →','button',()=>{set='nums';index=Math.min(countValue,9);pageMode='trace';ink=[];done=false;render();}));
+    side.append(button('Try writing a number →','button',()=>{
+      if(managedModes){onModeChange({set:'nums',mode:'trace',kind:'letters',pageMode:'trace'});return;}
+      set='nums';index=Math.min(countValue,9);pageMode='trace';ink=[];done=false;reportMode();render();
+    }));
     layout.append(card,side);body.append(layout);
   }
   function open(requestedKind='letters',options={}) {
-    profile=getProfile(getSettings());opened=true;kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
+    profile=getProfile(getSettings());opened=true;managedModes=Boolean(options.managedModes);kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
     if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];countRound=0;countAnswered=false;countMarked.clear();}
     else{set=SETS.some(([value])=>value===profile.defaultSet)?profile.defaultSet:'upper';index=0;pageMode='trace';}
     if(SETS.some(([value])=>value===options.set)){set=options.set;index=0;pageMode='trace';}
     if(kind==='numbers'&&['count','add','groups'].includes(options.mode)){countMode=options.mode;pageMode='count';}
+    if(!managedModes){
+      reportMode();
+      if(pageMode==='count')countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];
+    }
     ink=[];done=false;render();report();
   }
   function close() {opened=false;clearTransient();}

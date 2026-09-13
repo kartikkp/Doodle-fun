@@ -138,7 +138,8 @@ for(let age=2;age<=10;age++)test(`age ${age}: draw and color, use coaching, reco
   await expect(page.locator('.draw-redo')).toBeEnabled();
   await page.locator('.draw-redo').tap();
   await page.getByRole('button',{name:'Back to activities',exact:true}).tap();
-  await page.locator('#card-coloring').tap();
+  await page.locator('#card-draw').tap();
+  await page.locator('[data-activity-mode="coloring"]').tap();
   await page.getByRole('button',{name:/^Color Sunshine/}).tap();
   const replace=page.getByRole('button',{name:/Start new picture|Replace picture|Start fresh/i});
   if(await replace.isVisible())await replace.click();

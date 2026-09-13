@@ -1,11 +1,12 @@
 import {test,expect} from '@playwright/test';
+import {getFamily} from '../catalog.js';
 import {CHALLENGE_INFO,generateChallenge} from '../challenges.js';
 import {getProfile} from '../core.js';
 
 async function start(page,id,age) {
   await page.addInitScript(age=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age,level:'auto',sound:false})),age);
   await page.goto(`/#${id}`);
-  await expect(page.getByRole('heading',{name:CHALLENGE_INFO[id].title,exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:getFamily(id).title,exact:true})).toBeVisible();
   return generateChallenge(id,getProfile({age}),0);
 }
 async function passed(page) {await expect(page.getByTestId('challenge-feedback')).toHaveClass(/is-complete/);}

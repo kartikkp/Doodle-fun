@@ -116,7 +116,8 @@ test('older children can complete a word and explore the entire 0–20 count ran
   await expect(page.locator('[data-learn-set="words"]')).toHaveAttribute('aria-pressed','true');
   await trace(page,'words','cat');await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
-  await page.locator('#card-equal-groups').click();
+  await page.locator('#card-sharing').click();
+  await page.locator('[data-activity-mode="equal-groups"]').click();
   await expect(page.getByRole('button',{name:'Equal groups',exact:true})).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
   await expect(page.locator('.learn-count-dot')).toHaveCount(9);
@@ -136,9 +137,9 @@ test('catalog trails and number activities open their requested practice instead
     await expect(page.locator(`[data-learn-set="${set}"]`)).toHaveAttribute('aria-pressed','true');
     await expect(page.getByTestId('trace-board')).toBeVisible();
   }
-  for(const [route,label]of [['counting','Count dots'],['addition','Add together'],['equal-groups','Equal groups']]) {
+  for(const route of ['counting','addition','equal-groups']) {
     await page.goto(`/#${route}`);
-    await expect(page.getByRole('button',{name:label,exact:true})).toHaveAttribute('aria-pressed','true');
+    await expect(page.locator(`[data-activity-mode="${route}"]`)).toHaveAttribute('aria-pressed','true');
     await expect(page.getByTestId('quantity-frame')).toBeVisible();
   }
 });

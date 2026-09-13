@@ -22,7 +22,7 @@ test('real Swift inventory indexes each test under its declared target and class
   }
   assert.equal(full.get('DoodleFunTests').get('NativeLayoutTests').size, 1);
   assert.deepEqual([...full.get('DoodleFunUITests')].map(([name, methods]) => [name, methods.size]), [
-    ['DoodleFunUITests', 4], ['ActivityCatalogUITests', 6], ['DrawingRecoveryUITests', 3], ['TracingGestureUITests', 2],
+    ['DoodleFunUITests', 4], ['ActivityCatalogUITests', 10], ['DrawingRecoveryUITests', 3], ['TracingGestureUITests', 2],
   ]);
   assert.equal(full.get('DoodleFunTests').has('NativeGameplayCase'), false, 'A helper-only base is not a runnable suite.');
 });

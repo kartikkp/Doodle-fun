@@ -57,7 +57,7 @@
 /* The coach already clears the device notch. Activity headers sit below it. */
 #activity-coach-bar:not([hidden]) ~ main{padding-top:0}
 #activity-coach-bar:not([hidden]) ~ main .activity-header{padding-top:10px}
-#activity-coach-bar:not([hidden]) ~ .drawing-screen{height:calc(100dvh - 57px - max(8px,env(safe-area-inset-top)))}
+#activity-coach-bar:not([hidden]) ~ .drawing-screen{height:calc(100dvh - var(--activity-nav-height,calc(65px + env(safe-area-inset-top))))}
 /* Center modal content inside the usable screen, clear of the notch and home indicator. */
 body dialog[open]{inset:calc(env(safe-area-inset-top) + 12px) calc(env(safe-area-inset-right) + 12px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 12px);margin:auto;max-width:calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - 24px);max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px)}
 /* Keep educational boards and footers inside landscape device safe areas. */
@@ -96,3 +96,12 @@ html:has(dialog[open]){overflow:hidden;overscroll-behavior:none}
 /* The notch adds padding to the header; let content determine its height. */
 .home-header{height:auto;min-height:104px}
 @media(max-width:650px){.home-header{min-height:80px}}
+
+/* One home card per activity family; its practice modes share a clear toolbar. */
+.activity-mode-bar{display:flex;align-items:center;gap:8px;padding:7px max(18px,env(safe-area-inset-right)) 7px max(18px,env(safe-area-inset-left));background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;overscroll-behavior-x:contain;max-width:100%;scrollbar-width:thin}
+.activity-mode{flex:0 0 auto;min-height:48px;padding:10px 17px;border:1px solid #dce1ec;border-radius:14px;background:#f6f7fb;color:#56617b;font-weight:750;font-size:.875rem;white-space:nowrap}
+.activity-mode[aria-pressed=true]{background:#ece9ff;color:#51419c;border-color:#9e8ed3}
+.card-mode-count{display:block;margin-top:5px;font-weight:750;color:var(--ink)}
+.card-listen{--accent:#93622b;--card-bg:#fff3d8;border-color:#ebdab7}
+.listening-screen{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+@media(max-width:650px){.activity-mode-bar{gap:6px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.activity-mode{font-size:.8125rem;padding:10px 14px}}

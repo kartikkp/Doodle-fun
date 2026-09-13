@@ -131,7 +131,7 @@ function getProgress() {
   const stored = readStore('discovery-progress-v1', {});
   return Object.fromEntries(DISCOVERY_IDS.map(id => [id, typeof stored?.[id] === 'number' && Number.isFinite(stored[id]) ? Math.max(0, Math.min(100000, Math.floor(stored[id]))) : 0]));
 }
-export function createDiscovery(container, { getSettings, onBack = () => {}, onNotice = () => {}, onProgress = () => {} }) {
+export function createDiscovery(container, { getSettings, getTitle=()=>null, onBack = () => {}, onNotice = () => {}, onProgress = () => {} }) {
   const sessions = new Map();
   let currentId = 'shape-match', profile = getProfile(getSettings()), current, active = false, progress = getProgress();
   let title, objective, play, status, nextButton, restartButton, hearButton, counter;
@@ -294,7 +294,7 @@ export function createDiscovery(container, { getSettings, onBack = () => {}, onN
     controls.append(arrows, undo, element('p', 'discover-tip', 'Follow the open paths. Take your time.')); layout.append(board, controls); play.append(layout);
   }
   function render() {
-    const meta = META[currentId]; title.textContent = meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name}${profile.challengeAge>=8&&['shape-match','color-match'].includes(currentId)?' · warm-up':''} · round ${current.index + 1}`;
+    const meta = META[currentId]; title.textContent = getTitle() || meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name}${profile.challengeAge>=8&&['shape-match','color-match'].includes(currentId)?' · warm-up':''} · round ${current.index + 1}`;
     hearButton.disabled = !getSettings().sound || !canSpeak(); hearButton.title = hearButton.disabled ? 'Turn on sound from the home screen to hear instructions' : 'Hear these instructions';
     play.replaceChildren(); nextButton.classList.toggle('is-ready', current.done); container.dataset.discovery = currentId;
     if (currentId === 'sorting') renderSorting(); else if (currentId === 'memory') renderMemory(); else if (currentId === 'maze') renderMaze(); else renderChoices();
