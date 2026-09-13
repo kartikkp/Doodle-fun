@@ -379,7 +379,12 @@ final class ActivityCatalogUITests: XCTestCase {
         XCTAssertFalse(drum.isEnabled)
         listenUntilReady()
         XCUIDevice.shared.press(.home)
-        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10), "The test must actually background the app before returning.")
+        let backgrounded = NSPredicate { _, _ in
+            let state = self.app.state
+            return state == .runningBackground || state == .runningBackgroundSuspended
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: backgrounded, object: app)], timeout: 10), .completed,
+                       "The test must actually background the app before returning, including a suspended background app.")
         app.activate()
         XCTAssertTrue(text("Sound paused. Tap Listen when you are ready to continue.").waitForExistence(timeout: 10))
         XCTAssertFalse(drum.isEnabled, "Returning to the app needs a fresh listening gesture.")
