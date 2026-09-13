@@ -43,7 +43,7 @@ export function scheduleSound(context, destination, event, at=context.currentTim
 }
 
 export function createSoundEngine({onInterrupt=()=>{}}={}) {
-  let context=null,master=null,volume=.55,generation=0,active=null,deliberateSuspend=false;
+  let context=null,master=null,stateHandler=null,volume=.55,generation=0,active=null;
   const release=(job)=>{
     for(const timer of job.timers)clearTimeout(timer);
     for(const source of job.sources){try{source.stop();}catch{/* Already ended. */}}
@@ -53,17 +53,30 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     generation++;
     if(active){const job=active;active=null;release(job);job.resolve({status:'cancelled'});}
   }
+  function retireContext(expected=context) {
+    if(!expected||expected!==context)return;
+    // Clear ownership before close: its state event or pending resume may arrive
+    // after a later user gesture has already created a replacement context.
+    const oldMaster=master,oldHandler=stateHandler;
+    context=null;master=null;stateHandler=null;
+    if(oldHandler)expected.removeEventListener('statechange',oldHandler);
+    try{oldMaster?.disconnect();}catch{/* Already detached. */}
+    try{if(expected.state!=='closed')Promise.resolve(expected.close()).catch(()=>{});}catch{/* No remaining sources can play. */}
+  }
   function ensureContext() {
+    if(context?.state==='closed')retireContext();
     if(!context||context.state==='closed') {
       const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;
       if(!Audio)throw new Error('Audio is not available in this browser.');
-      context=new Audio();master=context.createGain();master.gain.value=MAX_MASTER_GAIN*volume;master.connect(context.destination);
-      context.addEventListener('statechange',()=>{
-        if(context.state==='running'||deliberateSuspend)return;
+      const created=new Audio();context=created;master=created.createGain();master.gain.value=MAX_MASTER_GAIN*volume;master.connect(created.destination);
+      stateHandler=()=>{
+        if(context!==created||created.state==='running')return;
         const job=active;
         if(job){active=null;generation++;release(job);job.resolve({status:'failed',reason:'Audio was interrupted. Tap Listen to try again.'});}
+        retireContext(created);
         onInterrupt();
-      });
+      };
+      created.addEventListener('statechange',stateHandler);
     }
     return context;
   }
@@ -71,11 +84,11 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
   function play(events,{onEvent=()=>{}}={}) {
     stop();const token=generation;
     let ctx,resuming;
-    try {ctx=ensureContext();deliberateSuspend=false;resuming=ctx.state==='running'?Promise.resolve():ctx.resume();}
-    catch(error){return Promise.resolve({status:'failed',reason:error.message});}
+    try {ctx=ensureContext();resuming=ctx.state==='running'?Promise.resolve():ctx.resume();}
+    catch(error){retireContext();return Promise.resolve({status:'failed',reason:error.message});}
     return new Promise(resolve=>{
       const job={resolve,sources:[],nodes:[],timers:[],token};active=job;
-      const fail=()=>{if(active!==job)return;active=null;release(job);resolve({status:'failed',reason:'Sound could not start. Tap Listen to try again.'});};
+      const fail=()=>{if(active!==job)return;active=null;release(job);retireContext(ctx);resolve({status:'failed',reason:'Sound could not start. Tap Listen to try again.'});};
       const timeout=setTimeout(fail,2500);job.timers.push(timeout);
       Promise.resolve(resuming).then(()=>{
         if(active!==job||token!==generation)return;
@@ -103,8 +116,9 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     });
   }
   function suspend() {
-    stop();deliberateSuspend=true;
-    if(context&&context.state==='running')context.suspend().catch(()=>{});
+    // A queued suspend can finish after the next resume. Retire instead, then
+    // create a fresh context only on the next explicit Listen or pad gesture.
+    stop();retireContext();
   }
   return {play,stop,suspend,setVolume(value){volume=clamp(Number(value)||.55,.15,.8);if(master)master.gain.setValueAtTime(MAX_MASTER_GAIN*volume,context.currentTime);},get state(){return context?.state||'uninitialized';}};
 }

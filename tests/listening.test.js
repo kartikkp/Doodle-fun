@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LISTENING_IDS,LISTENING_INFO,soundProfile,buildListeningRound,evaluateBeat} from '../listening.js';
 import {getProfile} from '../core.js';
-import {TIMBRES,MAX_MASTER_GAIN} from '../audio.js';
+import {TIMBRES,MAX_MASTER_GAIN,createSoundEngine} from '../audio.js';
 
 test('four sound activities and all nine effective-age profiles have distinct, bounded challenges',()=>{
   assert.equal(new Set(LISTENING_IDS).size,4);
@@ -55,4 +55,69 @@ test('beat evaluator rejects a uniform or reversed-gap stream in older tasks, wh
   assert.equal(evaluateBeat([0,600,9000],[.65,.65],soundProfile(3)).passed,true);
   assert.equal(evaluateBeat([1,1],[.65],soundProfile(2)).passed,false);
   assert.equal(evaluateBeat([0,NaN],[.65],soundProfile(2)).passed,false);
+});
+
+// State/lifecycle tests only. Real signal generation is checked independently
+// with the browser's live analyser and OfflineAudioContext.
+function audioLifecycle(t,plans=[]) {
+  let now=0,nextTimer=0;const timers=new Map(),contexts=[];
+  t.mock.method(globalThis,'setTimeout',(fn,delay=0)=>{const id=++nextTimer;timers.set(id,{at:now+delay,fn});return id;});
+  t.mock.method(globalThis,'clearTimeout',id=>timers.delete(id));
+  t.mock.method(performance,'now',()=>now);
+  const parameter=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}});
+  class ControlledContext {
+    constructor(){this.plan=plans[contexts.length]||{};this.state=this.plan.resume?'suspended':'running';this.createdAt=now;this.destination={};this.listeners=new Set();this.recordedListeners=[];this.sources=[];this.closeCalls=0;this.suspendCalls=0;contexts.push(this);}
+    get currentTime(){return this.plan.stalled||this.state!=='running'?0:(now-this.createdAt)/1000;}
+    addEventListener(type,fn){assert.equal(type,'statechange');this.listeners.add(fn);this.recordedListeners.push(fn);}
+    removeEventListener(type,fn){assert.equal(type,'statechange');this.listeners.delete(fn);}
+    emit(){for(const listener of this.listeners)listener();}
+    createGain(){return {gain:parameter(),connect(){},disconnect(){}};}
+    createOscillator(){const source={frequency:parameter(),connect(){},disconnect(){},start(){},stopCalls:0,stop(){this.stopCalls++;}};this.sources.push(source);return source;}
+    resume(){if(this.plan.resume==='reject')return Promise.reject(new Error('Output unavailable'));if(this.plan.resume==='pending')return new Promise(resolve=>{this.finishResume=()=>{this.state='running';this.emit();resolve();};});this.state='running';return Promise.resolve();}
+    suspend(){this.suspendCalls++;return new Promise(resolve=>setTimeout(()=>{this.state='suspended';this.emit();resolve();},80));}
+    close(){this.closeCalls++;return new Promise(resolve=>setTimeout(()=>{this.state='closed';this.emit();resolve();},80));}
+  }
+  const original=Object.getOwnPropertyDescriptor(globalThis,'AudioContext');
+  Object.defineProperty(globalThis,'AudioContext',{configurable:true,writable:true,value:ControlledContext});
+  t.after(()=>{if(original)Object.defineProperty(globalThis,'AudioContext',original);else delete globalThis.AudioContext;});
+  const flush=async()=>{await Promise.resolve();await Promise.resolve();};
+  async function advance(milliseconds){await flush();const end=now+milliseconds;for(;;){const entry=[...timers.entries()].filter(([,timer])=>timer.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!entry)break;now=entry[1].at;timers.delete(entry[0]);entry[1].fn();await flush();}now=end;await flush();}
+  return {contexts,advance,flush};
+}
+const shortTone=[{kind:'tone',duration:.08}];
+
+test('suspension retires the context before immediate replay; late old state events cannot interrupt the fresh job',async t=>{
+  const clock=audioLifecycle(t,[{},{resume:'pending'}]);let interruptions=0;
+  const engine=createSoundEngine({onInterrupt:()=>interruptions++});
+  const first=engine.play(shortTone);await clock.advance(200);assert.equal((await first).status,'played');
+  const preview=engine.play(shortTone);await clock.advance(200);assert.equal((await preview).status,'played');
+  assert.equal(clock.contexts.length,1,'ordinary per-note playback must reuse the context');
+  const old=clock.contexts[0],cancelled=engine.play(shortTone);await clock.flush();engine.suspend();
+  assert.equal((await cancelled).status,'cancelled');assert.equal(old.closeCalls,1);assert.equal(old.suspendCalls,0);
+  assert.equal(old.listeners.size,0);assert.equal(engine.state,'uninitialized');assert.ok(old.sources.every(source=>source.stopCalls>0));
+  const next=engine.play(shortTone);assert.equal(clock.contexts.length,2,'create the replacement synchronously on the next play');
+  await clock.flush();old.state='suspended';for(const listener of old.recordedListeners)listener();
+  clock.contexts[1].finishResume();
+  await clock.advance(200);assert.equal((await next).status,'played');assert.equal(interruptions,0);
+});
+
+test('a pending resume times out and retires; a late resolution cannot complete or cancel the next audible attempt',async t=>{
+  const clock=audioLifecycle(t,[{resume:'pending'},{}]);const engine=createSoundEngine();let pulses=0;
+  const failed=engine.play(shortTone,{onEvent:()=>pulses++});await clock.advance(2600);
+  assert.equal((await failed).status,'failed');const old=clock.contexts[0];assert.equal(old.closeCalls,1);assert.equal(old.sources.length,0);assert.equal(pulses,0);
+  const retry=engine.play(shortTone);await clock.flush();old.finishResume();for(const listener of old.recordedListeners)listener();
+  await clock.advance(200);assert.equal((await retry).status,'played');assert.equal(clock.contexts.length,2);assert.equal(old.sources.length,0);assert.equal(pulses,0);
+});
+
+test('frozen running clocks and rejected resumes retire failed contexts so an explicit retry can recover',async t=>{
+  const clock=audioLifecycle(t,[{stalled:true},{resume:'reject'},{}]);const engine=createSoundEngine();
+  const stalled=engine.play(shortTone);await clock.advance(2300);assert.equal((await stalled).status,'failed');assert.equal(clock.contexts[0].closeCalls,1);
+  const rejected=engine.play(shortTone);await clock.flush();assert.equal((await rejected).status,'failed');assert.equal(clock.contexts[1].closeCalls,1);
+  const retry=engine.play(shortTone);await clock.advance(200);assert.equal((await retry).status,'played');assert.equal(clock.contexts.length,3);
+});
+
+test('ordinary stop cancels nodes but preserves the reusable context; suspension before first play creates none',async t=>{
+  const clock=audioLifecycle(t);const engine=createSoundEngine();engine.suspend();assert.equal(clock.contexts.length,0);
+  const first=engine.play(shortTone);await clock.flush();engine.stop();assert.equal((await first).status,'cancelled');
+  assert.equal(clock.contexts[0].closeCalls,0);const next=engine.play(shortTone);await clock.advance(200);assert.equal((await next).status,'played');assert.equal(clock.contexts.length,1);
 });
