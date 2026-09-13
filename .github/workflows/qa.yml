@@ -76,6 +76,19 @@ jobs:
         run: >-
           npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID"
           --output "$RUNNER_TEMP/DoodleFun-native-qa" --only DoodleFunTests
+      - name: Run trusted native listening interactions
+        timeout-minutes: 10
+        shell: bash
+        env:
+          DOODLE_SIMULATOR_UDID: ${{ steps.simulator.outputs.udid }}
+        run: |
+          caffeinate -di npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID" \
+            --output "$RUNNER_TEMP/DoodleFun-native-audio-qa" --without-gameplay \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedSoundDetectiveRequiresAudioAndRespectsItsOwnMute \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPitchPathCanRetryAndChooseTheHeardContour \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedMelodyEchoPlaysPadsInOrderAfterRetry \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps \
+            2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-audio-qa.log"
       - name: Keep native failure evidence
         uses: actions/upload-artifact@v7
         if: failure()
@@ -86,5 +99,18 @@ jobs:
             ${{ runner.temp }}/DoodleFun-native-qa/qa-build.json
             ${{ runner.temp }}/DoodleFun-native-qa/run-*.json
             ${{ runner.temp }}/DoodleFun-native-qa/last-command.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Keep native listening evidence
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: iphone-native-audio-qa-report
+          path: |
+            ${{ runner.temp }}/DoodleFun-native-audio-qa/*.xcresult/**
+            ${{ runner.temp }}/DoodleFun-native-audio-qa/qa-build.json
+            ${{ runner.temp }}/DoodleFun-native-audio-qa/run-*.json
+            ${{ runner.temp }}/DoodleFun-native-audio-qa/last-command.json
+            ${{ runner.temp }}/DoodleFun-native-audio-qa.log
           if-no-files-found: ignore
           retention-days: 7
