@@ -39,7 +39,7 @@ xcrun simctl launch booted com.kartikkp.DoodleFun
 
 ### Full iPhone QA
 
-The expanded suite contains **270 age/activity gameplay cases** for the 30 retained modes, seven native bridge checks, four parental-gate checks, one native landscape-layout check, and **19 UI tests**. The four catalog UI tests each visit the 21 family defaults, including a landscape pass. An additional archive test captures all 21 family defaults in landscape with full-device screenshots. Four listening tests require real audio playback through trusted simulator taps. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet. This inventory is not a claim that every case has passed on the current runtime; see the [current QA status](consolidated-listening-qa.md).
+The expanded suite contains **270 age/activity gameplay cases** for the 30 retained modes, eight native bridge checks, four parental-gate checks, one native landscape-layout check, and **19 UI tests**. The four catalog UI tests each visit the 21 family defaults, including a landscape pass. An additional archive test captures all 21 family defaults in landscape with full-device screenshots. Four listening tests require real audio playback through trusted simulator taps. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet. This inventory is not a claim that every case has passed on the current runtime; see the [current QA status](consolidated-listening-qa.md).
 
 Use a dedicated simulator: the suite resets the tested app's local data. Install the Node dependencies, then supply its UDID from `xcrun simctl list devices available`:
 
@@ -66,6 +66,7 @@ Unlock the Mac before native touch tests, keep it awake for the run, and run one
 - The native shell reloads the current activity when WebKit reports a terminated content process. It preserves data already saved by the web app, but cannot restore a gesture or round that was only in memory. Repeated termination displays a native **Try again** action.
 - **Save** first opens a native grown-up check with a fresh multiplication question. Correct approval opens the system share sheet using a temporary PNG. Cancelling returns to the drawing; reopening works. The popover is anchored on iPad. The file is deleted when sharing completes or is cancelled. Native validation permits only a bounded, decodable PNG from the bundled main frame and sanitizes the filename.
 - Spoken coaching uses `AVSpeechSynthesizer`. It follows the Read aloud preference, replaces the previous utterance, and stops when the app becomes inactive. Available voices are supplied by iOS. Listening games have separate game-sound and volume controls and synthesize tones/percussion locally through Web Audio.
+- Native inactivity explicitly pauses listening, with one repeat delivery on return in case background JavaScript was deferred. This does not depend on WKWebView reporting a hidden document. An unfinished round requires a new Listen tap after interruption.
 - A debug-only `--reset-test-data` launch argument isolates automated UI tests. It is excluded from Release behavior.
 
 ## Bridge contract

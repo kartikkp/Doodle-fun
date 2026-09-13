@@ -43,7 +43,7 @@ Each family’s `manifest.json` records the source bundle fingerprint and SHA-25
 
 ## Capture status
 
-Captured and visually reviewed on September 8, 2026, from integrated bundle `05facec229a9211d` (HTML SHA-256 `f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9`). Both families have identical shipping native-source hashes, verified against the current native source and unchanged source project.
+Captured and visually reviewed on September 8, 2026, from integrated bundle `05facec229a9211d` (HTML SHA-256 `f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9`). Both families have identical native-source hashes from that capture, with the source project and app bundle identities retained in their manifests. Those historical identities do not certify the current revision.
 
 | Folder | Dedicated simulator | PNG size | Result |
 | --- | --- | --- | --- |
