@@ -104,11 +104,14 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func control(_ labels: [String], identifier: String? = nil) -> XCUIElement {
+        // Native WebKit includes the CSS play glyph in the accessible name.
+        // The retained iOS 26 failure hierarchy reports exactly “▶Listen”.
+        let accessibleLabels = labels.flatMap { ["Listen", "Replay"].contains($0) ? ["Listen", "▶Listen", "Replay", "▶Replay"] : [$0] }
         let predicate: NSPredicate
         if let identifier {
-            predicate = NSPredicate(format: "label IN %@ OR identifier == %@", labels, identifier)
+            predicate = NSPredicate(format: "label IN %@ OR identifier == %@", accessibleLabels, identifier)
         } else {
-            predicate = NSPredicate(format: "label IN %@", labels)
+            predicate = NSPredicate(format: "label IN %@", accessibleLabels)
         }
         // iOS 26 exposes aria-pressed controls (ages, tools, trace choices) as
         // Switch rather than Button. Match the actual accessible name without
@@ -280,14 +283,17 @@ final class ActivityCatalogUITests: XCTestCase {
 
     private func openListening(_ id: String) {
         XCTAssertTrue(control(["Turn on read aloud"]).exists, "Game audio is tested with read-aloud off.")
-        reveal(control(["Age 2"]), toward: .down).tap()
+        let ageChoice = reveal(control(["Age 2"]), toward: .down)
+        ageChoice.tap()
+        XCTAssertEqual(ageChoice.value as? String, "1", "The native age-two switch is selected.")
         guard let activity = Self.activities.first(where: { $0.id == id }) else {
             XCTFail("Missing listening family \(id)")
             return
         }
         reveal(card(activity)).tap()
         XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
-        XCTAssertTrue(text("Age 2 · Your pace").exists)
+        // Compact phones intentionally hide the redundant age caption. The
+        // selected native age control and each game's age-two round verify it.
         XCTAssertTrue(control(["Game sound on"]).exists)
     }
 
