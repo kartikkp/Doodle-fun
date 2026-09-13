@@ -1,7 +1,7 @@
 // TEST ONLY. esbuild bundles this into the isolated XCTest host, never the app.
 // Expected trace geometry/question data come from source modules; actions target
 // the independently packaged index.html and assertions inspect rendered results.
-import {ACTIVITIES} from '../../../catalog.js';
+import {ACTIVITY_MODES,getFamily} from '../../../catalog.js';
 import {getLearningItems} from '../../../learning-data.js';
 import {getProfile} from '../../../core.js';
 import {generateChallenge} from '../../../challenges.js';
@@ -122,8 +122,7 @@ async function trace(qa) {
 }
 
 async function quantity(qa) {
-  const mode=({counting:'Count dots',addition:'Add together','equal-groups':'Equal groups'})[qa.id];
-  qa.assert(qa.button(mode).getAttribute('aria-pressed')==='true','Correct number mode selected');
+  qa.assert(qa.el(`[data-activity-mode="${qa.id}"]`).getAttribute('aria-pressed')==='true','Correct number mode selected');
   const answer=Number(qa.el('[data-testid="quantity-frame"]').dataset.quantity);
   qa.assert(qa.all('.learn-count-dot').length===answer,'Answer quantity equals actual visible dot count');
   if(qa.id==='equal-groups') {
@@ -297,15 +296,18 @@ globalThis.__doodleNativeQA=async({id,age})=>{
   const recordError=event=>runtimeErrors.push(String(event.message||event.reason||event.error||'Unknown script error'));
   addEventListener('error',recordError);addEventListener('unhandledrejection',recordError);
   try {
-    qa.assert(ACTIVITIES.length===30 && ACTIVITIES.every(activity=>handlers[activity.id]),'All 30 activity handlers are packaged');
-    const activity=ACTIVITIES.find(activity=>activity.id===id);
+    const legacy=ACTIVITY_MODES.filter(mode=>mode.engine!=='listening');
+    qa.assert(legacy.length===30 && legacy.every(activity=>handlers[activity.id]),'All 30 retained practice-mode handlers are packaged');
+    const activity=legacy.find(activity=>activity.id===id), family=getFamily(id);
     qa.assert(activity&&age>=2&&age<=10,'Known activity and supported exact age');
     qa.assert(location.protocol==='file:','The activity must run from the native offline bundle');
     qa.assert(Boolean(window.webkit?.messageHandlers?.doodleNative),'Actual native bridge must be present');
     qa.assert(qa.el(`[data-age="${age}"]`).getAttribute('aria-pressed')==='true','Requested exact age is selected after settings reload');
-    qa.click(`#card-${id}`);
-    await qa.waitFor(()=>location.hash===`#${id}`&&visible(document.querySelector('#coach-open')),'native activity route');
-    const heading=activity.engine==='learning'?(activity.kind==='numbers'?'Number explorers':'Letter adventures'):activity.title;
+    qa.click(`#card-${family.id}`);
+    await qa.waitFor(()=>visible(document.querySelector('#coach-open')),'native activity family');
+    if(document.body.dataset.activity!==id) qa.click(`[data-activity-mode="${id}"]`);
+    await qa.waitFor(()=>document.body.dataset.activity===id&&visible(document.querySelector('#coach-open')),'native practice mode');
+    const heading=family.title;
     qa.assert(qa.all('h1').some(node=>visible(node)&&node.textContent.trim()===heading),'Expected user-visible activity heading is rendered');
     if(id==='coloring') {
       qa.assert(qa.el('.draw-template-dialog').open,'Coloring opens its page chooser');
@@ -319,7 +321,7 @@ globalThis.__doodleNativeQA=async({id,age})=>{
     qa.assert(document.documentElement.scrollWidth<=innerWidth+1,'Activity does not create horizontal page overflow');
     const back=qa.all('button').find(button=>visible(button)&&['Back to activities','Back to home'].includes(button.getAttribute('aria-label')));
     qa.click(back);
-    await qa.waitFor(()=>visible(document.querySelector(`#card-${id}`))&&!visible(document.querySelector('#coach-open')),'return to activity catalog');
+    await qa.waitFor(()=>visible(document.querySelector(`#card-${family.id}`))&&!visible(document.querySelector('#coach-open')),'return to activity catalog');
     qa.check('return navigation');
     qa.assert(runtimeErrors.length===0,`No uncaught browser errors: ${runtimeErrors.join('; ')}`);
     return {id,age,status:'passed',assertions:qa.assertions,steps:qa.steps,elapsedMs:Math.round(performance.now()-begin),interaction:'Native WKWebView DOM actions; drawing/tracing use synthetic pointers with scoped capture adapter. Trusted simulator finger gestures are tested separately.'};

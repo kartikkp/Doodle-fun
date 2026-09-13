@@ -121,7 +121,7 @@ export function createPixelHistory({ maxBytes = 32 * 1024 * 1024, maxActions = 3
   };
 }
 
-export function createDrawing(container, { getSettings, onBack, onNotice = () => {} }) {
+export function createDrawing(container, { getSettings, onBack, onNotice = () => {}, getTitle = () => null }) {
   container.classList.add('drawing-screen');
   container.innerHTML = `
     <header class="activity-header draw-header">
@@ -147,7 +147,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
         <div class="draw-actions" role="group" aria-label="Paper actions">
           <button class="button draw-undo" aria-label="Undo last action"><span aria-hidden="true">↶</span><span>Undo</span></button>
           <button class="button draw-redo" aria-label="Redo last action"><span aria-hidden="true">↷</span><span>Redo</span></button>
-          <button class="button draw-templates" aria-label="Choose a coloring page" title="Choose a coloring page"><span aria-hidden="true">▧</span><span>Pages</span></button>
+          <button class="button draw-templates" aria-label="Choose a coloring page" title="Choose a coloring page"><span aria-hidden="true">▧</span><span>Coloring pages</span></button>
           <button class="button draw-new" aria-label="Start a new drawing" title="Start a new drawing"><span aria-hidden="true">＋</span><span>New</span></button>
         </div>
       </aside>
@@ -175,7 +175,9 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     if (feedbackRevision !== revision) $('.draw-draft-status').textContent = message;
   }
   function invalidateExport() { exportGeneration++; pendingNativeShare = null; }
+  function updateTitle() { $('.draw-title').textContent = getTitle() || (coloringMode ? 'Color & create' : 'Doodle studio'); }
   function render() {
+    updateTitle();
     display.clearRect(0, 0, canvas.width, canvas.height);
     display.fillStyle = '#fff'; display.fillRect(0, 0, canvas.width, canvas.height);
     display.drawImage(art, 0, 0, canvas.width, canvas.height);
@@ -346,6 +348,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   }
   function settingsChanged() {
     finishPointer(); profile = getProfile(getSettings());
+    updateTitle();
     const colors = COLORS.slice(0, profile.colorCount || 12);
     if (!colors.some(([hex]) => hex === color)) color = colors[0][0];
     const row = $('.draw-colors'); row.replaceChildren();
@@ -447,7 +450,6 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   return {
     open({ coloring = false } = {}) {
       active = true; coloringMode = coloring; settingsChanged();
-      $('.draw-title').textContent = coloring ? 'Color & create' : 'Doodle studio';
       requestAnimationFrame(resize);
       if (coloring) showDialog($('.draw-template-dialog'));
     },

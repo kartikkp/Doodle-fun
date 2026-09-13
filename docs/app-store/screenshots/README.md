@@ -1,6 +1,8 @@
 # Native App Store screenshots
 
-Five actual app scenes are captured in portrait for each device family:
+**These checked-in images belong to the earlier `05facec229a9211d` runtime. They have not been refreshed for the 21-family catalog and four listening games in PR #6. Do not submit them as current-version screenshots. New native captures are waiting for an unlocked Mac.**
+
+The retained September 8 captures contain five actual app scenes in portrait for each device family:
 
 1. Activity library, with age 6 selected.
 2. A rainbow colored through six native finger taps using the Fill tool.
@@ -24,7 +26,9 @@ node scripts/app-store-screenshots.mjs --family iphone --device IPHONE_UDID --ou
 node scripts/app-store-screenshots.mjs --family ipad --device IPAD_UDID --output /tmp/doodle-store-ipad --assets docs/app-store/screenshots/ipad
 ```
 
-Run the devices sequentially to reduce simulator resource contention. Each run resets app data only inside its dedicated screenshot device. It copies the iOS project to the chosen output directory, substitutes the capture XCTest source in that copy, builds without signing, and exports five retained `XCUIScreen.main.screenshot()` attachments. The original project, signing settings and production app source are unchanged.
+The current helper captures the consolidated library, Doodle studio coloring, Trail studio tracing, Pattern parade, and Sound detective. Its default `--listening-state ready` requires actual completed playback; `--listening-state prompt` captures the initial unheard challenge and labels that state in its manifest. A prompt capture is not proof that sound played. Replace the old fifth Coach image when the new native capture has been reviewed.
+
+Unlock the Mac before capture. Run the devices sequentially to reduce simulator resource contention; the helper uses a temporary `caffeinate -di` assertion during its run. Each run resets app data only inside its dedicated screenshot device. It copies the iOS project to the chosen output directory, substitutes the capture XCTest source in that copy, builds without signing, and exports five retained `XCUIScreen.main.screenshot()` attachments. The original project, signing settings and production app source are unchanged.
 
 Use `--prepare-only` to inspect the copied project and `capture-run.json` without booting a simulator or building. Use `--export /absolute/path/to/capture.xcresult` with the original `--output` to repeat extraction without running the app. Each extraction creates a fresh `attachments-*` directory and records it in the manifest, preserving earlier evidence. Repeating extraction of the final iPhone result produced five byte-identical images.
 
@@ -39,7 +43,7 @@ Each family’s `manifest.json` records the source bundle fingerprint and SHA-25
 
 ## Capture status
 
-Captured and visually reviewed on September 8, 2026, from integrated bundle `05facec229a9211d` (HTML SHA-256 `f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9`). Both families have identical shipping native-source hashes, verified against the current native source and unchanged source project.
+Captured and visually reviewed on September 8, 2026, from integrated bundle `05facec229a9211d` (HTML SHA-256 `f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9`). Both families have identical native-source hashes from that capture, with the source project and app bundle identities retained in their manifests. Those historical identities do not certify the current revision.
 
 | Folder | Dedicated simulator | PNG size | Result |
 | --- | --- | --- | --- |
@@ -48,4 +52,4 @@ Captured and visually reviewed on September 8, 2026, from integrated bundle `05f
 
 All ten original images were visually reviewed: clear home branding below the status bar, six contained rainbow fills, completed letter practice, a complete repeating-pattern board, and readable contextual coaching. The iPad screenshots show the actual larger-screen layout, including its native window corner control. All ten files match the original retained screenshot bytes, have no transparency, and pass dimensions, orientation and SHA-256 checks. No visual edits were applied.
 
-The retained successful capture results are `capture-2026-09-08T22-51-56-537Z.xcresult` (iPhone) and `capture-2026-09-08T22-56-17-918Z.xcresult` (iPad). Pilot runs stayed outside this folder. Screenshots are prepared for review and upload; this process did not submit anything to App Store Connect.
+The retained successful capture results are `capture-2026-09-08T22-51-56-537Z.xcresult` (iPhone) and `capture-2026-09-08T22-56-17-918Z.xcresult` (iPad). Pilot runs stayed outside this folder. These screenshots remain evidence for their earlier bundle and require replacement for the current revision; this process did not submit anything to App Store Connect.

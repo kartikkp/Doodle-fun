@@ -1,11 +1,12 @@
 # Doodle Fun — App Store kit
 
-The native app includes 30 activities for chosen starting ages 2–10, an offline privacy policy, and fresh parental approval before sharing pictures or opening external websites.
+The native app groups 34 practice modes into 21 activities for chosen starting ages 2–10. Create, Letters, Numbers, Discover, and Listen include four games with sounds generated offline. Game sound and volume are separate from optional Read aloud; no microphone or voice recording is used. The app also includes an offline privacy policy and a fresh grown-up check before sharing pictures or opening external websites.
 
 ## Listing and public pages
 
 - [Store copy and questionnaire worksheet](metadata.md): name, subtitle, promotional text, keywords, description, privacy answers, age-rating guidance, and reviewer instructions.
 - [Native iPhone and iPad screenshots](screenshots/README.md): five scenes per device family, with exact dimensions and source manifests.
+- [Current catalog and listening QA](../consolidated-listening-qa.md): tested runtime, source/browser/native evidence and physical-device limits.
 - Privacy URL: https://kartikkp.github.io/Doodle-fun/privacy.html
 - Support URL: https://kartikkp.github.io/Doodle-fun/support.html
 
@@ -16,7 +17,7 @@ GitHub issues is the selected public support channel. Its public nature is expla
 ## Use this kit
 
 1. Paste the prepared text and review the questionnaire recommendations in `metadata.md`.
-2. Upload the numbered PNGs from the `screenshots/iphone` and `screenshots/ipad` folders in order. Each image shows the actual native app.
+2. Check the screenshot README for each capture’s source bundle, then use numbered PNGs from `screenshots/iphone` and `screenshots/ipad` only when they match the app being submitted. Images of the earlier 30-card catalog do not describe the consolidated catalog or listening games.
 3. Enter the public privacy/support URLs and the owner's private App Review name, email, and telephone.
 4. Confirm the Kids category, price, territories, seller/copyright information, and app-name availability in the publishing account.
 

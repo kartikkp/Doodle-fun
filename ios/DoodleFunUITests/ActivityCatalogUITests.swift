@@ -18,40 +18,31 @@ final class ActivityCatalogUITests: XCTestCase {
         }
     }
 
-    // Keep this explicit list reviewable against catalog.js. Generic learning
-    // headings are intentional; each card's practice-specific control is also
-    // checked so opening the shared engine alone is not a successful launch.
+    // Keep this explicit family list reviewable against catalog.js. Each
+    // family's default practice-specific control is checked as well as its
+    // title; the legacy mode routes retain separate native gameplay coverage.
     private static let activities: [Activity] = [
         Activity("draw", "Doodle studio", controls: ["Pen"]),
-        Activity("coloring", "Color & create", controls: ["Fill"]),
-        Activity("prewriting", "Line & shape trails", heading: "Letter adventures", controls: ["Check tracing"]),
-        Activity("uppercase", "Big letter trails", heading: "Letter adventures", controls: ["Check tracing"]),
-        Activity("lowercase", "Little letter trails", heading: "Letter adventures", controls: ["Check tracing"]),
-        Activity("word-tracing", "Word trails", heading: "Letter adventures", controls: ["Check tracing"]),
-        Activity("number-tracing", "Number trails", heading: "Letter adventures", controls: ["Check tracing"]),
-        Activity("counting", "Count with me", heading: "Number explorers", controls: ["Show counting steps"]),
-        Activity("addition", "Add together", heading: "Number explorers", controls: ["Show counting steps"]),
-        Activity("equal-groups", "Equal groups", heading: "Number explorers", controls: ["Show counting steps"]),
-        Activity("shape-match", "Shape detective", controls: ["New round", "New round →"]),
-        Activity("color-match", "Color buddies", controls: ["New round", "New round →"]),
+        Activity("trails", "Trail studio", controls: ["Check tracing"]),
+        Activity("letter-match", "Letter buddies", controls: ["Show partners"]),
+        Activity("word-build", "Build a word", controls: ["Show next letter"]),
+        Activity("counting", "Count & make", controls: ["Show counting steps"]),
+        Activity("number-stories", "Number stories", controls: ["Show counting steps"]),
+        Activity("sharing", "Groups & sharing", controls: ["Next", "Next →"]),
+        Activity("compare", "More, less, same", controls: ["New round →"]),
+        Activity("ordering", "Put it in order", controls: ["Next", "Next →"]),
+        Activity("shape-match", "Shape & color detective", controls: ["New round", "New round →"]),
         Activity("patterns", "Pattern parade", controls: ["New round", "New round →"]),
         Activity("sorting", "Sort it out", controls: ["New round", "New round →"]),
         Activity("odd-one-out", "Spot the difference", controls: ["New round", "New round →"]),
         Activity("memory", "Memory garden", controls: ["New round", "New round →"]),
-        Activity("maze", "Little pathfinder", controls: ["New round", "New round →"]),
-        Activity("compare", "More, less, same", controls: ["New round →"]),
-        Activity("number-order", "Number stepping stones", controls: ["New round →"]),
-        Activity("subtraction", "Take away", controls: ["New round →"]),
-        Activity("number-bonds", "Missing number", controls: ["New round →"]),
-        Activity("ten-frame", "Fill the frame", controls: ["Check my frame"]),
-        Activity("letter-match", "Letter buddies", controls: ["Show partners"]),
-        Activity("word-build", "Build a word", controls: ["Show next letter"]),
-        Activity("size-order", "Growing garden", controls: ["Next", "Next →"]),
+        Activity("maze", "Pathfinder", controls: ["New round", "New round →"]),
         Activity("picture-sequence", "Story steps", controls: ["Next", "Next →"]),
-        Activity("directions", "Follow the arrows", controls: ["Next", "Next →"]),
         Activity("make-a-shape", "Shape builder", controls: ["Next", "Next →"]),
-        Activity("rhythm", "Tap the pattern", controls: ["Next", "Next →"]),
-        Activity("sharing", "Fair shares", controls: ["Next", "Next →"]),
+        Activity("sound-match", "Sound detective", controls: ["Listen"]),
+        Activity("pitch-path", "Higher or lower", controls: ["Listen"]),
+        Activity("melody-echo", "Melody echo", controls: ["Listen"]),
+        Activity("beat-studio", "Beat studio", controls: ["Listen"]),
     ]
 
     private var app: XCUIApplication!
@@ -85,8 +76,8 @@ final class ActivityCatalogUITests: XCTestCase {
         } else {
             XCTFail("No native StatusBar frame or verified safe-area geometry for \(frame.size)")
         }
-        XCTAssertEqual(Self.activities.count, 30)
-        XCTAssertEqual(Set(Self.activities.map(\.id)).count, 30)
+        XCTAssertEqual(Self.activities.count, 21)
+        XCTAssertEqual(Set(Self.activities.map(\.id)).count, 21)
     }
 
     override func tearDownWithError() throws {
@@ -113,11 +104,14 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func control(_ labels: [String], identifier: String? = nil) -> XCUIElement {
+        // Native WebKit includes the CSS play glyph in the accessible name.
+        // The retained iOS 26 failure hierarchy reports exactly “▶Listen”.
+        let accessibleLabels = labels.flatMap { ["Listen", "Replay"].contains($0) ? ["Listen", "▶Listen", "Replay", "▶Replay"] : [$0] }
         let predicate: NSPredicate
         if let identifier {
-            predicate = NSPredicate(format: "label IN %@ OR identifier == %@", labels, identifier)
+            predicate = NSPredicate(format: "label IN %@ OR identifier == %@", accessibleLabels, identifier)
         } else {
-            predicate = NSPredicate(format: "label IN %@", labels)
+            predicate = NSPredicate(format: "label IN %@", accessibleLabels)
         }
         // iOS 26 exposes aria-pressed controls (ages, tools, trace choices) as
         // Switch rather than Button. Match the actual accessible name without
@@ -212,17 +206,15 @@ final class ActivityCatalogUITests: XCTestCase {
         add(attachment)
     }
 
-    private func checkPracticeSelection(_ activity: Activity) {
-        let practiceHeadings = ["prewriting":"Down", "uppercase":"Trace A", "lowercase":"Trace a",
-                                "word-tracing":"Write “cat”", "number-tracing":"Trace 0"]
+    private func checkPracticeSelection(_ activity: Activity, age: Int) {
+        let practiceHeadings = ["trails": age <= 4 ? "Down" : age >= 8 ? "Write “cat”" : "Trace A"]
         if let heading = practiceHeadings[activity.id] {
             XCTAssertTrue(text(heading).waitForExistence(timeout: 10), "The requested practice opened: \(activity.id)")
         }
         let prompt: NSPredicate?
         switch activity.id {
         case "counting": prompt = NSPredicate(format: "label BEGINSWITH %@", "How many dots")
-        case "addition": prompt = NSPredicate(format: "label CONTAINS %@ AND label ENDSWITH %@", " + ", " = ?")
-        case "equal-groups": prompt = NSPredicate(format: "label CONTAINS %@ AND label ENDSWITH %@", " groups of ", ". How many?")
+        case "number-stories": prompt = NSPredicate(format: "label CONTAINS %@ AND label ENDSWITH %@", " + ", " = ?")
         default: prompt = nil
         }
         if let prompt {
@@ -249,25 +241,17 @@ final class ActivityCatalogUITests: XCTestCase {
                 let link = reveal(card(activity))
                 XCTAssertTrue(link.isHittable)
                 link.tap()
-                if activity.id == "coloring" {
-                    let page = web.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Color Sunshine")).firstMatch
-                    XCTAssertTrue(page.waitForExistence(timeout: 10))
-                    reveal(page, inCoach: true).tap()
-                    let replace = control(["Start fresh"])
-                    if replace.waitForExistence(timeout: 1) { reveal(replace, inCoach: true).tap() }
-                    XCTAssertTrue(control(["Close coloring pages"]).waitForNonExistence(timeout: 10))
-                }
                 let heading = text(activity.heading)
                 XCTAssertTrue(heading.waitForExistence(timeout: 10), "Expected heading: \(activity.heading)")
                 reveal(heading, toward: .down)
                 XCTAssertTrue(safeTapBounds.contains(heading.frame), "The activity heading fits on screen")
-                checkPracticeSelection(activity)
+                checkPracticeSelection(activity, age: age)
                 if keepScreenshots { capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-opening") }
 
                 if !screenshotOnly {
                     let playControl = reveal(control(activity.controlLabels))
                     assertTapTarget(playControl)
-                    if keepScreenshots && activity.id == "word-tracing" {
+                    if keepScreenshots && activity.id == "trails" {
                         capture("age-\(age)-\(inLandscape ? "landscape" : "portrait")-\(activity.id)-scrolled-controls")
                     }
                     let coach = reveal(control(["Coach"], identifier: "coach-open"), toward: .down)
@@ -295,6 +279,130 @@ final class ActivityCatalogUITests: XCTestCase {
                 XCTAssertTrue(card(activity).waitForExistence(timeout: 10), "Returned to the catalog after \(activity.id)")
             }
         }
+    }
+
+    private func openListening(_ id: String) {
+        XCTAssertTrue(control(["Turn on read aloud"]).exists, "Game audio is tested with read-aloud off.")
+        let ageChoice = reveal(control(["Age 2"]), toward: .down)
+        ageChoice.tap()
+        XCTAssertEqual(ageChoice.value as? String, "1", "The native age-two switch is selected.")
+        guard let activity = Self.activities.first(where: { $0.id == id }) else {
+            XCTFail("Missing listening family \(id)")
+            return
+        }
+        reveal(card(activity)).tap()
+        XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
+        // Compact phones intentionally hide the redundant age caption. The
+        // selected native age control and each game's age-two round verify it.
+        XCTAssertTrue(control(["Game sound on"]).exists)
+    }
+
+    private func listeningStatus(begins prefix: String) -> XCUIElement {
+        web.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
+    }
+
+    private func listenUntilReady() {
+        let listen = reveal(control(["Listen"]))
+        XCTAssertTrue(listen.isEnabled)
+        listen.tap()
+        XCTAssertTrue(listeningStatus(begins: "Your turn.").waitForExistence(timeout: 12),
+                      "A real user tap must finish playback before the game accepts an answer.")
+    }
+
+    private func leaveListening() {
+        reveal(control(["Back to activities"]), toward: .down).tap()
+        XCTAssertTrue(control(["Turn on read aloud"]).waitForExistence(timeout: 10),
+                      "Playing game audio must not enable read-aloud.")
+        XCTAssertFalse(control(["Turn off read aloud"]).exists)
+    }
+
+    func testTrustedSoundDetectiveRequiresAudioAndRespectsItsOwnMute() {
+        openListening("sound-match")
+        let chooseBell = control(["Choose Bell"])
+        XCTAssertFalse(chooseBell.isEnabled, "The visible model alone cannot bypass listening.")
+        reveal(control(["Game sound on"]), toward: .down).tap()
+        XCTAssertTrue(control(["Game sound off"]).exists)
+        XCTAssertFalse(control(["Listen"]).isEnabled)
+        XCTAssertFalse(chooseBell.isEnabled)
+        reveal(control(["Game sound off"]), toward: .down).tap()
+        XCTAssertTrue(text("Game sound is on. Tap Listen.").exists, "Enabling sound does not start playback.")
+        listenUntilReady()
+        XCTAssertTrue(text("Listen for Bell: A clear, ringing sound.").exists)
+        reveal(control(["Hear Bell"])).tap()
+        let previewFinished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: chooseBell)
+        XCTAssertEqual(XCTWaiter.wait(for: [previewFinished], timeout: 10), .completed)
+        reveal(chooseBell).tap()
+        XCTAssertTrue(text("You listened and found the sound!").waitForExistence(timeout: 10))
+        capture("Sound detective completed using native taps with read-aloud off")
+        reveal(control(["Try again"])).tap()
+        XCTAssertFalse(chooseBell.isEnabled, "A fresh attempt requires listening again.")
+        leaveListening()
+    }
+
+    func testTrustedPitchPathCanRetryAndChooseTheHeardContour() {
+        openListening("pitch-path")
+        let up = web.buttons.matching(NSPredicate(format: "label ENDSWITH %@", "Goes up")).firstMatch
+        let down = web.buttons.matching(NSPredicate(format: "label ENDSWITH %@", "Goes down")).firstMatch
+        XCTAssertFalse(up.isEnabled)
+        listenUntilReady()
+        reveal(down).tap()
+        XCTAssertTrue(listeningStatus(begins: "Try listening again.").waitForExistence(timeout: 10))
+        XCTAssertFalse(text("You listened and found the sound!").exists)
+        reveal(control(["Show a hint"])).tap()
+        XCTAssertTrue(text("↗ Goes up").exists, "The first age-two model rises.")
+        listenUntilReady()
+        reveal(up).tap()
+        XCTAssertTrue(text("You listened and found the sound!").waitForExistence(timeout: 10))
+        capture("Higher or lower completed after a native wrong-answer retry")
+        leaveListening()
+    }
+
+    func testTrustedMelodyEchoPlaysPadsInOrderAfterRetry() {
+        openListening("melody-echo")
+        listenUntilReady()
+        reveal(control(["Tone 2"])).tap()
+        XCTAssertTrue(listeningStatus(begins: "Let’s try that melody again.").waitForExistence(timeout: 10))
+        XCTAssertFalse(text("You played the whole melody in order!").exists)
+        reveal(control(["Try again"])).tap()
+        listenUntilReady()
+        reveal(control(["Tone 1"])).tap()
+        XCTAssertTrue(text("1 of 2 tones played.").waitForExistence(timeout: 10))
+        reveal(control(["Tone 2"])).tap()
+        XCTAssertTrue(text("You played the whole melody in order!").waitForExistence(timeout: 10))
+        capture("Melody echo completed with native tone-pad taps")
+        leaveListening()
+    }
+
+    func testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps() {
+        openListening("beat-studio")
+        let drum = control(["Tap drum"])
+        XCTAssertFalse(drum.isEnabled)
+        listenUntilReady()
+        XCUIDevice.shared.press(.home)
+        let backgrounded = NSPredicate { _, _ in
+            let state = self.app.state
+            return state == .runningBackground || state == .runningBackgroundSuspended
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: backgrounded, object: app)], timeout: 10), .completed,
+                       "The test must actually background the app before returning, including a suspended background app.")
+        app.activate()
+        XCTAssertTrue(text("Sound paused. Tap Listen when you are ready to continue.").waitForExistence(timeout: 10))
+        XCTAssertFalse(drum.isEnabled, "Returning to the app needs a fresh listening gesture.")
+        listenUntilReady()
+        reveal(drum).tap()
+        XCTAssertTrue(listeningStatus(begins: "1 drum tap.").waitForExistence(timeout: 10))
+        reveal(control(["Check my beat"])).tap()
+        XCTAssertTrue(listeningStatus(begins: "Listen for 2 taps. You made 1.").waitForExistence(timeout: 10))
+        reveal(control(["Try again"])).tap()
+        listenUntilReady()
+        for count in 1...2 {
+            reveal(drum).tap()
+            XCTAssertTrue(listeningStatus(begins: "\(count) drum \(count == 1 ? "tap." : "taps.")").waitForExistence(timeout: 10))
+        }
+        reveal(control(["Check my beat"])).tap()
+        XCTAssertTrue(text("You matched every drum tap!").waitForExistence(timeout: 10))
+        capture("Beat studio completed with native taps after background recovery")
+        leaveListening()
     }
 
     func testAge2PortraitCatalog() { sweep(age: 2, inLandscape: false, keepScreenshots: true) }

@@ -544,17 +544,17 @@ final class NativeLayoutTests: NativeGameplayCase {
                 if (location.protocol !== 'file:' || innerWidth <= innerHeight) throw new Error('Expected the packaged page in landscape');
                 const output = {viewport:{width:innerWidth,height:innerHeight,scale:visualViewport?.scale},cssInsets:cssInsets(),activities:[]};
                 const routes = [
-                  {id:'shape-match',controls:'.discover-footer button',back:'.discover-back'},
-                  {id:'size-order',controls:'.adventure-footer button',back:'.adventure-back'},
-                  {id:'uppercase',controls:'.learn-tools button,.learn-navigation button',back:'.learn-back'},
-                  {id:'counting',controls:'.learn-count-coach,.learn-next-puzzle',back:'.learn-back'},
-                  {id:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'}
+                  {id:'shape-match',family:'shape-match',controls:'.discover-footer button',back:'.discover-back'},
+                  {id:'size-order',family:'ordering',controls:'.adventure-footer button',back:'.adventure-back'},
+                  {id:'uppercase',family:'trails',controls:'.learn-tools button,.learn-navigation button',back:'.learn-back'},
+                  {id:'counting',family:'counting',controls:'.learn-count-coach,.learn-next-puzzle',back:'.learn-back'},
+                  {id:'compare',family:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'}
                 ];
                 for (const route of routes) {
-                  const card = document.querySelector(`#card-${route.id}`);
-                  if (!shown(card)) throw new Error(`Missing visible catalog card ${route.id}`);
+                  const card = document.querySelector(`#card-${route.family}`);
+                  if (!shown(card)) throw new Error(`Missing visible catalog family ${route.family}`);
                   card.click();
-                  await wait(() => location.hash === `#${route.id}` && [...document.querySelectorAll(route.controls)].some(shown), route.id);
+                  await wait(() => location.hash === `#${route.family}` && document.body.dataset.activity === route.id && [...document.querySelectorAll(route.controls)].some(shown), `${route.family} / ${route.id}`);
                   await settle();
                   const buttons = [...document.querySelectorAll(route.controls)].filter(shown);
                   if (buttons.length < 2) throw new Error(`Missing lower controls for ${route.id}`);
@@ -567,7 +567,7 @@ final class NativeLayoutTests: NativeGameplayCase {
                   const back = document.querySelector(route.back);
                   if (!shown(back)) throw new Error(`Missing back control ${route.id}`);
                   back.click();
-                  await wait(() => shown(document.querySelector(`#card-${route.id}`)), `${route.id} return`);
+                  await wait(() => shown(document.querySelector(`#card-${route.family}`)), `${route.family} return`);
                 }
                 return output;
                 """#

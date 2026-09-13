@@ -85,6 +85,47 @@ final class NativeBridgeTests: XCTestCase {
     }
 
     @MainActor
+    func testNativeInactivityPausesVisibleListeningAndRedeliversOnReturn() async throws {
+        let controller = DoodleViewController()
+        let window = UIWindow(frame: UIScreen.main.bounds)
+        let loaded = expectation(description: "Listening lifecycle page loaded")
+        controller.onContentReady = { [weak controller] in controller?.onContentReady = nil; loaded.fulfill() }
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        controller.loadViewIfNeeded()
+        await fulfillment(of: [loaded], timeout: 30)
+        _ = try await controller.webView.callAsyncJavaScript("""
+            location.hash = 'beat-studio';
+            const deadline = performance.now() + 5000;
+            while (!document.querySelector('.listening-screen')) {
+              if (performance.now() > deadline) throw new Error('Beat studio did not open');
+              await new Promise(resolve => setTimeout(resolve, 20));
+            }
+            window.nativePauseEvents = [];
+            addEventListener('doodle-native-inactive', () => nativePauseEvents.push(document.visibilityState));
+            return true;
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let visible = try await controller.webView.evaluateJavaScript("document.visibilityState") as? String
+        XCTAssertEqual(visible, "visible", "This regression must not depend on document visibility changing.")
+
+        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
+        let paused = try await controller.webView.evaluateJavaScript("document.querySelector('[data-testid=\"listening-feedback\"]').textContent") as? String
+        XCTAssertEqual(paused, "Sound paused. Tap Listen when you are ready to continue.")
+        // Reset the visible practice to prove foreground delivery reaches the
+        // controller again, even if the background notification was deferred.
+        _ = try await controller.webView.evaluateJavaScript("document.querySelector('.listening-actions button').click(); true")
+        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        let returned = try await controller.webView.evaluateJavaScript("document.querySelector('[data-testid=\"listening-feedback\"]').textContent") as? String
+        XCTAssertEqual(returned, paused)
+        let locked = try await controller.webView.evaluateJavaScript("document.querySelector('[data-listening-drum]').disabled") as? Bool
+        XCTAssertEqual(locked, true)
+        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        let events = try await controller.webView.evaluateJavaScript("nativePauseEvents") as? [String]
+        XCTAssertEqual(events, ["visible", "visible"], "One inactive transition is redelivered once on return, without requiring hidden web content.")
+    }
+
+    @MainActor
     func testWebProcessRecoveryKeepsActivityAndLocalProgress() async throws {
         let controller = DoodleViewController()
         let window = UIWindow(frame: UIScreen.main.bounds)

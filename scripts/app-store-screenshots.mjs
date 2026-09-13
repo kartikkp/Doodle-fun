@@ -11,16 +11,20 @@ const args=process.argv.slice(2), option=name=>args[args.indexOf(name)+1];
 const get=name=>args.includes(name)?option(name):undefined;
 const family=get('--family');
 if(!['iphone','ipad'].includes(family)) throw new Error('Supply --family iphone|ipad.');
+const listeningState=get('--listening-state')||'ready';
+if(!['prompt','ready'].includes(listeningState)) throw new Error('Supply --listening-state prompt|ready.');
 const output=path.resolve(get('--output')||path.join(root,'test-results','app-store',`${family}-${Date.now()}`));
 if(output===root || output===path.join(root,'ios') || output.startsWith(path.join(root,'ios')+path.sep)) throw new Error('Use a separate capture output directory.');
 const sha=data=>createHash('sha256').update(data).digest('hex');
 const xcrun=(...args)=>execFileSync('xcrun',args,{encoding:'utf8',maxBuffer:16*1024*1024});
 const scenes=[
-  {id:'01-library',title:'A library of 30 activities',interaction:'Select age 6 using the home age control.'},
-  {id:'02-coloring',title:'Color and create',interaction:'Open Color & create, choose Rainbow, select six colors and fill six enclosed bands with native taps.'},
-  {id:'03-tracing',title:'Practice letter paths',interaction:'Open Big letter trails and trace A’s three numbered paths with trusted native finger drags on the visible guide.'},
+  {id:'01-library',title:'A library of 21 activity families',interaction:'Select age 6 using the home age control.'},
+  {id:'02-coloring',title:'Color and create',interaction:'Open Doodle studio, select the Coloring pages practice mode, choose Rainbow, then fill six enclosed bands with native color and canvas taps.'},
+  {id:'03-tracing',title:'Practice letter paths',interaction:'Open Trail studio at age 6 and trace A’s three numbered paths with trusted native finger drags on the visible guide.'},
   {id:'04-patterns',title:'Notice what repeats',interaction:'Open Pattern parade and move to the third age-6 round, an ABC repeating pattern.'},
-  {id:'05-coach',title:'A little help along the way',interaction:'Open the visible Coach control for Pattern parade.'},
+  {id:'05-listening',title:'Listen and discover',interaction:listeningState==='ready'
+    ? 'Open Sound detective with read-aloud off, tap Listen twice, and wait for each sound sequence to finish before capturing the answer-ready game.'
+    : 'Open Sound detective with read-aloud off and game sound on. Capture its initial Tap Listen prompt, before playback or an answer; this image makes no playback-verification claim.'},
 ];
 const sourceProject=path.join(root,'ios/DoodleFun.xcodeproj/project.pbxproj');
 
@@ -49,7 +53,9 @@ final class AppStoreScreenshots: XCTestCase {
         app.terminate()
     }
     private func named(_ label: String) -> XCUIElement {
-        web.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+        // The native accessibility tree includes the CSS play glyph.
+        let labels = ["Listen", "Replay"].contains(label) ? ["Listen", "▶Listen", "Replay", "▶Replay"] : [label]
+        return web.descendants(matching: .any).matching(NSPredicate(format: "label IN %@", labels)).firstMatch
     }
     private var visibleBounds: CGRect {
         let window = app.windows.firstMatch.frame
@@ -99,7 +105,10 @@ final class AppStoreScreenshots: XCTestCase {
         settle()
         capture("01-library")
 
-        open("Color & create")
+        open("Doodle studio")
+        // The family mode bar precedes the drawing toolbar in the native AX
+        // tree. Its first exact match selects the retained coloring mode.
+        tap(named("Coloring pages"))
         let page = web.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Color Rainbow'")).firstMatch
         tap(page)
         XCTAssertTrue(named("Close coloring pages").waitForNonExistence(timeout: 10))
@@ -117,7 +126,8 @@ final class AppStoreScreenshots: XCTestCase {
         capture("02-coloring")
         home()
 
-        open("Big letter trails")
+        open("Trail studio")
+        XCTAssertTrue(named("Trace A").waitForExistence(timeout: 10))
         let board = named("Trace the guide with a finger or Pencil")
         reveal(board, surface: true)
         let segments: [(CGVector,CGVector)] = [
@@ -142,12 +152,25 @@ final class AppStoreScreenshots: XCTestCase {
         XCTAssertTrue(named("Which picture comes next?").exists)
         settle()
         capture("04-patterns")
-        tap(named("Coach"))
-        XCTAssertTrue(named("Close coach").waitForExistence(timeout:10))
-        XCTAssertTrue(named("Start here").exists)
-        XCTAssertTrue(named("Try a strategy").exists)
+        home()
+
+        XCTAssertTrue(named("Turn on read aloud").exists)
+        open("Sound detective")
+        XCTAssertTrue(named("Game sound on").waitForExistence(timeout:10))
+        if ${listeningState==='ready'?'true':'false'} {
+            let ready = named("Your turn. Explore the sounds or choose your answer.")
+            for _ in 0..<2 {
+                tap(named("Listen"))
+                XCTAssertTrue(ready.waitForExistence(timeout:12), "The actual sound sequence must finish before capture.")
+            }
+        } else {
+            XCTAssertTrue(named("Tap Listen when you are ready.").exists)
+            XCTAssertTrue(named("Listen").isEnabled)
+            XCTAssertFalse(named("Your turn. Explore the sounds or choose your answer.").exists)
+        }
+        reveal(named("Sound detective"))
         settle()
-        capture("05-coach")
+        capture("05-listening")
     }
 }
 `;
@@ -187,7 +210,7 @@ if(get('--export')) {
     '-resultBundlePath',result,'-parallel-testing-enabled','NO','CODE_SIGNING_ALLOWED=NO','ONLY_ACTIVE_ARCH=YES','test',
     '-only-testing:DoodleFunUITests/AppStoreScreenshots/testCaptureStoreScenes'];
   const captureDevice={name:candidate.name,udid:candidate.udid,deviceTypeIdentifier:candidate.deviceTypeIdentifier,runtime:candidate.runtime};
-  metadata={family,device:captureDevice,bundleManifest,nativeSourceSHA256,sourceProjectSHA256:originalProjectHash,captureSourceSHA256:sha(captureSource),preparedAt,result,command:['xcodebuild',...command]};
+  metadata={family,listeningState,scenes,device:captureDevice,bundleManifest,nativeSourceSHA256,sourceProjectSHA256:originalProjectHash,captureSourceSHA256:sha(captureSource),preparedAt,result,command:['xcodebuild',...command]};
   await writeFile(path.join(output,'capture-run.json'),JSON.stringify(metadata,null,2)+'\n');
   if(sha(await readFile(sourceProject))!==originalProjectHash) throw new Error('Source project changed during preparation; rerun with a stable snapshot.');
   if(args.includes('--prepare-only')) {console.log(`Prepared ${family} native captures in ${output}`);process.exit(0);}
@@ -195,7 +218,7 @@ if(get('--export')) {
   if(candidate.state!=='Booted') xcrun('simctl','boot',device);
   xcrun('simctl','bootstatus',device,'-b');
   xcrun('simctl','status_bar',device,'override','--time','9:41','--dataNetwork','wifi','--wifiMode','active','--wifiBars','3','--cellularMode','active','--cellularBars','4','--batteryState','discharging','--batteryLevel','100');
-  const code=await new Promise((resolve,reject)=>{const child=spawn('caffeinate',['-i','xcodebuild',...command],{cwd:root,stdio:'inherit'});child.on('error',reject);child.on('exit',resolve);});
+  const code=await new Promise((resolve,reject)=>{const child=spawn('caffeinate',['-di','xcodebuild',...command],{cwd:root,stdio:'inherit'});child.on('error',reject);child.on('exit',resolve);});
   if(code!==0) throw new Error(`Native screenshot capture failed (${code}); inspect ${result}.`);
 }
 // xcresulttool refuses to overwrite an existing manifest. A fresh directory
@@ -205,7 +228,7 @@ xcrun('xcresulttool','export','attachments','--path',result,'--output-path',expo
 const attachments=JSON.parse(await readFile(path.join(exportDirectory,'manifest.json'),'utf8')).flatMap(item=>item.attachments||[]);
 const assets=path.resolve(get('--assets')||path.join(output,'screenshots'));
 const prepared=[];
-for(const scene of scenes) {
+for(const scene of metadata.scenes||scenes) {
   const matches=attachments.filter(item=>item.suggestedHumanReadableName.startsWith(`store-${scene.id}_`)&&!item.isAssociatedWithFailure);
   if(matches.length!==1) throw new Error(`Expected one successful ${scene.id} capture, got ${matches.length}.`);
   const attachment=matches[0],bytes=await readFile(path.join(exportDirectory,attachment.exportedFileName));

@@ -12,7 +12,7 @@ for(const [name,width,height] of sizes) {
       await page.locator(`[data-age="${age}"]`).click();
       for(const {id:route,engine} of ACTIVITIES) {
         await page.locator(`#card-${route}`).click();
-        const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view'}[engine]);
+        const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view',listening:'#listening-view'}[engine]);
         await expect(view).toBeVisible();
         await expect(view.locator('h1')).toBeVisible();
         expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
@@ -39,7 +39,7 @@ test('grown-up settings persist and support can override age without locks',asyn
   await expect(page.locator('#support-level')).toHaveValue('little');
   await expect(page.locator('#settings-sound')).toBeChecked();
   await page.keyboard.press('Escape');
-  await page.locator('#card-uppercase').click();
+  await page.locator('#card-trails').click();
   await expect(page.locator('[data-learn-set=lower]')).toBeEnabled();
   await expect(page.locator('[data-learn-set=nums]')).toBeEnabled();
 });
@@ -54,8 +54,8 @@ test('malformed persisted settings and unavailable storage do not block play',as
   const errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('console',msg=>{if(msg.type()==='error')errors.push(msg.text());});
   await page.goto('/');
   await page.locator('[data-age="3"]').click();
-  await page.locator('#card-uppercase').click();
-  await expect(page.locator('[data-learn-set=upper]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#card-trails').click();
+  await expect(page.locator('[data-learn-set=shapes]')).toHaveAttribute('aria-pressed','true');
   await page.getByRole('button',{name:/Back to (home|activities)/}).click();
   await page.locator('#card-draw').click();
   await expect(page.locator('.draw-canvas')).toBeVisible();
@@ -67,7 +67,7 @@ test('browser history restores the correct activity',async({page})=>{
   await page.locator('#card-draw').click();
   await expect(page.locator('#drawing-view')).toBeVisible();
   await page.getByRole('button',{name:/Back to (home|activities)/}).click();
-  await page.locator('#card-uppercase').click();
+  await page.locator('#card-trails').click();
   await expect(page.locator('#learning-view')).toBeVisible();
   await page.goBack();
   await expect(page.locator('#home-screen')).toBeVisible();

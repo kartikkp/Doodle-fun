@@ -32,7 +32,7 @@ test('branch-published root bundle works under the GitHub project path and reloa
     await expect(page.locator('.activity-card')).toHaveCount(ACTIVITIES.length);
     for(const activity of ACTIVITIES){
       await page.locator('#card-'+activity.id).click();
-      const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view'}[activity.engine]);
+      const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view',listening:'#listening-view'}[activity.engine]);
       await expect(view).toBeVisible();await expect(view.locator('h1')).toBeVisible();
       await page.keyboard.press('Escape');
       await view.getByRole('button',{name:/Back to (home|activities)/}).click();

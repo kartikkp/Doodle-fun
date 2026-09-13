@@ -26,3 +26,9 @@ Success: every visible card launches and plays, the downloaded HTML works indepe
 4. Complete native iPhone QA across all 30 activities and ages 2–10 on current and compact phones; fix observed defects and retain versioned touch, screenshot and gameplay evidence.
 
 5. Prepare App Store privacy/support pages, offline policy access, fresh parental approval before external actions, and verified iPhone/iPad listing assets.
+
+## Phase 5 — Consolidated activities and listening play
+
+1. Group duplicated entry points into 21 distinct families, preserving all 30 original modes, links, drawings and progress. Keep Coach and actual practice difficulty aligned with the selected mode, including older bookmarked pages.
+2. Add Sound detective, Higher or lower, Melody echo and Beat studio with offline generated audio, starting steps for ages 2–10, replay, hints and interruption recovery. Clearly label the retained visual sequence mode as Picture practice.
+3. Verify routes, modes, age-adjusted gameplay, generated sound signals, native touch controls and offline bundles; update the store copy and native screenshots. Record unavailable audio backends and physical/child-testing limits explicitly.

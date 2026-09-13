@@ -91,7 +91,7 @@ function visualDots(amount,{crossed=0,known=null,berries=false}={}) {
   return dots;
 }
 
-export function createChallenges(container,{getSettings,onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}) {
+export function createChallenges(container,{getSettings,getTitle=()=>null,onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}) {
   let opened=false,id='compare',profile=getProfile(getSettings()),round=0,question,done=false,steps=[],cells=new Set(),matched=new Set(),selection=null,showHelp=false,feedback;
   const stored=readStore('challenges-progress-v1',{});
   const saved=stored&&typeof stored==='object'&&!Array.isArray(stored)?Object.fromEntries(Object.entries(stored).filter(([key,value])=>value===true&&Object.keys(CHALLENGE_INFO).some(id=>key.startsWith(`${id}:`))).slice(0,1000)):{};
@@ -108,7 +108,7 @@ export function createChallenges(container,{getSettings,onBack=()=>{},onNotice=(
   function render() {
     const info=CHALLENGE_INFO[id];container.replaceChildren();container.classList.add('challenges-screen');container.dataset.challengeId=id;
     const header=el('header','activity-header challenge-header'),heading=el('div','challenge-heading');
-    heading.append(el('p','challenge-eyebrow',info.skill),el('h1','',info.title));
+    heading.append(el('p','challenge-eyebrow',info.skill),el('h1','',getTitle() || info.title));
     const back=button('← Home','button',()=>{close();onBack();});back.setAttribute('aria-label','Back to activities');
     header.append(back,heading,el('span','challenge-support',`Practice ${profile.challengeAge} · No rush`));container.append(header);
     const body=el('div','activity-body challenge-body'),card=el('section','challenge-card'),side=el('aside','challenge-side');
