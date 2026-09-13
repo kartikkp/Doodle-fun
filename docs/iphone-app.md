@@ -39,7 +39,7 @@ xcrun simctl launch booted com.kartikkp.DoodleFun
 
 ### Full iPhone QA
 
-The expanded suite runs **270 age/activity gameplay cases**, seven native bridge checks, four parental-gate checks, one native landscape-layout check, and fifteen UI tests. The four catalog UI tests each visit all 30 activities, including a landscape pass. An additional archive test captures all 30 landscape screens with full-device screenshots. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet.
+The expanded suite contains **270 age/activity gameplay cases** for the 30 retained modes, seven native bridge checks, four parental-gate checks, one native landscape-layout check, and **19 UI tests**. The four catalog UI tests each visit the 21 family defaults, including a landscape pass. An additional archive test captures all 21 family defaults in landscape with full-device screenshots. Four listening tests require real audio playback through trusted simulator taps. Separate UI tests exercise real simulator finger tracing, drawing recovery, all nine coloring pages, settings, and the system share sheet. This inventory is not a claim that every case has passed on the current runtime; see the [current QA status](consolidated-listening-qa.md).
 
 Use a dedicated simulator: the suite resets the tested app's local data. Install the Node dependencies, then supply its UDID from `xcrun simctl list devices available`:
 
@@ -57,7 +57,7 @@ npm run test:iphone -- --device YOUR_QA_SIMULATOR_UDID --output ../iphone-qa --o
 npm run test:iphone -- --device YOUR_QA_SIMULATOR_UDID --output ../iphone-qa --without-gameplay --only DoodleFunUITests
 ```
 
-Do not run two jobs against the same simulator or output directory concurrently. Gameplay helpers use DOM actions inside the real native WKWebView, including synthetic pointer input where needed. The separate XCUITest suite sends trusted simulator touch gestures and operates the native share sheet. These are simulator checks, not physical-device or child playtesting.
+Unlock the Mac before native touch tests, keep it awake for the run, and run one simulator UI driver at a time. Do not reuse the same output directory concurrently. Gameplay helpers use DOM actions inside the real native WKWebView, including synthetic pointer input where needed. The separate XCUITest suite sends trusted simulator touch gestures and operates the native share sheet. These are simulator checks, not physical-device or child playtesting.
 
 ## Native behavior
 
@@ -65,7 +65,7 @@ Do not run two jobs against the same simulator or output directory concurrently.
 - WebKit's default persistent store keeps local settings and progress across application launches. Native and browser installations have separate storage. Deleting the app removes its local data; offloading can retain it. Doodle Fun has no app-provided cloud sync. Operating-system or device backups may include local app data according to the owner’s settings.
 - The native shell reloads the current activity when WebKit reports a terminated content process. It preserves data already saved by the web app, but cannot restore a gesture or round that was only in memory. Repeated termination displays a native **Try again** action.
 - **Save** first opens a native grown-up check with a fresh multiplication question. Correct approval opens the system share sheet using a temporary PNG. Cancelling returns to the drawing; reopening works. The popover is anchored on iPad. The file is deleted when sharing completes or is cancelled. Native validation permits only a bounded, decodable PNG from the bundled main frame and sanitizes the filename.
-- Spoken coaching uses `AVSpeechSynthesizer`. It follows the web sound preference, replaces the previous utterance, and stops when the app becomes inactive. Available voices are supplied by iOS.
+- Spoken coaching uses `AVSpeechSynthesizer`. It follows the Read aloud preference, replaces the previous utterance, and stops when the app becomes inactive. Available voices are supplied by iOS. Listening games have separate game-sound and volume controls and synthesize tones/percussion locally through Web Audio.
 - A debug-only `--reset-test-data` launch argument isolates automated UI tests. It is excluded from Release behavior.
 
 ## Bridge contract
@@ -85,7 +85,7 @@ The native share sheet dispatches `doodle-native-share` with `event.detail.statu
 
 ## Verification
 
-The expanded post-merge iPhone test matrix and corrected runtime are documented in [Full iPhone simulator QA](iphone-qa-report.md). That report distinguishes all-age native gameplay, trusted touch, visual inspection, fixes, and remaining limits. The older release checks below are retained as history.
+The [current consolidation/listening QA](consolidated-listening-qa.md) identifies the current bundle and outstanding native checks. The earlier expanded post-merge iPhone matrix is documented in [Full iPhone simulator QA](iphone-qa-report.md). That report distinguishes all-age native gameplay, trusted touch, visual inspection, fixes, and remaining limits for its own runtime. The older release checks below are retained as history.
 
 Validation on 8 September 2026 used Xcode 26.6 and bundled build `030d813f25b61b2d` (SHA-256 `3a9feb0f286f3164d2e7b470ecc217bffd4ff02ac5538f4ff3007f933c039af4`). The unsigned simulator build passed. All eight tests passed on both iPhone 17 Pro and iPad Air 11-inch (M4), running iOS/iPadOS 26.5: **16 runs, zero failures, zero skips**. The five native checks also passed on iOS 18.6. Two Node.js sync tests passed.
 
