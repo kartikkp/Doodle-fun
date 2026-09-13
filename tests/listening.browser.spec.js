@@ -5,7 +5,7 @@ import {getProfile} from '../core.js';
 
 const backendByBrowser=new Map();
 test.beforeEach(async({page,browserName},info)=>{
-  const needsLive=/hears real audio|game sound is independent|preview cannot earn/.test(info.title);
+  const needsLive=/hears real audio|game sound is independent|preview cannot earn|native inactivity/.test(info.title);
   if(!needsLive)return;
   if(!backendByBrowser.has(browserName)) {
     await page.goto('/');
@@ -140,6 +140,41 @@ test('game sound is independent of narration; off, modal and route cancel unhear
   await page.locator('[data-listening-listen]').click();await page.getByRole('button',{name:'Back to activities',exact:true}).click();
   await expect(page.locator('.listening-screen')).toHaveCount(0);await page.waitForTimeout(100);
   expect(await page.evaluate(()=>window.__listeningAudio.every(record=>record.context.state!=='running'))).toBe(true);
+});
+
+test('native inactivity while the document stays visible cancels heard input and scheduled audio, then recovers on a trusted Listen',async({page})=>{
+  const q=await start(page,'beat-studio',2),screen=page.locator('.listening-screen'),drum=page.locator('[data-listening-drum]');
+  const sendNativePause=()=>page.evaluate(()=>{
+    if(document.visibilityState!=='visible')throw new Error('This regression requires a visible document throughout native inactivity.');
+    window.dispatchEvent(new Event('doodle-native-inactive'));
+    window.dispatchEvent(new Event('doodle-native-inactive')); // Deferred/native duplicate delivery is safe.
+    return document.visibilityState;
+  });
+  const assertPaused=async()=>{
+    await expect(screen).toHaveAttribute('data-listening-state','waiting');
+    await expect(page.getByTestId('listening-feedback')).toHaveText('Sound paused. Tap Listen when you are ready to continue.');
+    await expect(page.locator('[data-listening-tap-count]')).toHaveText('0 taps');
+    await expect(drum).toBeDisabled();await expect(page.locator('[data-listening-check]')).toBeDisabled();
+    await expect(page.locator('[data-listening-listen]')).toBeEnabled();
+    await expect.poll(()=>page.evaluate(()=>window.__listeningAudio.every(record=>record.context.state==='closed'))).toBe(true);
+    expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-progress-v1'))).toBeNull();
+  };
+  await listen(page);await drum.click();await previewDone(page);
+  await expect(page.locator('[data-listening-tap-count]')).toHaveText('1 tap');
+  expect(await sendNativePause()).toBe('visible');await assertPaused();
+
+  await page.locator('[data-listening-listen]').click();
+  await expect(screen).toHaveAttribute('data-listening-state','playing');
+  expect(await sendNativePause()).toBe('visible');await assertPaused();
+  // The old scheduled sequence must not restore readiness after its end time.
+  await page.waitForTimeout((q.times.at(-1)+.4)*1000);await assertPaused();
+  const retiredCount=await page.evaluate(()=>window.__listeningAudio.length);
+  await listen(page);
+  expect(await page.evaluate(()=>window.__listeningAudio.length)).toBe(retiredCount+1);
+  await expect.poll(()=>page.evaluate(()=>window.__listeningAudio.at(-1).peak),'replacement context produces real nonzero audio').toBeGreaterThan(.0001);
+  await playCorrect(page,'beat-studio',q);
+  expect(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('doodle-fun:v2:listening-progress-v1')).stars))).toEqual(['beat-studio:2:0']);
+  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
 });
 
 test('preview cannot earn progress, a melody pad before Listen only explores, completed retry is idempotent',async({page})=>{

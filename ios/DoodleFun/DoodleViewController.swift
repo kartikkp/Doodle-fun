@@ -169,6 +169,8 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
     private var contentRulesReady = false
     private var recoveryTimes: [Date] = []
     private var backgroundObserver: NSObjectProtocol?
+    private var foregroundObserver: NSObjectProtocol?
+    private var pendingListeningPause = false
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -213,10 +215,26 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         ])
         setupStatus()
         backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.speaker.stopSpeaking(at: .immediate)
-            self?.cancelParentAction()
+            guard let self else { return }
+            self.speaker.stopSpeaking(at: .immediate)
+            self.cancelParentAction()
+            self.pendingListeningPause = true
+            self.pauseListening()
+        }
+        foregroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self, self.pendingListeningPause else { return }
+            self.pendingListeningPause = false
+            // Background WebKit execution may be deferred, and a quick app
+            // transition need not produce a document visibility change.
+            self.pauseListening()
         }
         prepareDocument()
+    }
+
+    private func pauseListening() {
+        // This fixed native lifecycle event carries no web-supplied payload.
+        // Repeated delivery only cancels the current listening attempt.
+        webView.evaluateJavaScript("window.dispatchEvent(new Event('doodle-native-inactive')); true", completionHandler: nil)
     }
 
     private func prepareDocument() {
@@ -239,6 +257,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
 
     deinit {
         if let backgroundObserver { NotificationCenter.default.removeObserver(backgroundObserver) }
+        if let foregroundObserver { NotificationCenter.default.removeObserver(foregroundObserver) }
         if let shareDirectory { try? FileManager.default.removeItem(at: shareDirectory) }
     }
 

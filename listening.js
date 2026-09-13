@@ -214,6 +214,9 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     body.append(main,side);screen.append(body);container.replaceChildren(screen);
   }
   const onVisibility=()=>{if(document.hidden)suspendAudio();};document.addEventListener('visibilitychange',onVisibility);globalThis.addEventListener?.('pagehide',suspendAudio);
+  // A rapid native app transition may leave WKWebView's document visible.
+  // The shell also delivers this pause on return if background JS was deferred.
+  globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
   return {open(nextId='sound-match') {cancel();id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
     close(){cancel();engine.suspend();id=null;container.replaceChildren();},
     settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age){profile=nextProfile;round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,suspendAudio};

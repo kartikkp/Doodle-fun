@@ -379,6 +379,7 @@ final class ActivityCatalogUITests: XCTestCase {
         XCTAssertFalse(drum.isEnabled)
         listenUntilReady()
         XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10), "The test must actually background the app before returning.")
         app.activate()
         XCTAssertTrue(text("Sound paused. Tap Listen when you are ready to continue.").waitForExistence(timeout: 10))
         XCTAssertFalse(drum.isEnabled, "Returning to the app needs a fresh listening gesture.")
