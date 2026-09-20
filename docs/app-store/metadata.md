@@ -1,26 +1,27 @@
 # Doodle Fun — App Store submission draft
 
-Prepared September 8, 2026; product copy updated September 13, 2026 for the consolidated catalog and listening games. **Not submitted.** This document prepares copy and recommends answers; it does not establish that an App Store Connect record, signing entitlement, legal owner, or submitted build has been verified. Reconcile the final answers with the release archive and the owner's actual practices before submission.
+Prepared September 8, 2026; product copy updated September 13, 2026 for the consolidated catalog and listening games. Release choices updated September 20, 2026 after the owner authorized preparation and purchased an individual Apple Developer membership. **Membership activation pending; not submitted.** This document records the selected release settings and prepares questionnaire answers. It does not establish that an App Store Connect record, signing entitlement, legal seller identity, or submitted build has been verified. Reconcile the final answers with the release archive and the owner's actual practices before submission.
 
 ## Listing settings
 
 | Field | Prepared value | Status |
 | --- | --- | --- |
-| Primary language | English (U.S.) | Draft |
-| App name | Doodle Fun: Draw & Discover | 27 characters; availability in the owner's account unverified |
+| Enrollment | Individual | Purchased by the owner; activation pending |
+| Primary language | English (U.S.) | Selected for preparation; not entered in App Store Connect |
+| App name | Doodle Fun: Draw & Discover | Selected; 27 characters; availability in the owner's account unverified |
 | Subtitle | Create, explore & listen | 24 characters |
-| Primary category | Education | Recommended |
-| Secondary category | None | Recommended; no second category needed |
-| Made for Kids | Yes; primary recommendation ages 6–8 | Owner must confirm the lasting Kids-category commitment below |
+| Primary category | Education | Selected; not entered in App Store Connect |
+| Secondary category | None | Prepared; no second category needed |
+| Made for Kids | Yes; primary audience ages 6–8 | Selected for preparation; account selection and review remain pending; see the lasting category commitment below |
 | Content age rating | Expected 4+, subject to Apple's questionnaire result | Not assigned or verified |
-| Price | Free | Draft assumption pending owner confirmation |
-| In-App Purchases / subscriptions | None | Current app has no purchase implementation |
-| Advertising | None | Current app has no advertising implementation |
-| Availability | United States only | Draft scope; no territories have been configured by this document |
-| Release option | Manual release after approval | Recommended; do not release automatically |
+| Price | Free | Selected; not entered in App Store Connect |
+| In-App Purchases / subscriptions | None | Selected; current app has no purchase implementation |
+| Advertising | None | Selected; current app has no advertising implementation |
+| Availability | United States only | Selected; no territories have been configured by this document |
+| Release option | Manual release after approval | Selected; public release still requires the owner's launch authorization |
 | Platforms | iPhone and iPad; iOS/iPadOS 17 or later | Match the final archive's deployment target |
-| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | Prepared page; verify the final published response before submission |
-| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | Prepared page; GitHub issues selected as the support channel |
+| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 on September 20, 2026; published September 8 content is stale. Publish the current policy after PR #6 is merged and verify it against the release bundle before submission. |
+| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. Publish the current support page after PR #6 is merged. GitHub issues remains the selected support channel. |
 | Marketing URL | https://kartikkp.github.io/Doodle-fun/ | Existing project website; verify before entering |
 | Privacy Choices URL | Leave blank | Optional; deletion and backup choices are in the privacy policy |
 | Sign-in required | No | No demo account is needed |
@@ -30,7 +31,7 @@ Apple limits the name and subtitle to 30 characters. The privacy URL is required
 
 ## Copy to paste
 
-The copy below assumes the owner selects Made for Kids and completes Kids-category review. If that decision changes, review all child-directed metadata against Apple's restrictions before using it. [Apple: App Review Guidelines, 2.3.8 and 5.1.4](https://developer.apple.com/app-store/review/guidelines/)
+The copy below uses the selected Made for Kids positioning. Account selection and Kids-category review remain pending. If that decision changes before submission, review all child-directed metadata against Apple's restrictions before using it. [Apple: App Review Guidelines, 2.3.8 and 5.1.4](https://developer.apple.com/app-store/review/guidelines/)
 
 ### Promotional text
 
@@ -110,11 +111,11 @@ The native privacy manifest and App Store privacy questionnaire are separate del
 
 ## Age rating and Kids category
 
-**Recommend Made for Kids, ages 6–8, with an expected content rating of 4+.** The app's strongest shared center is letter/word practice, counting and arithmetic with objects, patterns, and guided reasoning. Ages 2–5 have simpler creative activities and grown-up-supported practice; ages 9–10 have harder variations. The configurable 2–10 range does not mean every activity is intended for independent use at every age.
+**Selected positioning: Made for Kids, ages 6–8. Expected content rating: 4+, not assigned.** The app's strongest shared center is letter/word practice, counting and arithmetic with objects, patterns, and guided reasoning. Ages 2–5 have simpler creative activities and grown-up-supported practice; ages 9–10 have harder variations. The configurable 2–10 range does not mean every activity is intended for independent use at every age.
 
-Apple offers Kids bands of 5 and under, 6–8, and 9–11. The 6–8 recommendation reflects the current breadth of content; the owner should confirm the intended primary audience before submission. [Apple: Kids category](https://developer.apple.com/kids/)
+Apple offers Kids bands of 5 and under, 6–8, and 9–11. The selected 6–8 band reflects the current breadth of content; it has not yet been configured in App Store Connect. [Apple: Kids category](https://developer.apple.com/kids/)
 
-**Owner decision required:** after a Made for Kids app is approved, the selection cannot be changed, and later updates must continue to meet Kids-category requirements. [Apple: Made for Kids property](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information)
+**Lasting category commitment:** after a Made for Kids app is approved, the selection cannot be changed, and later updates must continue to meet Kids-category requirements. The selected launch positioning includes this requirement. [Apple: Made for Kids property](https://developer.apple.com/help/app-store-connect/reference/app-information/app-information)
 
 Use the following as a source-based worksheet, not a preassigned rating. Apple calculates the rating from the actual questionnaire. The app's difficulty picker and the content rating serve different purposes. [Apple: age ratings and definitions](https://developer.apple.com/help/app-store-connect/reference/app-information/age-ratings-values-and-definitions)
 
@@ -168,8 +169,8 @@ These are submission prerequisites, not values to guess. No account or external 
 
 | Field / action | Required owner input or verification |
 | --- | --- |
-| Apple Developer membership / account holder | Confirm active membership, correct account/team, and authority to publish. Existing project signing settings do not establish ownership. |
-| Legal seller / developer name | Confirm the exact person or legal entity shown by App Store Connect. |
+| Apple Developer membership / account holder | Individual membership purchased; wait for activation, then verify the correct account/team and required agreements. Existing project signing settings do not establish active membership or ownership. |
+| Legal seller / developer name | Verify the exact legal name shown by the individual membership in App Store Connect. No name is inferred from local paths, repository ownership, or this worksheet. |
 | Copyright | Supply the correct year and rights-holder name; do not use a placeholder in the submitted record. |
 | Public support contact | GitHub issues is the selected support channel. Confirm it meets applicable contact requirements before submission, or supply a monitored email if preferred. |
 | App Review contact | Supply first and last name, monitored email, and reachable telephone number in international format. This is separate from the public support contact. |
@@ -177,10 +178,10 @@ These are submission prerequisites, not values to guess. No account or external 
 | Bundle ID and signing | Verify the release archive matches the registered app identifier and distribution team. |
 | Version/build and selected archive | Confirm the final marketing version, unique build number, uploaded archive, and processing status. |
 | App name availability | Check the prepared 27-character name in the owner's App Store Connect account. |
-| Kids category and age band | Confirm Made for Kids, primary 6–8 recommendation, parental-gate review, and the lasting category commitment. |
+| Kids category and age band | Enter the selected Made for Kids, ages 6–8 positioning; verify the final parental gates and Kids-category requirements before submission. |
 | Privacy and content rights | Confirm the questionnaire against the final build and actual collection practices; confirm rights to all app content and store assets. |
-| Price and territory | Confirm the proposed free price, no IAP, and U.S.-only availability. Broader distribution requires a separate owner review of regional account/compliance fields. |
-| Live policy/support pages | After deployment, verify both production URLs return the final pages over HTTPS with working links. The same policy body must be present offline in the submitted app. |
+| Price and territory | Enter the selected free price, no IAP, and U.S.-only availability. Broader distribution requires a separate owner review of regional account/compliance fields. |
+| Live policy/support pages | Both URLs were reachable with HTTP 200 on September 20, 2026, but still serve September 8 content for the earlier 30-activity app. After PR #6 is merged, publish the current 21-family/34-mode pages, including game-sound and volume information, then verify their content and links over HTTPS. The same policy body must be present offline in the submitted app. |
 | Screenshots / preview | Supply actual screenshots of the submitted app for required device sizes. Do not use a mock screen or claim untested accessibility support. An app preview is optional. |
 | Release authorization | Confirm final content and account fields, then submit for review; release manually only when the owner authorizes it. |
 

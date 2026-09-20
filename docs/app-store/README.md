@@ -4,21 +4,26 @@ The native app groups 34 practice modes into 21 activities for chosen starting a
 
 ## Listing and public pages
 
+- [Release checklist](release-checklist.md): account activation, remaining device checks, listing setup, and upload-to-release steps.
 - [Store copy and questionnaire worksheet](metadata.md): name, subtitle, promotional text, keywords, description, privacy answers, age-rating guidance, and reviewer instructions.
 - [Native iPhone and iPad screenshots](screenshots/README.md): five scenes per device family, with exact dimensions and source manifests.
 - [Current catalog and listening QA](../consolidated-listening-qa.md): tested runtime, source/browser/native evidence and physical-device limits.
 - Privacy URL: https://kartikkp.github.io/Doodle-fun/privacy.html
 - Support URL: https://kartikkp.github.io/Doodle-fun/support.html
 
-The proposed listing is **free**, with **Education** as its category, **Kids ages 6–8** as its primary audience, **United States** availability, and **manual release**. These are prepared defaults, not settings already entered in App Store Connect. The app still offers all nine starting ages from 2 through 10.
+Both public URLs returned HTTP 200 in the September 20, 2026 preflight, but their published content is still the September 8 version for the earlier 30-activity app. The current local pages describe the 21 activity families, 34 modes, game sound and volume. After PR #6 is merged, publish those updated pages and verify their content against the release build before submission. Reachability alone does not establish that the public policy and support information are current.
+
+The owner has approved preparing **Doodle Fun: Draw & Discover** as a **free** app, without ads or in-app purchases, with **Education** as its category, **Kids ages 6–8** as its primary audience, **United States** availability, and **manual release**. These are the selected release settings; they have not been entered or verified in App Store Connect. Name availability remains unverified. The app still offers all nine starting ages from 2 through 10.
+
+The owner purchased an **individual Apple Developer membership** and is awaiting activation. Use that membership for this release. The exact legal seller identity, copyright holder and private App Review contact still need to be supplied or verified in the account.
 
 GitHub issues is the selected public support channel. Its public nature is explained on both pages. No support email, legal seller identity, or App Review contact information has been invented.
 
 ## Use this kit
 
-1. Paste the prepared text and review the questionnaire recommendations in `metadata.md`.
+1. While membership is pending, finish release QA, review the prepared text and questionnaire recommendations in `metadata.md`, and collect the owner's copyright and private review-contact details.
 2. Check the screenshot README for each capture’s source bundle, then use numbered PNGs from `screenshots/iphone` and `screenshots/ipad` only when they match the app being submitted. Images of the earlier 30-card catalog do not describe the consolidated catalog or listening games.
-3. Enter the public privacy/support URLs and the owner's private App Review name, email, and telephone.
-4. Confirm the Kids category, price, territories, seller/copyright information, and app-name availability in the publishing account.
+3. Publish and verify the updated privacy/support pages after PR #6 is merged. Once membership is active, verify the individual account/team, accept required account agreements, and create or confirm the app record. Check name availability and enter the selected listing settings, current public URLs and private review contact.
+4. Validate and upload the signed release archive. Complete physical iPhone/iPad checks through TestFlight, reconcile the privacy and age-rating answers with that build, and select the verified build for review.
 
-Creating the App Store Connect record, uploading a signed archive, physical-device TestFlight checks, and submitting to Apple remain the next release steps. This kit does not upload or submit an app.
+Creating the App Store Connect record, uploading a signed archive, physical-device TestFlight checks, and submitting to Apple remain the next release steps. Preparing this kit does not submit an app or authorize its public release; use manual release after approval and the owner's launch authorization.
