@@ -2,10 +2,16 @@ name: Activity QA
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_evidence:
+        description: Run focused native release checks and capture store screenshots
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
   activities:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -36,6 +42,7 @@ jobs:
           retention-days: 7
 
   iphone-build:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -101,6 +108,7 @@ jobs:
             ${{ runner.temp }}/DoodleFun-native-qa/last-command.json
           if-no-files-found: ignore
           retention-days: 7
+
       - name: Keep native listening evidence
         uses: actions/upload-artifact@v7
         if: always()
@@ -114,3 +122,37 @@ jobs:
             ${{ runner.temp }}/DoodleFun-native-audio-qa.log
           if-no-files-found: ignore
           retention-days: 7
+
+  release-evidence:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release_evidence }}
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run serial native release checks and real store captures
+        env:
+          DOODLE_RELEASE_OUTPUT: ${{ runner.temp }}/DoodleFun-release-evidence
+        run: node scripts/release-evidence.mjs --output "$DOODLE_RELEASE_OUTPUT"
+      - name: Keep release evidence and original screenshot bytes
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-evidence-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/DoodleFun-release-evidence/release-evidence.json
+            ${{ runner.temp }}/DoodleFun-release-evidence/inventory.json
+            ${{ runner.temp }}/DoodleFun-release-evidence/*/*.json
+            ${{ runner.temp }}/DoodleFun-release-evidence/*/*.log
+            ${{ runner.temp }}/DoodleFun-release-evidence/*/*.xcresult/**
+            ${{ runner.temp }}/DoodleFun-release-evidence/store-*/attachments-*/*.png
+            ${{ runner.temp }}/DoodleFun-release-evidence/store-*/attachments-*/manifest.json
+            ${{ runner.temp }}/DoodleFun-release-evidence/screenshots/**
+          if-no-files-found: error
+          retention-days: 14
