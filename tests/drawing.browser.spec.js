@@ -122,8 +122,8 @@ const coloringRegions = [
   { name: 'Dino', point: [.46, .57] },
 ];
 
-async function coloringMetrics(page, beforePNG, point) {
-  return canvas(page).evaluate(async (el, { beforePNG, point }) => {
+async function coloringMetrics(page, beforePNG, point, protectedPoints = []) {
+  return canvas(page).evaluate(async (el, { beforePNG, point, protectedPoints }) => {
     const image = new Image();
     await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = beforePNG; });
     const original = document.createElement('canvas'); original.width = el.width; original.height = el.height;
@@ -150,10 +150,22 @@ async function coloringMetrics(page, beforePNG, point) {
       dark++;
       if (Math.max(after[i], after[i + 1], after[i + 2]) < 80) preserved++;
     }
+    const protectedRegions = protectedPoints.map(at => {
+      const cx = Math.round(el.width * at[0]), cy = Math.round(el.height * at[1]);
+      const radius = Math.max(1, Math.floor(el.width * .008));
+      let unchanged = true;
+      for (let y = cy - radius; y <= cy + radius; y++) {
+        for (let x = cx - radius; x <= cx + radius; x++) {
+          const i = (y * el.width + x) * 4;
+          if (before.subarray(i, i + 4).some((value, channel) => value !== after[i + channel])) unchanged = false;
+        }
+      }
+      return { at, whiteBefore: fraction(before, at, isWhite), unchanged };
+    });
     return { interiorBefore: fraction(before, point, isWhite), exteriorBefore: fraction(before, [.06, .10], isWhite),
       interiorAfter: fraction(after, point, isCoral), exteriorAfter: fraction(after, [.06, .10], isWhite),
-      dark, retained: preserved / dark };
-  }, { beforePNG, point });
+      dark, retained: preserved / dark, protectedRegions };
+  }, { beforePNG, point, protectedPoints });
 }
 
 test('all nine coloring templates keep interior fills inside dark outlines', async ({ page }) => {
@@ -176,6 +188,32 @@ test('all nine coloring templates keep interior fills inside dark outlines', asy
     expect(metrics.retained, `${name}: filling keeps dark outlines`).toBeGreaterThan(.99);
     await page.getByRole('button', { name: 'Undo last action', exact: true }).click();
     expect(await snapshot(page)).toBe(initial);
+  }
+});
+
+test('rainbow cloud fills keep the background and rainbow band unchanged and undo exactly', async ({ page }) => {
+  await page.locator('.draw-templates').click();
+  await page.getByRole('button', { name: /Color Rainbow/ }).click();
+  await expect(page.locator('.draw-paper-name')).toContainText('Rainbow');
+  const initial = await snapshot(page);
+  await page.getByRole('button', { name: 'Fill', exact: true }).click();
+  await page.getByRole('button', { name: 'Coral', exact: true }).click();
+  // These side lobes connect through the lower outline, which used to be
+  // erased by a white rectangle. The upper central lobes were already closed.
+  const clouds = [['left', [.207, .824]], ['right', [.602, .832]]];
+  for (const [index, [name, point]] of clouds.entries()) {
+    await tapPaper(page, ...point);
+    const metrics = await coloringMetrics(page, initial, point, [[.06, .10], [.50, .39], clouds[1 - index][1]]);
+    expect(metrics.interiorBefore, `${name} cloud starts empty`).toBeGreaterThan(.95);
+    expect(metrics.interiorAfter, `${name} cloud receives paint`).toBeGreaterThan(.95);
+    expect(metrics.exteriorAfter, `${name} cloud paint stays out of the background`).toBeGreaterThan(.95);
+    for (const region of metrics.protectedRegions) {
+      expect(region.whiteBefore, `reference region ${region.at} starts empty`).toBeGreaterThan(.95);
+      expect(region.unchanged, `${name} cloud fill leaves region ${region.at} unchanged`).toBe(true);
+    }
+    expect(metrics.retained, `${name} cloud keeps its dark outline`).toBeGreaterThan(.99);
+    await page.getByRole('button', { name: 'Undo last action', exact: true }).click();
+    expect(await snapshot(page), `Undo restores the full page after filling the ${name} cloud`).toBe(initial);
   }
 });
 

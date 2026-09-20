@@ -1,4 +1,4 @@
-const CACHE='doodle-fun-offline-f0359a88a446a67e';
+const CACHE='doodle-fun-offline-c77bc6337d93eec9';
 const HOME=new URL('./',self.location.href).href;
 const PAGES=['privacy.html','support.html'].map(path=>new URL(path,HOME).href);
 self.addEventListener('install',event=>event.waitUntil((async()=>{

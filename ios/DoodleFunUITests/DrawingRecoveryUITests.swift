@@ -254,6 +254,29 @@ final class DrawingRecoveryUITests: XCTestCase {
             let recovered = try snapshot("\(name) undo fill")
             XCTAssertLessThan(recovered.coralCount, 20, "Undo should remove the applied color.")
             expectSameArtwork(outline, recovered, "Undo should restore \(name)'s line art.")
+            if name == "Rainbow" {
+                // Each cloud used to lose its lower outline to white overpaint,
+                // connecting its empty center to the surrounding background.
+                let clouds: [(name: String, point: CGVector)] = [
+                    ("left", CGVector(dx: 0.207, dy: 0.824)),
+                    ("right", CGVector(dx: 0.602, dy: 0.832))
+                ]
+                for (cloudIndex, cloud) in clouds.enumerated() {
+                    XCTAssertGreaterThan(outline.whiteFraction(near: cloud.point), 0.95, "The \(cloud.name) cloud's interior should start empty.")
+                    paper.coordinate(withNormalizedOffset: cloud.point).tap()
+                    let cloudFill = try snapshot("Rainbow \(cloud.name) cloud after fill")
+                    XCTAssertGreaterThan(cloudFill.coralFraction(near: cloud.point), 0.95, "The \(cloud.name) cloud must receive the paint.")
+                    XCTAssertGreaterThan(cloudFill.whiteFraction(near: exterior), 0.95, "The \(cloud.name) cloud fill must stay out of the background.")
+                    XCTAssertGreaterThan(cloudFill.whiteFraction(near: region.point), 0.95, "The rainbow band must remain unchanged when filling the \(cloud.name) cloud.")
+                    XCTAssertGreaterThan(cloudFill.whiteFraction(near: clouds[1 - cloudIndex].point), 0.95, "The other cloud must remain unchanged.")
+                    XCTAssertGreaterThan(outline.darkRetention(in: cloudFill), 0.99, "The cloud outlines must survive the fill.")
+                    app.buttons["Undo last action"].tap()
+                    let cloudUndo = try snapshot("Rainbow \(cloud.name) cloud undo fill")
+                    XCTAssertLessThan(cloudUndo.coralCount, 20, "Undo must remove all cloud paint.")
+                    XCTAssertGreaterThan(cloudUndo.whiteFraction(near: cloud.point), 0.95, "Undo must restore the cloud's empty interior.")
+                    expectSameArtwork(outline, cloudUndo, "Undo must restore the whole rainbow page after the \(cloud.name) cloud fill.")
+                }
+            }
         }
         XCTAssertEqual(fingerprints.count, 9)
     }
