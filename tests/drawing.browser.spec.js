@@ -244,6 +244,113 @@ test('rotation, home navigation, and reload keep the same saved artwork', async 
   expect(await draft(page)).toBe(original);
 });
 
+test.describe('short landscape drawing', () => {
+test.use({ serviceWorkers: 'block' });
+for (const viewport of [{ width: 667, height: 375 }, { width: 844, height: 390 },
+  { width: 874, height: 402, safeArea: { top: 0, right: 62, bottom: 21, left: 62 } }]) {
+  test(`short landscape ${viewport.width}×${viewport.height} keeps the whole paper visible and art supplies reachable`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: viewport.height, height: viewport.width });
+    if (viewport.safeArea) {
+      // Desktop engines expose zero safe-area insets. Substitute CSS variables
+      // only in the served test copy to cover the measured native phone insets.
+      await page.route('**/', async route => {
+        const response = await route.fetch();
+        const html = await response.text();
+        expect(html).toContain('env(safe-area-inset-bottom');
+        const variables = Object.entries(viewport.safeArea).map(([side, value]) => `--test-safe-area-${side}:${value}px`).join(';');
+        const body = html.replace(/env\(safe-area-inset-(top|right|bottom|left)(?:,[^)]*)?\)/g, (_, side) => `var(--test-safe-area-${side},0px)`)
+          .replace('</head>', `<style>@media (orientation:landscape){:root{${variables}}}</style></head>`);
+        await route.fulfill({ response, body });
+      });
+      await page.reload();
+      await expect(canvas(page)).toBeVisible();
+    }
+    await stroke(page);
+    await draft(page);
+    await page.setViewportSize(viewport);
+    const layout = () => page.evaluate(() => {
+      const paper = document.querySelector('.draw-canvas').getBoundingClientRect().toJSON();
+      const visible = window.visualViewport;
+      return { paper, viewport: { left: visible?.offsetLeft || 0, top: visible?.offsetTop || 0,
+        width: visible?.width || innerWidth, height: visible?.height || innerHeight },
+      navigation: { measured: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--activity-nav-height')),
+        actual: document.querySelector('#activity-coach-bar').getBoundingClientRect().height + document.querySelector('#activity-mode-bar').getBoundingClientRect().height },
+      document: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+      scrollX, scrollY };
+    });
+    try {
+      // Check before scrollIntoView or Playwright's automatic action scrolling
+      // can conceal a canvas pushed below the short landscape viewport.
+      await expect.poll(async () => {
+        const { paper: p, viewport: v, document: d, navigation: n, scrollX, scrollY } = await layout();
+        return { usefulSquare: p.width > 120 && Math.abs(p.width - p.height) < 1,
+          wholePaper: p.left >= v.left && p.top >= v.top && p.right <= v.left + v.width && p.bottom <= v.top + v.height,
+          currentNavigation: Math.abs(n.measured - n.actual) < 1,
+          noPageOverflow: d.width <= v.width + 1 && d.height <= v.height + 1 && scrollX === 0 && scrollY === 0 };
+      }).toEqual({ usefulSquare: true, wholePaper: true, currentNavigation: true, noPageOverflow: true });
+    } finally {
+      await testInfo.attach('drawing-layout-before-scrolling', { body: JSON.stringify(await layout(), null, 2), contentType: 'application/json' });
+    }
+    // The supplies can scroll inside their panel; each actual control must
+    // remain a full-sized, unobstructed target when brought into view.
+    for (const [selector, minimum] of [['.draw-tool', 48], ['.draw-save', 46], ['.draw-shuffle', 44], ['.draw-size', 44], ['.draw-actions .button', 44]]) {
+      for (const control of await page.locator(selector).all()) {
+        await control.scrollIntoViewIfNeeded();
+        const box = await control.boundingBox();
+        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.height).toBeGreaterThanOrEqual(minimum);
+        expect(box.x).toBeGreaterThanOrEqual(0); expect(box.y).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+        if (await control.isEnabled()) await control.click({ trial: true });
+      }
+    }
+    await page.getByRole('button', { name: /^Large brush/ }).click();
+    await expect(page.getByRole('button', { name: /^Large brush/ })).toHaveAttribute('aria-pressed', 'true');
+    const painted = await snapshot(page);
+    await page.getByRole('button', { name: 'Undo last action', exact: true }).click();
+    expect(await snapshot(page)).not.toBe(painted);
+    await page.getByRole('button', { name: 'Redo last action', exact: true }).click();
+    expect(await snapshot(page)).toBe(painted);
+    await page.locator('.draw-new').click();
+    await page.getByRole('button', { name: 'Keep drawing', exact: true }).click();
+    expect(await snapshot(page)).toBe(painted);
+  });
+}
+
+test('drawing height follows navigation padding changes without a viewport resize', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 667, height: 375 });
+  const measure = () => page.evaluate(() => ({
+    measured: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--activity-nav-height')),
+    actual: document.querySelector('#activity-coach-bar').getBoundingClientRect().height + document.querySelector('#activity-mode-bar').getBoundingClientRect().height,
+    paper: document.querySelector('.draw-canvas').getBoundingClientRect().toJSON(),
+    viewport: { width: innerWidth, height: innerHeight },
+  }));
+  await expect.poll(async () => { const r = await measure(); return Math.abs(r.measured - r.actual); }).toBeLessThan(1);
+  const before = await measure();
+  // Safe-area/padding can settle after rotation without changing the navigation
+  // content box. Force that separate event and require the canvas to follow it.
+  const padding = await page.addStyleTag({ content: '#activity-coach-bar,#activity-mode-bar{padding-bottom:12px!important}' });
+  let expanded;
+  try {
+    await expect.poll(async () => { const r = await measure(); return r.actual - before.actual; }).toBe(16);
+    await expect.poll(async () => { const r = await measure(); return Math.abs(r.measured - r.actual); }).toBeLessThan(1);
+    expanded = await measure();
+    expect(expanded.viewport).toEqual(before.viewport);
+    expect(expanded.paper.bottom).toBeLessThanOrEqual(expanded.viewport.height);
+  } finally {
+    await testInfo.attach('navigation-padding-expanded', { body: JSON.stringify(await measure(), null, 2), contentType: 'application/json' });
+    await padding.evaluate(el => el.remove());
+  }
+  await expect.poll(async () => { const r = await measure(); return Math.abs(r.measured - r.actual); }).toBeLessThan(1);
+  await expect.poll(async () => (await measure()).paper.width).toBeGreaterThan(120);
+  const restored = await measure();
+  expect(restored.actual).toBe(before.actual);
+  expect(restored.paper.bottom).toBeLessThanOrEqual(restored.viewport.height);
+  await testInfo.attach('navigation-padding-restored', { body: JSON.stringify({ before, expanded, restored }, null, 2), contentType: 'application/json' });
+});
+});
+
 test('saving generates a real full-resolution PNG with a white paper background', async ({ page }) => {
   // Exercise download fallback without opening the system share sheet.
   await page.evaluate(() => Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => false }));

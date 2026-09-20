@@ -560,6 +560,12 @@ final class NativeLayoutTests: NativeGameplayCase {
                   const buttons = [...document.querySelectorAll(route.controls)].filter(shown);
                   if (buttons.length < 2) throw new Error(`Missing lower controls for ${route.id}`);
                   const activity = {id:route.id,cssInsets:cssInsets(),viewportWidth:innerWidth,pageScrollWidth:document.documentElement.scrollWidth,controls:[]};
+                  if (route.id === 'draw') {
+                    // Measure before any control scrolling can conceal overflow.
+                    activity.drawingScreen = document.querySelector('.drawing-screen').getBoundingClientRect().toJSON();
+                    activity.paper = document.querySelector('.draw-canvas').getBoundingClientRect().toJSON();
+                    activity.pageScrollHeight = document.documentElement.scrollHeight;
+                  }
                   for (const button of buttons) {
                     const rect = await scrollToStableVisibleRect(button, `${route.id} / ${button.textContent.trim()}`);
                     activity.controls.push({label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
@@ -614,6 +620,17 @@ final class NativeLayoutTests: NativeGameplayCase {
                     XCTAssertLessThanOrEqual(control["right"] as? Double ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "\(id) / \(label) stays left of the actual right unsafe edge")
                 }
                 if id == "draw" {
+                    guard let screen = activity["drawingScreen"] as? [String: Double], let paper = activity["paper"] as? [String: Double] else { throw LayoutError(message: "Missing drawing screen and paper measurements") }
+                    let viewportHeight = viewport["height"] ?? 0
+                    XCTAssertLessThanOrEqual(activity["pageScrollHeight"] as? Double ?? .infinity, viewportHeight + 1, "The drawing activity fits without scrolling the page")
+                    XCTAssertGreaterThanOrEqual(screen["top"] ?? -.infinity, 0, "The drawing screen begins within the viewport")
+                    XCTAssertLessThanOrEqual(screen["bottom"] ?? .infinity, viewportHeight + 1, "The drawing screen fits below the coach and mode bars")
+                    XCTAssertGreaterThan(paper["width"] ?? 0, 120, "The whole drawing paper remains usable on a compact phone")
+                    XCTAssertEqual(paper["width"] ?? 0, paper["height"] ?? -1, accuracy: 2, "The visible paper stays square")
+                    XCTAssertGreaterThanOrEqual(paper["top"] ?? -.infinity, nativeInsets["top"]! - 0.5, "The whole paper clears the top unsafe edge")
+                    XCTAssertLessThanOrEqual(paper["bottom"] ?? .infinity, viewportHeight - nativeInsets["bottom"]! + 0.5, "The whole paper clears the bottom unsafe edge")
+                    XCTAssertGreaterThanOrEqual(paper["left"] ?? -.infinity, nativeInsets["left"]! - 0.5, "The whole paper clears the left unsafe edge")
+                    XCTAssertLessThanOrEqual(paper["right"] ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "The whole paper clears the right unsafe edge")
                     guard let prompt = activity["prompt"] as? [String: Double] else { throw LayoutError(message: "Missing drawing inspiration text measurements") }
                     XCTAssertGreaterThan(prompt["width"] ?? 0, 0, "Drawing inspiration has usable width")
                     XCTAssertGreaterThan(prompt["height"] ?? 0, 0, "Drawing inspiration is rendered")

@@ -76,9 +76,9 @@ function renderModeBar() {
   }
   requestAnimationFrame(()=>{const selected=modeBar.querySelector('[aria-pressed="true"]');if(selected)modeBar.scrollLeft=Math.max(0,selected.offsetLeft-modeBar.offsetLeft-12);});
 }
-// Measure the shared navigation so the canvas keeps its full usable height.
-new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-coach-bar').getBoundingClientRect().height+modeBar.getBoundingClientRect().height}px`)).observe(modeBar);
-new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-coach-bar').getBoundingClientRect().height+modeBar.getBoundingClientRect().height}px`)).observe($('activity-coach-bar'));
+// Include responsive and safe-area padding in both observation and measurement.
+new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-coach-bar').getBoundingClientRect().height+modeBar.getBoundingClientRect().height}px`)).observe(modeBar,{box:'border-box'});
+new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-coach-bar').getBoundingClientRect().height+modeBar.getBoundingClientRect().height}px`)).observe($('activity-coach-bar'),{box:'border-box'});
 new MutationObserver(()=>{if(document.querySelector('dialog[open]'))listening?.suspendAudio();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
 
 function renderSettings() {
