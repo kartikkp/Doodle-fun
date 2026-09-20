@@ -210,7 +210,7 @@ html:has(dialog[open]){overflow:hidden;overscroll-behavior:none}
   .draw-header { padding: max(6px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 6px max(14px, env(safe-area-inset-left)); }
   .draw-heading .draw-eyebrow, .draw-prompt-label, .draw-prompt-icon { display: none; }
   .draw-heading h1 { font-size: 1.12rem; }
-  .draw-prompt { padding: 0 16px 3px; }
+  .draw-prompt { padding: 0 max(16px, env(safe-area-inset-right)) 3px max(16px, env(safe-area-inset-left)); }
   .draw-challenge { font-size: .875rem; }
   .draw-prompt .draw-shuffle { min-height: 44px; height: 44px; }
   .draw-workspace { flex-direction: row; padding: 0 max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); gap: 12px; }
@@ -297,7 +297,7 @@ html:has(dialog[open]){overflow:hidden;overscroll-behavior:none}
 @media(max-width:760px){.listening-body{padding-top:10px}.listening-main{padding:13px 12px}.listening-header{padding-top:12px;padding-bottom:12px}.listening-age{display:none}.listening-prompt{font-size:23px;margin:11px 0 8px}.listening-intro{font-size:14px;line-height:1.4;margin-bottom:11px}.listening-listen{min-height:52px;min-width:145px;font-size:20px;border-radius:16px;box-shadow:0 3px 0 #49388a}.listening-pulses{margin:12px 0 0;min-height:10px}.listening-feedback{margin:10px 0 12px;padding:10px 12px;font-size:14px;min-height:44px}.listening-model{padding:9px 10px;margin:10px 0;font-size:14px;line-height:1.4}.listening-sound-choices{margin-top:12px;gap:9px}.listening-sound-card{gap:6px;padding:9px}.listening-sound-card strong{font-size:16px}.listening-instrument{font-size:27px}.listening-sound-card .listening-button{padding:7px 6px;font-size:13px}.listening-actions{margin-top:16px;gap:10px}}
 </style>
   
-<meta name="doodle-build" content="eed45af3e085ab6f">
+<meta name="doodle-build" content="f0359a88a446a67e">
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to activities</a>

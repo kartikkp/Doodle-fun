@@ -548,7 +548,8 @@ final class NativeLayoutTests: NativeGameplayCase {
                   {id:'size-order',family:'ordering',controls:'.adventure-footer button',back:'.adventure-back'},
                   {id:'uppercase',family:'trails',controls:'.learn-tools button,.learn-navigation button',back:'.learn-back'},
                   {id:'counting',family:'counting',controls:'.learn-count-coach,.learn-next-puzzle',back:'.learn-back'},
-                  {id:'compare',family:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'}
+                  {id:'compare',family:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'},
+                  {id:'draw',family:'draw',controls:'.draw-save,.draw-shuffle',back:'.draw-back'}
                 ];
                 for (const route of routes) {
                   const card = document.querySelector(`#card-${route.family}`);
@@ -562,6 +563,12 @@ final class NativeLayoutTests: NativeGameplayCase {
                   for (const button of buttons) {
                     const rect = await scrollToStableVisibleRect(button, `${route.id} / ${button.textContent.trim()}`);
                     activity.controls.push({label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
+                  }
+                  if (route.id === 'draw') {
+                    const prompt = document.querySelector('.draw-challenge');
+                    if (!shown(prompt) || !prompt.textContent.trim()) throw new Error('Missing drawing inspiration text');
+                    const rect = prompt.getBoundingClientRect();
+                    activity.prompt = {left:rect.left,right:rect.right,width:rect.width,height:rect.height,scrollWidth:prompt.scrollWidth,clientWidth:prompt.clientWidth};
                   }
                   output.activities.push(activity);
                   const back = document.querySelector(route.back);
@@ -592,7 +599,7 @@ final class NativeLayoutTests: NativeGameplayCase {
                 XCTAssertEqual(css[edge] ?? -1, nativeInsets[edge]!, accuracy: 0.5, "CSS env(\(edge)) must match the actual native safe area")
                 XCTAssertEqual(nativeWindowInsets[edge]!, nativeInsets[edge]!, accuracy: 0.5, "Window and edge-to-edge controller safe areas must agree")
             }
-            XCTAssertEqual(activities.count, 5, "Discovery, adventures, both learning layouts and challenges must be measured")
+            XCTAssertEqual(activities.count, 6, "Discovery, adventures, both learning layouts, challenges and drawing must be measured")
             for activity in activities {
                 let id = activity["id"] as? String ?? "unknown"
                 guard let controls = activity["controls"] as? [[String: Any]], let routeInsets = activity["cssInsets"] as? [String: Double] else { throw LayoutError(message: "Missing control measurements for \(id)") }
@@ -602,8 +609,17 @@ final class NativeLayoutTests: NativeGameplayCase {
                     let label = control["label"] as? String ?? "unknown"
                     XCTAssertEqual(control["visible"] as? Bool, true, "\(id) / \(label) is visible after scrolling")
                     XCTAssertGreaterThanOrEqual(control["width"] as? Double ?? 0, 48, "\(id) / \(label) keeps its touch width")
+                    XCTAssertGreaterThanOrEqual(control["height"] as? Double ?? 0, 44, "\(id) / \(label) keeps its touch height")
                     XCTAssertGreaterThanOrEqual(control["left"] as? Double ?? -.infinity, nativeInsets["left"]! - 0.5, "\(id) / \(label) stays right of the actual left unsafe edge")
                     XCTAssertLessThanOrEqual(control["right"] as? Double ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "\(id) / \(label) stays left of the actual right unsafe edge")
+                }
+                if id == "draw" {
+                    guard let prompt = activity["prompt"] as? [String: Double] else { throw LayoutError(message: "Missing drawing inspiration text measurements") }
+                    XCTAssertGreaterThan(prompt["width"] ?? 0, 0, "Drawing inspiration has usable width")
+                    XCTAssertGreaterThan(prompt["height"] ?? 0, 0, "Drawing inspiration is rendered")
+                    XCTAssertGreaterThanOrEqual(prompt["left"] ?? -.infinity, nativeInsets["left"]! - 0.5, "Drawing inspiration stays right of the actual left unsafe edge")
+                    XCTAssertLessThanOrEqual(prompt["right"] ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "Drawing inspiration stays left of the actual right unsafe edge")
+                    XCTAssertLessThanOrEqual(prompt["scrollWidth"] ?? .infinity, (prompt["clientWidth"] ?? 0) + 1, "Drawing inspiration wraps without clipping its text")
                 }
             }
         } catch { testError = error; report["error"] = error.localizedDescription }

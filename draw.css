@@ -93,7 +93,7 @@
   .draw-header { padding: max(6px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 6px max(14px, env(safe-area-inset-left)); }
   .draw-heading .draw-eyebrow, .draw-prompt-label, .draw-prompt-icon { display: none; }
   .draw-heading h1 { font-size: 1.12rem; }
-  .draw-prompt { padding: 0 16px 3px; }
+  .draw-prompt { padding: 0 max(16px, env(safe-area-inset-right)) 3px max(16px, env(safe-area-inset-left)); }
   .draw-challenge { font-size: .875rem; }
   .draw-prompt .draw-shuffle { min-height: 44px; height: 44px; }
   .draw-workspace { flex-direction: row; padding: 0 max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); gap: 12px; }
