@@ -504,6 +504,13 @@ final class NativeLayoutTests: NativeGameplayCase {
             try await orient(.landscapeLeft, scene: scene, controller: controller, window: window)
             report["nativeLandscape"] = nativeGeometry(controller, window: window)
             report["interfaceOrientation"] = scene.interfaceOrientation.rawValue
+            let expectedSafeArea = controller.view.safeAreaInsets
+            let expectedGeometry: [String: Any] = [
+                "width": Double(controller.view.bounds.width),
+                "height": Double(controller.view.bounds.height),
+                "insets": ["top": Double(expectedSafeArea.top), "right": Double(expectedSafeArea.right),
+                           "bottom": Double(expectedSafeArea.bottom), "left": Double(expectedSafeArea.left)]
+            ]
 
             let script = #"""
                 const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
@@ -540,9 +547,42 @@ final class NativeLayoutTests: NativeGameplayCase {
                     return {top:parseFloat(value.paddingTop),right:parseFloat(value.paddingRight),bottom:parseFloat(value.paddingBottom),left:parseFloat(value.paddingLeft)};
                   } finally { probe.remove(); }
                 };
-                await settle();
+                // UIKit's transition can finish before WebKit receives its safe-area values.
+                // Wait for the measured geometry, never substitute CSS or relax its assertions.
+                const readinessStarted = performance.now(), readinessDeadline = readinessStarted + 5000;
+                const readiness = {expected:expectedGeometry,tolerance:0.5,requiredConsecutiveSamples:3,
+                  timeoutMs:5000,ready:false,initial:null,changes:[],final:null,elapsedMs:0};
+                let consecutiveMatches = 0, previousGeometry = null;
+                const sampleGeometry = frameObserved => {
+                  const viewport = {width:innerWidth,height:innerHeight,scale:visualViewport?.scale};
+                  const insets = cssInsets();
+                  const close = (actual, expected) => Number.isFinite(actual) && Number.isFinite(expected) && Math.abs(actual - expected) <= 0.5;
+                  const matches = close(viewport.width,expectedGeometry.width) && close(viewport.height,expectedGeometry.height)
+                    && ['top','right','bottom','left'].every(edge => close(insets[edge],expectedGeometry.insets[edge]));
+                  consecutiveMatches = frameObserved && matches ? consecutiveMatches + 1 : 0;
+                  const sample = {elapsedMs:performance.now()-readinessStarted,viewport,cssInsets:insets,matches,frameObserved,consecutiveMatches};
+                  const geometry = JSON.stringify({viewport,cssInsets:insets});
+                  if (!readiness.initial) readiness.initial = sample;
+                  else if (geometry !== previousGeometry) readiness.changes.push(sample);
+                  readiness.final = sample;
+                  previousGeometry = geometry;
+                };
+                const nextGeometryFrame = () => new Promise(resolve => {
+                  let frameID;
+                  const timer = setTimeout(() => { cancelAnimationFrame(frameID); resolve(false); },Math.min(50,Math.max(0,readinessDeadline-performance.now())));
+                  frameID = requestAnimationFrame(() => { clearTimeout(timer); resolve(true); });
+                });
+                sampleGeometry(false);
+                while (performance.now() < readinessDeadline) {
+                  const frameObserved = await nextGeometryFrame();
+                  sampleGeometry(frameObserved);
+                  if (performance.now() <= readinessDeadline && consecutiveMatches >= readiness.requiredConsecutiveSamples) { readiness.ready = true; break; }
+                  await pause(Math.min(20,Math.max(0,readinessDeadline-performance.now())));
+                }
+                readiness.elapsedMs = performance.now()-readinessStarted;
+                if (!readiness.ready) return {readiness,readinessError:'Native and CSS geometry did not agree for three consecutive samples within 5000ms'};
                 if (location.protocol !== 'file:' || innerWidth <= innerHeight) throw new Error('Expected the packaged page in landscape');
-                const output = {viewport:{width:innerWidth,height:innerHeight,scale:visualViewport?.scale},cssInsets:cssInsets(),activities:[]};
+                const output = {viewport:readiness.final.viewport,cssInsets:readiness.final.cssInsets,readiness,activities:[]};
                 const routes = [
                   {id:'shape-match',family:'shape-match',controls:'.discover-footer button',back:'.discover-back'},
                   {id:'size-order',family:'ordering',controls:'.adventure-footer button',back:'.adventure-back'},
@@ -586,7 +626,7 @@ final class NativeLayoutTests: NativeGameplayCase {
                 """#
             let finished = expectation(description: "layout: landscape DOM measurements")
             var outcome: Result<Any, Error>?
-            controller.webView.callAsyncJavaScript(script, arguments: [:], in: nil, in: .page) { result in
+            controller.webView.callAsyncJavaScript(script, arguments: ["expectedGeometry": expectedGeometry], in: nil, in: .page) { result in
                 outcome = result
                 finished.fulfill()
             }
@@ -594,6 +634,7 @@ final class NativeLayoutTests: NativeGameplayCase {
             guard let outcome else { throw LayoutError(message: "Landscape DOM measurements timed out") }
             guard let web = try outcome.get() as? [String: Any] else { throw LayoutError(message: "Landscape DOM measurements returned no report") }
             report["webLandscape"] = web
+            if let readinessError = web["readinessError"] as? String { throw LayoutError(message: readinessError) }
             let safe = controller.view.safeAreaInsets
             let nativeInsets = ["left":Double(safe.left),"right":Double(safe.right),"top":Double(safe.top),"bottom":Double(safe.bottom)]
             let nativeWindowInsets = ["left":Double(window.safeAreaInsets.left),"right":Double(window.safeAreaInsets.right),"top":Double(window.safeAreaInsets.top),"bottom":Double(window.safeAreaInsets.bottom)]
