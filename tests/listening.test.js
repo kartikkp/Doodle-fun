@@ -94,7 +94,7 @@ test('suspension retires the context before immediate replay; late old state eve
   assert.equal(clock.contexts.length,1,'ordinary per-note playback must reuse the context');
   const old=clock.contexts[0],cancelled=engine.play(shortTone);await clock.flush();engine.suspend();
   assert.equal((await cancelled).status,'cancelled');assert.equal(old.closeCalls,1);assert.equal(old.suspendCalls,0);
-  assert.equal(old.listeners.size,0);assert.equal(engine.state,'uninitialized');assert.ok(old.sources.every(source=>source.stopCalls>0));
+  assert.equal(old.listeners.size,1,'only the retired-context close guard remains');assert.equal(engine.state,'uninitialized');assert.ok(old.sources.every(source=>source.stopCalls>0));
   const next=engine.play(shortTone);assert.equal(clock.contexts.length,2,'create the replacement synchronously on the next play');
   await clock.flush();old.state='suspended';for(const listener of old.recordedListeners)listener();
   clock.contexts[1].finishResume();
@@ -107,6 +107,23 @@ test('a pending resume times out and retires; a late resolution cannot complete 
   assert.equal((await failed).status,'failed');const old=clock.contexts[0];assert.equal(old.closeCalls,1);assert.equal(old.sources.length,0);assert.equal(pulses,0);
   const retry=engine.play(shortTone);await clock.flush();old.finishResume();for(const listener of old.recordedListeners)listener();
   await clock.advance(200);assert.equal((await retry).status,'played');assert.equal(clock.contexts.length,2);assert.equal(old.sources.length,0);assert.equal(pulses,0);
+  assert.equal(old.state,'closed','late resume must leave the retired context closed');
+});
+
+test('a delayed running event after close re-closes only the retired context and preserves new playback',async t=>{
+  const clock=audioLifecycle(t);let interruptions=0;
+  const engine=createSoundEngine({onInterrupt:()=>interruptions++});
+  const first=engine.play(shortTone);await clock.advance(200);assert.equal((await first).status,'played');
+  const old=clock.contexts[0];engine.suspend();await clock.advance(100);
+  assert.equal(old.state,'closed');assert.equal(old.closeCalls,1);
+  const next=engine.play([{kind:'tone',duration:.65}]);await clock.flush();
+  // WebKit can deliver a delayed output-start event after close has resolved.
+  old.state='running';old.emit();old.emit();
+  await clock.advance(100);
+  assert.equal(old.closeCalls,2,'duplicate state delivery needs only one new close');
+  assert.equal(old.state,'closed');assert.equal(clock.contexts[1].closeCalls,0);
+  assert.equal(engine.state,'running');assert.equal(interruptions,0);
+  await clock.advance(650);assert.equal((await next).status,'played');
 });
 
 test('frozen running clocks and rejected resumes retire failed contexts so an explicit retry can recover',async t=>{

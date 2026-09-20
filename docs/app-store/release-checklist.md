@@ -15,6 +15,7 @@ September 20, 2026. Individual Apple Developer membership purchased; activation 
 | Content rating | Expected 4+; Apple's questionnaire result is not assigned yet |
 | Devices | iPhone and iPad, iOS/iPadOS 17 or later |
 | Release | Manual release after review approval |
+| Public support email | pishahrodi+support@gmail.com — supplied; prepared locally, not yet published |
 
 These choices are prepared locally and have not been entered or verified in App Store Connect. Kids ages 6–8 is the store audience; the app's adjustable practice ages remain 2–10.
 
@@ -23,8 +24,9 @@ These choices are prepared locally and have not been entered or verified in App 
 - [ ] Finish the outstanding native QA and record results in the current QA report. Do not treat simulator or automated results as completed physical-device testing.
 - [ ] Replace and visually review all ten store screenshots for the current 21-family, 34-mode app. Recapture/review is in progress; consult the [screenshot manifest and status](screenshots/README.md) before using any images.
 - [ ] Finalize the release source in [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6), preserving the owner's signing configuration.
-- [ ] After PR #6 is merged, publish the current privacy/support pages and verify their content and links. Both public URLs returned HTTP 200 on September 20, but still served September 8 content for the earlier 30-activity app. Current pages must describe the consolidated catalog and sound/volume behavior, and the public policy must match the offline release policy.
-- [ ] Collect the correct copyright year/rights holder and private App Review contact: first/last name, monitored email, and reachable telephone number. Enter private contact details directly in App Store Connect; do not commit them here.
+- [ ] After PR #6 is merged, publish the current privacy/support pages and verify their content, support email, and links. Both public URLs returned HTTP 200 on September 20, but still served September 8 content for the earlier 30-activity app. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy.
+- [x] Receive the public support email and private App Review contact. Private contact details are stored separately from the repository and still need to be entered in App Store Connect.
+- [ ] Verify the correct copyright year/rights holder and the individual membership's legal seller name. Do not infer them from file paths or repository ownership.
 
 ## Physical iPhone and iPad release checks
 

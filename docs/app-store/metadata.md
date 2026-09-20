@@ -21,7 +21,8 @@ Prepared September 8, 2026; product copy updated September 13, 2026 for the cons
 | Release option | Manual release after approval | Selected; public release still requires the owner's launch authorization |
 | Platforms | iPhone and iPad; iOS/iPadOS 17 or later | Match the final archive's deployment target |
 | Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 on September 20, 2026; published September 8 content is stale. Publish the current policy after PR #6 is merged and verify it against the release bundle before submission. |
-| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. Publish the current support page after PR #6 is merged. GitHub issues remains the selected support channel. |
+| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. Publish the current page with the owner's supplied support email after PR #6 is merged. |
+| Public support email | pishahrodi+support@gmail.com | Supplied by the owner; prepared on the support page and in offline help/policy; not yet published |
 | Marketing URL | https://kartikkp.github.io/Doodle-fun/ | Existing project website; verify before entering |
 | Privacy Choices URL | Leave blank | Optional; deletion and backup choices are in the privacy policy |
 | Sign-in required | No | No demo account is needed |
@@ -105,7 +106,7 @@ Apple's collection test concerns off-device transmission accessible to the devel
 | Linked-to-user purposes | Not applicable if the collection answer remains No. |
 | ATT permission | Not used; there is no tracking behavior to authorize. |
 
-Support opens a website in the external browser after a grown-up check. There is no in-app support form or automatic attachment of artwork, progress, or identifiers. A person who posts a public GitHub issue voluntarily provides their message and profile information to GitHub and its readers. The policy explains this separately. Do not automatically claim Apple's optional-support disclosure exemption: it has multiple conditions. Reassess the answers if an in-app contact form, diagnostic attachment, analytics service, or data collection is added. [Apple: optional disclosure and web-view guidance](https://developer.apple.com/app-store/app-privacy-details/)
+Support opens a website in the external browser after a grown-up check. The website's email link opens the grown-up's email app; nothing is sent automatically. The developer receives the sender address, message, and any attachments the grown-up chooses to send. There is no in-app support form or automatic attachment of artwork, progress, or identifiers. A person who chooses the optional public GitHub bug tracker also provides their message and profile information to GitHub and its readers. The policy explains these voluntary support channels separately from local app use. Confirm the final privacy answers against the actual support practices; do not automatically claim Apple's optional-support disclosure exemption, which has multiple conditions. Reassess the answers if an in-app contact form, diagnostic attachment, analytics service, or other collection is added. [Apple: optional disclosure and web-view guidance](https://developer.apple.com/app-store/app-privacy-details/)
 
 The native privacy manifest and App Store privacy questionnaire are separate deliverables. Confirm the final archive's manifest and required-reason API declarations through the release checks; this draft does not certify them.
 
@@ -152,7 +153,7 @@ PARENTAL GATE: SHARING
 Open Doodle studio, choose Free draw or Coloring pages, make a mark, and tap Save. The “Ask a grown-up” check displays two randomly chosen integers from 12 through 19 to multiply. Enter their product in the numeric answer field and tap Continue. For example, if the displayed question is 12 × 13, enter 156. There is no fixed answer or demo credential. A correct answer opens the native system share sheet; Cancel or an incorrect answer does not share. Cancelling the share sheet preserves the artwork. Every new share requires a new gate. Sending the app to the background cancels a pending gate.
 
 PRIVACY AND SUPPORT
-The home footer's Privacy button and Grown-ups > Privacy policy open the same policy, included in the app and readable offline without a gate. Grown-ups > Help & support opens help. Visit support website, and external links in the policy, require the same grown-up check before opening the system browser. External destinations are restricted to the project's public privacy/support pages, GitHub support issues, and GitHub's privacy statement. GitHub issues are public; the support text asks grown-ups not to post children's identifying information.
+The home footer's Privacy button and Grown-ups > Privacy policy open the same policy, included in the app and readable offline without a gate. Grown-ups > Help & support opens help. Visit support website, and external links in the policy, require the same grown-up check before opening the system browser. Native external destinations are restricted to the project's public privacy/support pages, GitHub issues, and GitHub's privacy statement. The support website offers email contact for grown-ups; sending a message is voluntary and attaches no app data automatically. The email address is also readable as plain text in offline help and the policy. GitHub is an optional public bug tracker. Both channels ask grown-ups to avoid children's identifying information.
 
 LISTENING GAMES
 Choose Listen, then a game. Game sound and Game volume are separate from Read aloud. Tap Listen for a clue. Sound detective provides separate Hear and Choose buttons; Melody echo has tone pads. Generated tones and percussion work offline with no microphone, recordings, or audio downloads. Check media volume, Silent mode, and connected audio devices if needed. Opening Coach or leaving the activity pauses the turn; return and tap Listen again. Picture practice inside Melody echo preserves the earlier visual sequence game.
@@ -163,7 +164,7 @@ The native app does not collect personal data or use ads, analytics, tracking SD
 The app is designed for touch in portrait and landscape on iPhone and iPad. Saving a PNG can use Photos, Files, or another destination available in the system share sheet. The app does not import photos or use the camera.
 ```
 
-## Owner and account fields still pending
+## Owner and account handoff
 
 These are submission prerequisites, not values to guess. No account or external submission was changed by preparing this document.
 
@@ -172,8 +173,8 @@ These are submission prerequisites, not values to guess. No account or external 
 | Apple Developer membership / account holder | Individual membership purchased; wait for activation, then verify the correct account/team and required agreements. Existing project signing settings do not establish active membership or ownership. |
 | Legal seller / developer name | Verify the exact legal name shown by the individual membership in App Store Connect. No name is inferred from local paths, repository ownership, or this worksheet. |
 | Copyright | Supply the correct year and rights-holder name; do not use a placeholder in the submitted record. |
-| Public support contact | GitHub issues is the selected support channel. Confirm it meets applicable contact requirements before submission, or supply a monitored email if preferred. |
-| App Review contact | Supply first and last name, monitored email, and reachable telephone number in international format. This is separate from the public support contact. |
+| Public support contact | The owner supplied pishahrodi+support@gmail.com. Publish the prepared support page and verify the email link/address before submission. GitHub issues remains an optional public developer bug tracker. |
+| App Review contact | Supplied and stored separately from the repository. Enter the private first/last name, email, and telephone in App Store Connect and verify them there; do not add private values to public documentation. |
 | App record / Apple ID / SKU | Confirm or create in the correct account. These values are not known or reserved by this draft. |
 | Bundle ID and signing | Verify the release archive matches the registered app identifier and distribution team. |
 | Version/build and selected archive | Confirm the final marketing version, unique build number, uploaded archive, and processing status. |
@@ -185,6 +186,6 @@ These are submission prerequisites, not values to guess. No account or external 
 | Screenshots / preview | Supply actual screenshots of the submitted app for required device sizes. Do not use a mock screen or claim untested accessibility support. An app preview is optional. |
 | Release authorization | Confirm final content and account fields, then submit for review; release manually only when the owner authorizes it. |
 
-GitHub issues is the selected public support channel. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements; it does not require email as the only public method or guarantee acceptance of GitHub-only support. Confirm the selected channel meets those requirements before submission. Private App Review name, email and telephone fields still need real values. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
+The public support page offers the owner's supplied email address. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements. The separate private App Review contact has been supplied and still needs to be entered and verified in the publishing account. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
 
 The prepared public pages use local system fonts and no scripts, tracking, or remote assets. `privacy.html` is the policy source of truth: the build embeds the contents of its single `privacy-policy-content` article into the offline app. Keep that article and the published page synchronized through the normal build and native-sync process.

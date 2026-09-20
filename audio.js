@@ -61,7 +61,18 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     context=null;master=null;stateHandler=null;
     if(oldHandler)expected.removeEventListener('statechange',oldHandler);
     try{oldMaster?.disconnect();}catch{/* Already detached. */}
-    try{if(expected.state!=='closed')Promise.resolve(expected.close()).catch(()=>{});}catch{/* No remaining sources can play. */}
+    // WebKit can deliver a delayed output-start event even after close resolves.
+    // Keep this guard on the retired context alone so that event re-closes it,
+    // without interrupting a replacement context or retaining a global timer.
+    let closing=false;
+    const closeRetired=()=>{
+      if(expected.state==='closed'||closing)return;
+      closing=true;
+      try{Promise.resolve(expected.close()).then(()=>{closing=false;},()=>{closing=false;});}
+      catch{closing=false;/* Its sources and output are already disconnected. */}
+    };
+    expected.addEventListener('statechange',closeRetired);
+    closeRetired();
   }
   function ensureContext() {
     if(context?.state==='closed')retireContext();

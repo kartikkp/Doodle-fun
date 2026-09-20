@@ -36,7 +36,7 @@ test.beforeEach(async({page,browserName},info)=>{
 
 test.afterEach(async({page},info)=>{
   if(page.isClosed())return;
-  const rows=await page.evaluate(()=>(window.__listeningAudio||[]).map(record=>({state:record.context.state,currentTime:record.context.currentTime,peak:record.peak,lastRms:record.lastRms,samples:record.samples,outputConnections:record.connections})));
+  const rows=await page.evaluate(()=>(window.__listeningAudio||[]).map(record=>({state:record.context.state,currentTime:record.context.currentTime,peak:record.peak,lastRms:record.lastRms,samples:record.samples,outputConnections:record.connections,lifecycle:record.lifecycle})));
   if(rows.length)await info.attach('real-audio-signal.json',{body:JSON.stringify(rows,null,2),contentType:'application/json'});
 });
 
@@ -51,7 +51,20 @@ async function observeAudio(page,age) {
     if(!Native)return;
     function ObservedAudio(...args) {
       const context=new Native(...args),analyser=context.createAnalyser();analyser.fftSize=2048;analyser.connect(context.destination);
-      const record={context,peak:0,lastRms:0,samples:0,connections:0};window.__listeningAudio.push(record);
+      const record={context,peak:0,lastRms:0,samples:0,connections:0,lifecycle:[]};window.__listeningAudio.push(record);
+      const capture=(event,error)=>record.lifecycle.push({event,error,at:performance.now(),state:context.state,currentTime:context.currentTime});
+      capture('created');context.addEventListener('statechange',()=>capture('statechange'));
+      for(const name of ['resume','close']) {
+        const original=context[name].bind(context);
+        context[name]=(...args)=>{
+          capture(`${name} called`);
+          try {
+            const result=original(...args);
+            Promise.resolve(result).then(()=>capture(`${name} resolved`),error=>capture(`${name} rejected`,String(error)));
+            return result;
+          }catch(error){capture(`${name} threw`,String(error));throw error;}
+        };
+      }
       const createGain=context.createGain.bind(context);
       context.createGain=(...args)=>{
         const node=createGain(...args),connect=node.connect.bind(node);

@@ -15,13 +15,13 @@ Both public URLs returned HTTP 200 in the September 20, 2026 preflight, but thei
 
 The owner has approved preparing **Doodle Fun: Draw & Discover** as a **free** app, without ads or in-app purchases, with **Education** as its category, **Kids ages 6–8** as its primary audience, **United States** availability, and **manual release**. These are the selected release settings; they have not been entered or verified in App Store Connect. Name availability remains unverified. The app still offers all nine starting ages from 2 through 10.
 
-The owner purchased an **individual Apple Developer membership** and is awaiting activation. Use that membership for this release. The exact legal seller identity, copyright holder and private App Review contact still need to be supplied or verified in the account.
+The owner purchased an **individual Apple Developer membership** and is awaiting activation. Use that membership for this release. The exact legal seller identity and copyright holder still need to be verified. Private App Review contact details have been supplied and stored separately from the repository; they have not been entered in App Store Connect.
 
-GitHub issues is the selected public support channel. Its public nature is explained on both pages. No support email, legal seller identity, or App Review contact information has been invented.
+The selected public support email is **pishahrodi+support@gmail.com**, exactly as supplied by the owner. The support page offers an email link; the offline help and privacy policy show the address as text. Email is voluntary, sends nothing automatically, and is separate from local app data. GitHub issues remains an optional public developer bug tracker. The policy explains both channels.
 
 ## Use this kit
 
-1. While membership is pending, finish release QA, review the prepared text and questionnaire recommendations in `metadata.md`, and collect the owner's copyright and private review-contact details.
+1. While membership is pending, finish release QA, review the prepared text and questionnaire recommendations in `metadata.md`, and verify the owner's copyright information. Keep the supplied private review-contact details outside the repository.
 2. Check the screenshot README for each capture’s source bundle, then use numbered PNGs from `screenshots/iphone` and `screenshots/ipad` only when they match the app being submitted. Images of the earlier 30-card catalog do not describe the consolidated catalog or listening games.
 3. Publish and verify the updated privacy/support pages after PR #6 is merged. Once membership is active, verify the individual account/team, accept required account agreements, and create or confirm the app record. Check name availability and enter the selected listing settings, current public URLs and private review contact.
 4. Validate and upload the signed release archive. Complete physical iPhone/iPad checks through TestFlight, reconcile the privacy and age-rating answers with that build, and select the verified build for review.
