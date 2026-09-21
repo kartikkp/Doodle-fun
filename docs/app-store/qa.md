@@ -1,5 +1,7 @@
 # App Store preparation QA
 
+This is the historical privacy/store-preparation report for runtime `05facec229a9211d`. See [consolidated catalog and listening QA](../consolidated-listening-qa.md) for the later 21-family, 34-mode revision.
+
 This increment adds offline privacy/help screens, public privacy/support pages, and per-action parental approval for native and browser exports and external links. It does not replace the earlier complete age/activity QA report or claim physical-device or child playtesting.
 
 ## Runtime under test

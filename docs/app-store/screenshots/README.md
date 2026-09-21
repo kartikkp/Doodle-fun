@@ -1,18 +1,26 @@
 # Native App Store screenshots
 
-Five actual app scenes are captured in portrait for each device family:
+**September 20 refresh complete.** All ten numbered PNGs are original native captures of runtime `0f22199625622369`, HTML SHA-256 `72c6446e6281d47f8778407df192801956a215040e9dac60c3d7570fd9d842fe`. [Release CI 35544788457](https://github.com/kartikkp/Doodle-fun/actions/runs/35544788457) passed at immutable revision `a52187e04f902a67eab1ef0241429d2d13a12ee9`; application source remains `3fc4971`. Both capture tests passed, all images were independently verified against their retained original attachments, and all ten were visually reviewed. Nothing has been uploaded to App Store Connect.
+
+The five portrait scenes in each family are:
 
 1. Activity library, with age 6 selected.
-2. A rainbow colored through six native finger taps using the Fill tool.
-3. The letter A traced using native finger gestures.
+2. A rainbow colored through six native finger taps using Fill.
+3. The letter A completed using native finger gestures.
 4. An ABC repeating pattern in Pattern parade.
-5. The contextual Coach for Pattern parade.
+5. Sound detective after two completed Listen playbacks.
 
-The images use the real bundled WKWebView app. They contain no marketing overlay, browser substitute, generated artwork, cropping, or resizing. The simulator status bar is set to 9:41, full Wi-Fi and 100% battery. Normal pattern randomization can change the pictured symbols on later captures.
+The images use the real bundled WKWebView app. They contain no marketing overlay, browser substitute, generated artwork, cropping or resizing. The simulator status bar is set to 9:41, full Wi-Fi and 100% battery. Normal pattern randomization can change the pictured symbols on later captures.
 
 ## Reproduce
 
-Requires macOS, Xcode with an available iOS simulator runtime, and the repository dependencies installed. First integrate and synchronize the final app with `npm run ios:sync`. The capture script deliberately does not rebuild or synchronize production files.
+The optional manual **Activity QA** workflow input `release_evidence=true` runs six focused native checks and both five-image capture sets on fresh GitHub macOS simulators. It validates iOS 26.5 and device availability, runs serially, and retains results, source hashes, manifests and original PNG attachments for 14 days. Ordinary pull-request QA is unchanged. Download and visually review its artifact before replacing these files.
+
+```sh
+gh workflow run qa.yml --repo kartikkp/Doodle-fun --ref YOUR_REVIEWED_BRANCH -f release_evidence=true
+```
+
+For local capture, the following requires macOS, Xcode with an available iOS simulator runtime, and the repository dependencies installed. First integrate and synchronize the final app with `npm run ios:sync`. The capture script deliberately does not rebuild or synchronize production files.
 
 Create dedicated simulators named with the `Doodle App Store ` prefix. Do not reuse a personal simulator or the full QA devices; their IDs are explicitly rejected by the script.
 
@@ -24,9 +32,11 @@ node scripts/app-store-screenshots.mjs --family iphone --device IPHONE_UDID --ou
 node scripts/app-store-screenshots.mjs --family ipad --device IPAD_UDID --output /tmp/doodle-store-ipad --assets docs/app-store/screenshots/ipad
 ```
 
-Run the devices sequentially to reduce simulator resource contention. Each run resets app data only inside its dedicated screenshot device. It copies the iOS project to the chosen output directory, substitutes the capture XCTest source in that copy, builds without signing, and exports five retained `XCUIScreen.main.screenshot()` attachments. The original project, signing settings and production app source are unchanged.
+The current helper captures the consolidated library, Doodle studio coloring, Trail studio tracing, Pattern parade, and Sound detective. Its default `--listening-state ready` requires actual completed playback; `--listening-state prompt` captures the initial unheard challenge and labels that state in its manifest. A prompt capture is not proof that sound played. The fifth image now shows listening and replaces the older Coach screenshot.
 
-Use `--prepare-only` to inspect the copied project and `capture-run.json` without booting a simulator or building. Use `--export /absolute/path/to/capture.xcresult` with the original `--output` to repeat extraction without running the app. Each extraction creates a fresh `attachments-*` directory and records it in the manifest, preserving earlier evidence. Repeating extraction of the final iPhone result produced five byte-identical images.
+Unlock the Mac before capture. Run the devices sequentially to reduce simulator resource contention; the helper uses a temporary `caffeinate -di` assertion during its run. Each run resets app data only inside its dedicated screenshot device. It copies the iOS project to the chosen output directory, substitutes the capture XCTest source in that copy, builds without signing, and exports five retained `XCUIScreen.main.screenshot()` attachments. The original project, signing settings and production app source are unchanged.
+
+Use `--prepare-only` to inspect the copied project and `capture-run.json` without booting a simulator or building. Use `--export /absolute/path/to/capture.xcresult` with the original `--output` to repeat extraction without running the app. Each extraction creates a fresh `attachments-*` directory and records it in the manifest, preserving earlier evidence.
 
 The script requires 8-bit RGB PNGs with no alpha and one of these portrait sizes:
 
@@ -35,17 +45,19 @@ The script requires 8-bit RGB PNGs with no alpha and one of these portrait sizes
 | iPhone 6.9-inch | 1320 × 2868 or 1290 × 2796 |
 | iPad 13-inch | 2064 × 2752 or 2048 × 2732 |
 
+The target dimensions above are included in Apple’s current [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications), verified September 20, 2026. Apple permits one to ten images per set and disallows transparency.
+
 Each family’s `manifest.json` records the source bundle fingerprint and SHA-256, source project and capture-script hashes, simulator, capture time, interaction, image dimensions, original attachment directory and name, and image SHA-256. Review every full-size image before uploading; generated manifests verify provenance and format, not aesthetic quality or current App Store submission eligibility.
 
-## Capture status
+## Verified capture set
 
-Captured and visually reviewed on September 8, 2026, from integrated bundle `05facec229a9211d` (HTML SHA-256 `f37041e2d7d6925ca75c8e5246d3031db5f22712091c977361164603f8565ee9`). Both families have identical shipping native-source hashes, verified against the current native source and unchanged source project.
-
-| Folder | Dedicated simulator | PNG size | Result |
+| Family | Simulator / OS | Images | Actual dimensions |
 | --- | --- | --- | --- |
-| `iphone/` | iPhone 17 Pro Max, iOS 26.5 | 1320 × 2868 | 5 images; native capture case passed |
-| `ipad/` | iPad Pro 13-inch M5, iOS 26.5 | 2064 × 2752 | 5 images; native capture case passed |
+| iPhone 6.9-inch | iPhone 17 Pro Max / iOS 26.5 | 5 | 1320 × 2868 |
+| iPad 13-inch | iPad Pro 13-inch (M5) / iPadOS 26.5 | 5 | 2064 × 2752 |
 
-All ten original images were visually reviewed: clear home branding below the status bar, six contained rainbow fills, completed letter practice, a complete repeating-pattern board, and readable contextual coaching. The iPad screenshots show the actual larger-screen layout, including its native window corner control. All ten files match the original retained screenshot bytes, have no transparency, and pass dimensions, orientation and SHA-256 checks. No visual edits were applied.
+The isolated GitHub runner used Xcode 26.6 build 17F113. Captures ran from September 20 at 23:51 UTC through September 21 at 00:01 UTC (September 20 in New York). Result bundles are `capture-2026-09-20T23-48-07-635Z.xcresult` and `capture-2026-09-20T23-55-18-100Z.xcresult`. Device IDs and exact per-image times are in the manifests. Both Sound detective scenes followed two completed Listen playbacks and use the answer-ready state.
 
-The retained successful capture results are `capture-2026-09-08T22-51-56-537Z.xcresult` (iPhone) and `capture-2026-09-08T22-56-17-918Z.xcresult` (iPad). Pilot runs stayed outside this folder. Screenshots are prepared for review and upload; this process did not submit anything to App Store Connect.
+Independent verification checked 78 source hashes against the immutable revision, both passing capture tests, all image dimensions, 8-bit RGB/no-alpha format, PNG integrity, SHA-256, and byte identity against original XCTest attachments. The checked-in files and manifests are byte-identical copies of that verified set. Visual review covered the catalog, contained rainbow fills, completed tracing, pattern choices and listening controls on both devices; no blocking visual issue was found. Simulator evidence does not establish physical-device behavior or App Store acceptance.
+
+Earlier `f0359a88a446a67e` drafts remain outside Git in the release preparation evidence. Their visual review found the subsequently corrected cloud-outline defect; they are not the current listing images. Current source results, original attachments, independent verification and visual-review records are retained in workspace `work/release-prep-2026-09-20/ci-release-35544788457` and `work/release-prep-2026-09-20/artifact-verification`.

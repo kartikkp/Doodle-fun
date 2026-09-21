@@ -9,7 +9,8 @@ export default defineConfig({
   reporter:[['list'],['html',{open:'never'}]],
   use:{baseURL:'http://127.0.0.1:4173',trace:'retain-on-failure',screenshot:'only-on-failure'},
   projects:[
-    {name:'chromium',use:{...devices['Desktop Chrome']}},
+    // Keep real Web Audio DSP running without depending on a host speaker.
+    {name:'chromium',use:{...devices['Desktop Chrome'],launchOptions:{args:['--disable-audio-output']}}},
     {name:'webkit',use:{...devices['Desktop Safari']}},
   ],
   webServer:{command:'npm start',url:'http://127.0.0.1:4173',reuseExistingServer:true,timeout:30000},

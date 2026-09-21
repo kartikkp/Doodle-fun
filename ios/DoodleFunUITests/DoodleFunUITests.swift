@@ -64,10 +64,21 @@ final class DoodleFunUITests: XCTestCase {
     private func revealInfoControl(_ control: XCUIElement, towardTop: Bool = false) {
         XCTAssertTrue(control.waitForExistence(timeout: 10))
         let web = app.webViews.firstMatch
+        let dialog = web.otherElements.matching(NSPredicate(format: "label ENDSWITH %@", ", web dialog"))
+            .containing(control.elementType, identifier: control.label).firstMatch
+        XCTAssertTrue(dialog.waitForExistence(timeout: 10), "The control must belong to the visible web dialog.")
         func isVisible() -> Bool {
-            // Use the actual viewport: the SE's fully visible Done button sits
-            // within its bottom 70 points. A fixed inset kept swiping past it.
-            let bounds = web.frame.intersection(app.windows.firstMatch.frame).insetBy(dx: 2, dy: 2)
+            // AX can report a clipped button as hittable outside a scrolling
+            // dialog. Use that dialog's real viewport rather than screen
+            // insets, which also keeps the SE's low Done button reachable.
+            var bounds = dialog.frame.intersection(web.frame).intersection(app.windows.firstMatch.frame)
+            let close = dialog.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Close ")).firstMatch
+            if close.exists, control.label != close.label, close.frame.intersects(bounds) {
+                let contentTop = max(bounds.minY, close.frame.maxY)
+                bounds = CGRect(x: bounds.minX, y: contentTop, width: bounds.width,
+                                height: max(0, bounds.maxY - contentTop))
+            }
+            bounds = bounds.insetBy(dx: 2, dy: 2)
             let frame = control.frame
             return control.isHittable && !frame.isEmpty && bounds.contains(frame)
         }

@@ -504,6 +504,13 @@ final class NativeLayoutTests: NativeGameplayCase {
             try await orient(.landscapeLeft, scene: scene, controller: controller, window: window)
             report["nativeLandscape"] = nativeGeometry(controller, window: window)
             report["interfaceOrientation"] = scene.interfaceOrientation.rawValue
+            let expectedSafeArea = controller.view.safeAreaInsets
+            let expectedGeometry: [String: Any] = [
+                "width": Double(controller.view.bounds.width),
+                "height": Double(controller.view.bounds.height),
+                "insets": ["top": Double(expectedSafeArea.top), "right": Double(expectedSafeArea.right),
+                           "bottom": Double(expectedSafeArea.bottom), "left": Double(expectedSafeArea.left)]
+            ]
 
             let script = #"""
                 const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
@@ -540,40 +547,86 @@ final class NativeLayoutTests: NativeGameplayCase {
                     return {top:parseFloat(value.paddingTop),right:parseFloat(value.paddingRight),bottom:parseFloat(value.paddingBottom),left:parseFloat(value.paddingLeft)};
                   } finally { probe.remove(); }
                 };
-                await settle();
+                // UIKit's transition can finish before WebKit receives its safe-area values.
+                // Wait for the measured geometry, never substitute CSS or relax its assertions.
+                const readinessStarted = performance.now(), readinessDeadline = readinessStarted + 5000;
+                const readiness = {expected:expectedGeometry,tolerance:0.5,requiredConsecutiveSamples:3,
+                  timeoutMs:5000,ready:false,initial:null,changes:[],final:null,elapsedMs:0};
+                let consecutiveMatches = 0, previousGeometry = null;
+                const sampleGeometry = frameObserved => {
+                  const viewport = {width:innerWidth,height:innerHeight,scale:visualViewport?.scale};
+                  const insets = cssInsets();
+                  const close = (actual, expected) => Number.isFinite(actual) && Number.isFinite(expected) && Math.abs(actual - expected) <= 0.5;
+                  const matches = close(viewport.width,expectedGeometry.width) && close(viewport.height,expectedGeometry.height)
+                    && ['top','right','bottom','left'].every(edge => close(insets[edge],expectedGeometry.insets[edge]));
+                  consecutiveMatches = frameObserved && matches ? consecutiveMatches + 1 : 0;
+                  const sample = {elapsedMs:performance.now()-readinessStarted,viewport,cssInsets:insets,matches,frameObserved,consecutiveMatches};
+                  const geometry = JSON.stringify({viewport,cssInsets:insets});
+                  if (!readiness.initial) readiness.initial = sample;
+                  else if (geometry !== previousGeometry) readiness.changes.push(sample);
+                  readiness.final = sample;
+                  previousGeometry = geometry;
+                };
+                const nextGeometryFrame = () => new Promise(resolve => {
+                  let frameID;
+                  const timer = setTimeout(() => { cancelAnimationFrame(frameID); resolve(false); },Math.min(50,Math.max(0,readinessDeadline-performance.now())));
+                  frameID = requestAnimationFrame(() => { clearTimeout(timer); resolve(true); });
+                });
+                sampleGeometry(false);
+                while (performance.now() < readinessDeadline) {
+                  const frameObserved = await nextGeometryFrame();
+                  sampleGeometry(frameObserved);
+                  if (performance.now() <= readinessDeadline && consecutiveMatches >= readiness.requiredConsecutiveSamples) { readiness.ready = true; break; }
+                  await pause(Math.min(20,Math.max(0,readinessDeadline-performance.now())));
+                }
+                readiness.elapsedMs = performance.now()-readinessStarted;
+                if (!readiness.ready) return {readiness,readinessError:'Native and CSS geometry did not agree for three consecutive samples within 5000ms'};
                 if (location.protocol !== 'file:' || innerWidth <= innerHeight) throw new Error('Expected the packaged page in landscape');
-                const output = {viewport:{width:innerWidth,height:innerHeight,scale:visualViewport?.scale},cssInsets:cssInsets(),activities:[]};
+                const output = {viewport:readiness.final.viewport,cssInsets:readiness.final.cssInsets,readiness,activities:[]};
                 const routes = [
-                  {id:'shape-match',controls:'.discover-footer button',back:'.discover-back'},
-                  {id:'size-order',controls:'.adventure-footer button',back:'.adventure-back'},
-                  {id:'uppercase',controls:'.learn-tools button,.learn-navigation button',back:'.learn-back'},
-                  {id:'counting',controls:'.learn-count-coach,.learn-next-puzzle',back:'.learn-back'},
-                  {id:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'}
+                  {id:'shape-match',family:'shape-match',controls:'.discover-footer button',back:'.discover-back'},
+                  {id:'size-order',family:'ordering',controls:'.adventure-footer button',back:'.adventure-back'},
+                  {id:'uppercase',family:'trails',controls:'.learn-tools button,.learn-navigation button',back:'.learn-back'},
+                  {id:'counting',family:'counting',controls:'.learn-count-coach,.learn-next-puzzle',back:'.learn-back'},
+                  {id:'compare',family:'compare',controls:'.challenge-footer button',back:'.challenge-header [aria-label="Back to activities"]'},
+                  {id:'draw',family:'draw',controls:'.draw-save,.draw-shuffle',back:'.draw-back'}
                 ];
                 for (const route of routes) {
-                  const card = document.querySelector(`#card-${route.id}`);
-                  if (!shown(card)) throw new Error(`Missing visible catalog card ${route.id}`);
+                  const card = document.querySelector(`#card-${route.family}`);
+                  if (!shown(card)) throw new Error(`Missing visible catalog family ${route.family}`);
                   card.click();
-                  await wait(() => location.hash === `#${route.id}` && [...document.querySelectorAll(route.controls)].some(shown), route.id);
+                  await wait(() => location.hash === `#${route.family}` && document.body.dataset.activity === route.id && [...document.querySelectorAll(route.controls)].some(shown), `${route.family} / ${route.id}`);
                   await settle();
                   const buttons = [...document.querySelectorAll(route.controls)].filter(shown);
                   if (buttons.length < 2) throw new Error(`Missing lower controls for ${route.id}`);
                   const activity = {id:route.id,cssInsets:cssInsets(),viewportWidth:innerWidth,pageScrollWidth:document.documentElement.scrollWidth,controls:[]};
+                  if (route.id === 'draw') {
+                    // Measure before any control scrolling can conceal overflow.
+                    activity.drawingScreen = document.querySelector('.drawing-screen').getBoundingClientRect().toJSON();
+                    activity.paper = document.querySelector('.draw-canvas').getBoundingClientRect().toJSON();
+                    activity.pageScrollHeight = document.documentElement.scrollHeight;
+                  }
                   for (const button of buttons) {
                     const rect = await scrollToStableVisibleRect(button, `${route.id} / ${button.textContent.trim()}`);
                     activity.controls.push({label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
+                  }
+                  if (route.id === 'draw') {
+                    const prompt = document.querySelector('.draw-challenge');
+                    if (!shown(prompt) || !prompt.textContent.trim()) throw new Error('Missing drawing inspiration text');
+                    const rect = prompt.getBoundingClientRect();
+                    activity.prompt = {left:rect.left,right:rect.right,width:rect.width,height:rect.height,scrollWidth:prompt.scrollWidth,clientWidth:prompt.clientWidth};
                   }
                   output.activities.push(activity);
                   const back = document.querySelector(route.back);
                   if (!shown(back)) throw new Error(`Missing back control ${route.id}`);
                   back.click();
-                  await wait(() => shown(document.querySelector(`#card-${route.id}`)), `${route.id} return`);
+                  await wait(() => shown(document.querySelector(`#card-${route.family}`)), `${route.family} return`);
                 }
                 return output;
                 """#
             let finished = expectation(description: "layout: landscape DOM measurements")
             var outcome: Result<Any, Error>?
-            controller.webView.callAsyncJavaScript(script, arguments: [:], in: nil, in: .page) { result in
+            controller.webView.callAsyncJavaScript(script, arguments: ["expectedGeometry": expectedGeometry], in: nil, in: .page) { result in
                 outcome = result
                 finished.fulfill()
             }
@@ -581,6 +634,7 @@ final class NativeLayoutTests: NativeGameplayCase {
             guard let outcome else { throw LayoutError(message: "Landscape DOM measurements timed out") }
             guard let web = try outcome.get() as? [String: Any] else { throw LayoutError(message: "Landscape DOM measurements returned no report") }
             report["webLandscape"] = web
+            if let readinessError = web["readinessError"] as? String { throw LayoutError(message: readinessError) }
             let safe = controller.view.safeAreaInsets
             let nativeInsets = ["left":Double(safe.left),"right":Double(safe.right),"top":Double(safe.top),"bottom":Double(safe.bottom)]
             let nativeWindowInsets = ["left":Double(window.safeAreaInsets.left),"right":Double(window.safeAreaInsets.right),"top":Double(window.safeAreaInsets.top),"bottom":Double(window.safeAreaInsets.bottom)]
@@ -592,7 +646,7 @@ final class NativeLayoutTests: NativeGameplayCase {
                 XCTAssertEqual(css[edge] ?? -1, nativeInsets[edge]!, accuracy: 0.5, "CSS env(\(edge)) must match the actual native safe area")
                 XCTAssertEqual(nativeWindowInsets[edge]!, nativeInsets[edge]!, accuracy: 0.5, "Window and edge-to-edge controller safe areas must agree")
             }
-            XCTAssertEqual(activities.count, 5, "Discovery, adventures, both learning layouts and challenges must be measured")
+            XCTAssertEqual(activities.count, 6, "Discovery, adventures, both learning layouts, challenges and drawing must be measured")
             for activity in activities {
                 let id = activity["id"] as? String ?? "unknown"
                 guard let controls = activity["controls"] as? [[String: Any]], let routeInsets = activity["cssInsets"] as? [String: Double] else { throw LayoutError(message: "Missing control measurements for \(id)") }
@@ -602,8 +656,28 @@ final class NativeLayoutTests: NativeGameplayCase {
                     let label = control["label"] as? String ?? "unknown"
                     XCTAssertEqual(control["visible"] as? Bool, true, "\(id) / \(label) is visible after scrolling")
                     XCTAssertGreaterThanOrEqual(control["width"] as? Double ?? 0, 48, "\(id) / \(label) keeps its touch width")
+                    XCTAssertGreaterThanOrEqual(control["height"] as? Double ?? 0, 44, "\(id) / \(label) keeps its touch height")
                     XCTAssertGreaterThanOrEqual(control["left"] as? Double ?? -.infinity, nativeInsets["left"]! - 0.5, "\(id) / \(label) stays right of the actual left unsafe edge")
                     XCTAssertLessThanOrEqual(control["right"] as? Double ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "\(id) / \(label) stays left of the actual right unsafe edge")
+                }
+                if id == "draw" {
+                    guard let screen = activity["drawingScreen"] as? [String: Double], let paper = activity["paper"] as? [String: Double] else { throw LayoutError(message: "Missing drawing screen and paper measurements") }
+                    let viewportHeight = viewport["height"] ?? 0
+                    XCTAssertLessThanOrEqual(activity["pageScrollHeight"] as? Double ?? .infinity, viewportHeight + 1, "The drawing activity fits without scrolling the page")
+                    XCTAssertGreaterThanOrEqual(screen["top"] ?? -.infinity, 0, "The drawing screen begins within the viewport")
+                    XCTAssertLessThanOrEqual(screen["bottom"] ?? .infinity, viewportHeight + 1, "The drawing screen fits below the coach and mode bars")
+                    XCTAssertGreaterThan(paper["width"] ?? 0, 120, "The whole drawing paper remains usable on a compact phone")
+                    XCTAssertEqual(paper["width"] ?? 0, paper["height"] ?? -1, accuracy: 2, "The visible paper stays square")
+                    XCTAssertGreaterThanOrEqual(paper["top"] ?? -.infinity, nativeInsets["top"]! - 0.5, "The whole paper clears the top unsafe edge")
+                    XCTAssertLessThanOrEqual(paper["bottom"] ?? .infinity, viewportHeight - nativeInsets["bottom"]! + 0.5, "The whole paper clears the bottom unsafe edge")
+                    XCTAssertGreaterThanOrEqual(paper["left"] ?? -.infinity, nativeInsets["left"]! - 0.5, "The whole paper clears the left unsafe edge")
+                    XCTAssertLessThanOrEqual(paper["right"] ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "The whole paper clears the right unsafe edge")
+                    guard let prompt = activity["prompt"] as? [String: Double] else { throw LayoutError(message: "Missing drawing inspiration text measurements") }
+                    XCTAssertGreaterThan(prompt["width"] ?? 0, 0, "Drawing inspiration has usable width")
+                    XCTAssertGreaterThan(prompt["height"] ?? 0, 0, "Drawing inspiration is rendered")
+                    XCTAssertGreaterThanOrEqual(prompt["left"] ?? -.infinity, nativeInsets["left"]! - 0.5, "Drawing inspiration stays right of the actual left unsafe edge")
+                    XCTAssertLessThanOrEqual(prompt["right"] ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "Drawing inspiration stays left of the actual right unsafe edge")
+                    XCTAssertLessThanOrEqual(prompt["scrollWidth"] ?? .infinity, (prompt["clientWidth"] ?? 0) + 1, "Drawing inspiration wraps without clipping its text")
                 }
             }
         } catch { testError = error; report["error"] = error.localizedDescription }

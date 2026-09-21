@@ -1,5 +1,10 @@
+import {getActivity} from './catalog.js';
 // Prompts support a conversation and a strategy, not an age-based assessment.
 export const COACHING = {
+  'sound-match':['Tap Listen. Explore each sound with Hear before choosing its partner.','Compare the way each sound begins and fades. Replay the clue whenever you need it.','What helped you tell a ringing bell from a soft drum?','Make two gentle sounds with household objects. Close your eyes and find their partners.'],
+  'pitch-path':['Tap Listen and follow the notes with your hand. Notice where they move.','Listen from beginning to end. Higher sounds move up; lower sounds move down. The volume is not the clue.','Can you hum the little tune and trace its path in the air?','Take turns humming a high note and a low note. Copy the direction together.'],
+  'melody-echo':['Tap Listen, then play the tone pads in the order you heard.','Remember a small part at a time. Replay freely or use the picture hint; there is no timing score.','Which part of the melody was easiest to remember?','Make a short tune with your voice and take turns echoing it.'],
+  'beat-studio':['Listen to the drum. When it finishes, tap your version and check it.','Notice the spaces: some are short and some are longer. Your own steady speed is welcome.','How does a longer pause change the feeling of your beat?','Copy a gentle clapping pattern together, with short and long spaces.'],
   draw:['Pick one color. Make a mark, then try a different kind of line.','Build your idea from a few simple shapes. Undo lets you try a different way.','Which mark would you like to turn into something?','Make the same kind of line with a crayon on paper.'],
   coloring:['Choose a picture. Pick a color, then tap a space with Fill.','Use Pen for small details. Undo takes back just your last change.','How do your colors change the feeling of this picture?','Find three things around you with colors from your picture.'],
   prewriting:['Start at a numbered dot. Slide along one trail at a time.','Use Show me to watch the movement. Lift your finger between separate trails.','Which movement felt smoothest: a line, a curve, or a loop?','Draw a big trail in the air with your whole arm.'],
@@ -33,7 +38,9 @@ export const COACHING = {
 };
 
 export function coachingFor(id, age) {
+  id=getActivity(id,age)?.id || id;
   const content=[...(COACHING[id] || COACHING[id==='letters'?'uppercase':'counting'])];
+  if(age<=3 && id==='beat-studio') {content[0]='Listen and count the drum taps together. Then tap the same number at any speed.';content[1]='Count one tap at a time. There is no timing check at this starting age.';}
   if(age>=8 && id==='size-order') {
     content[0]='Read the direction: small to big, or big to small. Compare sizes before choosing the first flower.';
     content[1]='Keep the direction in mind. Compare two flowers at a time and choose the next size.';

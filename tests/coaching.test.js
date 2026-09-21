@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ACTIVITIES} from '../catalog.js';
+import {ACTIVITY_MODES as ACTIVITIES} from '../catalog.js';
 import {COACHING,coachingFor,normalizeAdjustments} from '../coaching.js';
 import {drawingIdeas,coloringIdeas} from '../draw.js';
 import {getProfile} from '../core.js';

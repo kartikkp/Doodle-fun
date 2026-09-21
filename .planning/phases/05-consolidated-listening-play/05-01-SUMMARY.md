@@ -1,0 +1,29 @@
+# Consolidated activities and listening play
+
+Updated September 20, 2026. Source implementation, unsigned release packaging, final native follow-ups and ten store screenshots are complete. The final images passed independent artifact validation and visual review. [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) remains unmerged. Nothing has been uploaded or submitted to App Store Connect.
+
+## Delivered behavior
+
+The library contains 21 activity families and 34 modes, retaining all 30 original exercises, legacy links, artwork and progress. Doodle studio groups Free draw and Coloring pages; other related exercises share clear mode selectors. Each mode retains its own Coach context and age 2–10 starting difficulty.
+
+Four games generate offline audio: Sound detective, Higher or lower, Melody echo and Beat studio. A completed intentional playback is required before scoring. Replay, hints, recoverable mistakes, independent Game sound/volume settings and background recovery remain available. The earlier visual sequence exercise is explicitly labeled Picture practice. No microphone, account, ads, purchases, analytics or remote audio dependency was added.
+
+The launch worksheet is prepared for Doodle Fun: Draw & Discover, free, English (U.S.), Education/Kids ages 6–8, U.S. availability and manual release. The supplied public email is included in current support/privacy material. Private review details stay outside Git. Account entry, legal identity, rights-holder confirmation and final listing answers remain pending.
+
+## Corrections found through QA
+
+Malformed sound preferences and mode/Coach mismatches are handled. Native background events retire interrupted playback; late events from an old WebKit AudioContext cannot revive it or corrupt its replacement. Landscape inspiration respects safe areas. Rainbow clouds retain their closed outlines, preventing fill from leaking outside. Compact landscape drawing fits the viewport with square paper over 120 points while preserving control sizes, and border-box observers keep navigation measurements current after padding changes. A native support test now scrolls within its actual dialog bounds.
+
+All recovery, scoring, native approval, paper-size and containment assertions remain intact. Earlier failures and their source versions are preserved in the [QA report](../../../docs/consolidated-listening-qa.md).
+
+## Verification and remaining work
+
+Current application commit `3fc4971`, runtime `0f22199625622369`, bundled HTML SHA-256 `72c6446e6281d47f8778407df192801956a215040e9dac60c3d7570fd9d842fe`. Syntax, 80 Node tests, 24 focused Chromium/WebKit drawing cases and the final unsigned Release archive audit pass. Final test/workflow commit **`a52187e04f902a67eab1ef0241429d2d13a12ee9`** passed [ordinary CI 35544783333](https://github.com/kartikkp/Doodle-fun/actions/runs/35544783333): **80 Node, 640 browser, 283 native gameplay/bridge/layout and four trusted sound cases**, with no failures, skips or retries. [Dedicated CI 35544788457](https://github.com/kartikkp/Doodle-fun/actions/runs/35544788457) passed **compact 4/4, large phone 2/2 and 1/1 capture case per family**, producing ten final images. Independent validation passed all 78 source hashes and six validation groups with zero failures or warnings. PNGs are byte-identical to their original native attachments, have the required dimensions and no alpha, and all ten passed visual review with no blocking issue. Application source, runtime and unsigned archive remain unchanged.
+
+Earlier focused CI 35543519908 failed overall: compact 4/4 and large-phone rotation/relaunch passed, but the first large-phone layout sample arrived before WebKit's rotated CSS safe-area values. All six later activity samples matched UIKit. The test-only readiness correction preserves every assertion and fails unless viewport dimensions and all four insets agree across three frame samples within five seconds. In the final cold-device run, the large phone reached correct 62-point side/20-point bottom insets by 1,169 ms and three matching frames by 1,228 ms; compact readiness completed by 1,238 ms. Fully contained paper measured 130 points square on compact and 137 on large. The original failed evidence remains retained.
+
+Earlier full native checks passed 283 gameplay/bridge/layout plus 19 touch cases on the large phone. The compact iOS18.6 run passed 301/302 and exposed the now-corrected landscape drawing defect. These earlier runs are not relabeled as complete touch testing of the final runtime. Final CI compact evidence uses iOS26.5, a distinct OS runtime. The full 19 touch cases were not repeated on the final application bundle.
+
+Finalize PR review, then merge and verify the automatic GitHub Pages deployment and current support/privacy content. Exact legal seller/copyright identity, membership activation, signed archive validation/upload, physical iPhone/iPad TestFlight checks, final account/listing fields and App Review remain release steps. Nothing has been merged, publicly deployed or submitted. The local Mac remained locked during final follow-ups; isolated CI completed technical preparation without changing local settings. Automated playthroughs do not establish physical audibility or child enjoyment; supervised child playtesting remains recommended product research.
+
+The owner's dirty Xcode project remains excluded from commits, SHA-256 `ce3c3a060fa0785f89d273c9c3057d527eb327484fbcea168dd53c7bd7226acc`. Personal simulator state is untouched. Only completed task-created build caches were removed; current raw evidence and archives remain in the workspace release-preparation folder.

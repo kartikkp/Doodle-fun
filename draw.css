@@ -89,11 +89,12 @@
   .draw-template-card { font-size: .75rem; }
 }
 @media (max-height: 560px) and (min-width: 560px) {
-  .drawing-screen { min-height: 320px; }
+  /* The coach and mode bars already occupy part of the viewport. */
+  .drawing-screen { min-height: 0; }
   .draw-header { padding: max(6px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 6px max(14px, env(safe-area-inset-left)); }
   .draw-heading .draw-eyebrow, .draw-prompt-label, .draw-prompt-icon { display: none; }
   .draw-heading h1 { font-size: 1.12rem; }
-  .draw-prompt { padding: 0 16px 3px; }
+  .draw-prompt { padding: 0 max(16px, env(safe-area-inset-right)) 3px max(16px, env(safe-area-inset-left)); }
   .draw-challenge { font-size: .875rem; }
   .draw-prompt .draw-shuffle { min-height: 44px; height: 44px; }
   .draw-workspace { flex-direction: row; padding: 0 max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left)); gap: 12px; }
@@ -106,4 +107,11 @@
   .draw-actions .button { min-width: 44px; padding: 5px; }
   .draw-actions .button > span:last-child { display: none; }
   .draw-paper-name { display: none; }
+}
+@media (max-height: 430px) and (min-width: 560px) {
+  /* Reclaim spacing on short phones without shrinking the touch controls. */
+  body:is([data-activity="draw"], [data-activity="coloring"]) .activity-coach-bar { padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 4px; }
+  body:is([data-activity="draw"], [data-activity="coloring"]) .activity-mode-bar { padding-top: 4px; padding-bottom: 4px; }
+  #activity-coach-bar:not([hidden]) ~ .drawing-screen .draw-header { padding-top: 4px; padding-bottom: 4px; }
+  .draw-workspace { padding-bottom: 4px; }
 }

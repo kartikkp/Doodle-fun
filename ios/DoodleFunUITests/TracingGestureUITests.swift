@@ -57,9 +57,15 @@ final class TracingGestureUITests: XCTestCase {
         XCTAssertTrue(ageChoice.waitForExistence(timeout: 20))
         reveal(ageChoice)
         ageChoice.tap()
-        let card = app.links["Line & shape trails"]
+        let card = app.links["Trail studio"]
         reveal(card)
         card.tap()
+        // The family defaults to word practice for older children. These
+        // gesture cases explicitly exercise the retained line/shape mode.
+        let firstLines = named("First lines")
+        XCTAssertTrue(firstLines.waitForExistence(timeout: 15))
+        reveal(firstLines)
+        firstLines.tap()
         let board = named("Trace the guide with a finger or Pencil")
         XCTAssertTrue(board.waitForExistence(timeout: 15))
         reveal(board, drawingSurface: true)
