@@ -94,17 +94,30 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
   // Calling resume before the first await preserves Safari's user-gesture grant.
   function play(events,{onEvent=()=>{}}={}) {
     stop();const token=generation;
-    let ctx,resuming;
-    try {ctx=ensureContext();resuming=ctx.state==='running'?Promise.resolve():ctx.resume();}
+    let ctx,resuming,preparing;
+    try {
+      // WebKit has its own audio-session policy. Select media playback only
+      // after an intentional sound gesture; unsupported browsers keep working.
+      try {
+        const session=globalThis.navigator?.audioSession;
+        if(session&&session.type!=='playback')session.type='playback';
+      } catch { /* The optional Audio Session API is not available everywhere. */ }
+      const native=globalThis.webkit?.messageHandlers?.doodleAudio;
+      preparing=Promise.resolve(native?native.postMessage({type:'prepareGameAudio'}):{ok:true})
+        .catch(()=>({ok:false}));
+      // Start resume in this same click stack. Awaiting the native reply first
+      // would lose Safari's gesture grant; scheduling waits for both below.
+      ctx=ensureContext();resuming=ctx.state==='running'?Promise.resolve():ctx.resume();
+    }
     catch(error){retireContext();return Promise.resolve({status:'failed',reason:error.message});}
     return new Promise(resolve=>{
       const job={resolve,sources:[],nodes:[],timers:[],token};active=job;
       const fail=()=>{if(active!==job)return;active=null;release(job);retireContext(ctx);resolve({status:'failed',reason:'Sound could not start. Tap Listen to try again.'});};
       const timeout=setTimeout(fail,2500);job.timers.push(timeout);
-      Promise.resolve(resuming).then(()=>{
+      Promise.all([resuming,preparing]).then(([,prepared])=>{
         if(active!==job||token!==generation)return;
         clearTimeout(timeout);
-        if(ctx.state!=='running'||!events.length){fail();return;}
+        if(prepared?.ok!==true||ctx.state!=='running'||!events.length){fail();return;}
         const start=ctx.currentTime+.035,startedAt=performance.now();let end=start;
         try {
           events.forEach((event,index)=>{

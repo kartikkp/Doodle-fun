@@ -1,4 +1,5 @@
 import XCTest
+import AVFoundation
 import CryptoKit
 import UIKit
 import WebKit
@@ -82,6 +83,90 @@ final class NativeBridgeTests: XCTestCase {
             XCTAssertTrue((12...19).contains(fresh.left))
             XCTAssertTrue((12...19).contains(fresh.right))
         }
+    }
+
+    @MainActor
+    func testGameAudioBridgeActivatesOutputOnlyPlaybackAndRejectsInactiveRequests() async throws {
+        let controller = DoodleViewController()
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }, "A foreground scene is required for measured device geometry.")
+        let window = UIWindow(windowScene: scene)
+        window.frame = scene.coordinateSpace.bounds
+        let loaded = expectation(description: "Game audio bridge packaged page loaded")
+        controller.onContentReady = { [weak controller] in controller?.onContentReady = nil; loaded.fulfill() }
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        defer {
+            NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+            controller.webView.stopLoading()
+            window.isHidden = true
+            window.rootViewController = nil
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
+        controller.loadViewIfNeeded()
+        await fulfillment(of: [loaded], timeout: 30)
+        window.layoutIfNeeded()
+        controller.view.layoutIfNeeded()
+        controller.webView.layoutIfNeeded()
+        func bounds(_ rect: CGRect) -> [String: Double] {
+            ["x": Double(rect.origin.x), "y": Double(rect.origin.y), "width": Double(rect.width), "height": Double(rect.height)]
+        }
+        func insets(_ edges: UIEdgeInsets) -> [String: Double] {
+            ["top": Double(edges.top), "right": Double(edges.right), "bottom": Double(edges.bottom), "left": Double(edges.left)]
+        }
+        let geometry: [String: Any] = [
+            "unit": "UIKit points", "systemVersion": UIDevice.current.systemVersion,
+            "interfaceOrientation": scene.interfaceOrientation.rawValue,
+            "windowBounds": bounds(window.bounds), "windowSafeAreaInsets": insets(window.safeAreaInsets),
+            "viewBounds": bounds(controller.view.bounds), "viewSafeAreaInsets": insets(controller.view.safeAreaInsets),
+            "webViewBounds": bounds(controller.webView.bounds), "webViewSafeAreaInsets": insets(controller.webView.safeAreaInsets),
+            "statusBarFrame": bounds(scene.statusBarManager?.statusBarFrame ?? .zero),
+            "statusBarHidden": scene.statusBarManager?.isStatusBarHidden ?? true
+        ]
+        let geometryData = try JSONSerialization.data(withJSONObject: geometry, options: [.prettyPrinted, .sortedKeys])
+        let geometryAttachment = XCTAttachment(data: geometryData, uniformTypeIdentifier: "public.json")
+        geometryAttachment.name = "Native audio portrait UIKit geometry"
+        geometryAttachment.lifetime = .keepAlways
+        add(geometryAttachment)
+        let geometryLine = try JSONSerialization.data(withJSONObject: geometry, options: [.sortedKeys])
+        print("NATIVE_AUDIO_PORTRAIT_GEOMETRY \(String(decoding: geometryLine, as: UTF8.self))")
+        XCTAssertEqual(scene.interfaceOrientation, .portrait, "The device profile must be measured in portrait.")
+        XCTAssertGreaterThan(window.bounds.height, window.bounds.width)
+        let session = AVAudioSession.sharedInstance()
+        XCTAssertEqual(session.category, .playback)
+        XCTAssertEqual(session.mode, .default)
+        XCTAssertEqual(session.categoryOptions, [.mixWithOthers])
+        XCTAssertNil(Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription"))
+        XCTAssertFalse((Bundle.main.object(forInfoDictionaryKey: "UIBackgroundModes") as? [String] ?? []).contains("audio"))
+
+        func request(_ type: String) async throws -> [String: Any] {
+            let value = try await controller.webView.callAsyncJavaScript("""
+                return await window.webkit.messageHandlers.doodleAudio.postMessage({type});
+                """, arguments: ["type": type], in: nil, contentWorld: .page)
+            return try XCTUnwrap(value as? [String: Any])
+        }
+        let unsupported = try await request("not-an-audio-action")
+        XCTAssertEqual(unsupported["ok"] as? Bool, false)
+        XCTAssertEqual(unsupported["reason"] as? String, "unsupported-action")
+
+        let prepared = try await request("prepareGameAudio")
+        XCTAssertEqual(prepared["ok"] as? Bool, true, "Activation must succeed before JavaScript schedules audio: \(prepared)")
+        XCTAssertEqual(prepared["category"] as? String, AVAudioSession.Category.playback.rawValue)
+        XCTAssertEqual(prepared["mode"] as? String, AVAudioSession.Mode.default.rawValue)
+        XCTAssertEqual(session.categoryOptions, [.mixWithOthers])
+        let volume = try XCTUnwrap(prepared["outputVolume"] as? Double)
+        XCTAssertTrue((0...1).contains(volume))
+        XCTAssertNotNil(prepared["outputs"] as? [String], "Report route types without device names; this does not prove physical audibility.")
+
+        // UIKit may still report active while resignation is being delivered.
+        // The native lifecycle guard must reject this interval too.
+        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
+        let inactive = try await request("prepareGameAudio")
+        XCTAssertEqual(inactive["ok"] as? Bool, false)
+        XCTAssertEqual(inactive["reason"] as? String, "inactive")
+        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        let resumed = try await request("prepareGameAudio")
+        XCTAssertEqual(resumed["ok"] as? Bool, true, "A fresh foreground request can reactivate playback.")
     }
 
     @MainActor

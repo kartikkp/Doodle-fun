@@ -5,7 +5,7 @@ import {getProfile} from '../core.js';
 
 const backendByBrowser=new Map();
 test.beforeEach(async({page,browserName},info)=>{
-  const needsLive=/hears real audio|game sound is independent|preview cannot earn|native inactivity/.test(info.title);
+  const needsLive=/hears real audio|game sound is independent|preview cannot earn|native inactivity|playback session preference/.test(info.title);
   if(!needsLive)return;
   if(!backendByBrowser.has(browserName)) {
     await page.goto('/');
@@ -197,6 +197,73 @@ test('preview cannot earn progress, a melody pad before Listen only explores, co
   await page.goto('/#sound-match');const q=buildListeningRound('sound-match',2);
   for(let count=0;count<2;count++){await listen(page);await playCorrect(page,'sound-match',q);if(!count)await page.getByRole('button',{name:'Try again',exact:true}).click();}
   expect(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('doodle-fun:v2:listening-progress-v1')).stars).length)).toBe(1);
+});
+
+for(const unsupported of [false,true])test(`playback session preference ${unsupported?'unsupported':'available'} remains gesture-only and never autoplays`,async({page})=>{
+  await page.addInitScript(unsupported=>{
+    window.__sessionPreferences=[];
+    Object.defineProperty(navigator,'audioSession',{configurable:true,value:{set type(value){
+      window.__sessionPreferences.push({value,activeGesture:navigator.userActivation?.isActive??null});
+      if(unsupported)throw new Error('Unsupported audio-session preference');
+    }}});
+  },unsupported);
+  await start(page,'melody-echo',2);
+  expect(await page.evaluate(()=>window.__sessionPreferences)).toEqual([]);
+  expect(await page.evaluate(()=>window.__listeningAudio.length)).toBe(0);
+  await page.locator('[data-listening-pad="0"]').click();await previewDone(page);
+  await expect.poll(()=>page.evaluate(()=>Math.max(0,...window.__listeningAudio.map(record=>record.peak)))).toBeGreaterThan(.0001);
+  await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
+  expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-progress-v1'))).toBeNull();
+  await listen(page);
+  const preferences=await page.evaluate(()=>window.__sessionPreferences);
+  expect(preferences).toHaveLength(2);
+  expect(preferences.every(item=>item.value==='playback')).toBe(true);
+  expect(preferences.every(item=>item.activeGesture!==false),'preparation stays in the trusted gesture where the API reports activation').toBe(true);
+});
+
+for(const outcome of ['false','rejected','timeout'])test(`native audio preparation ${outcome} never schedules or unlocks any listening game`,async({page})=>{
+  await page.addInitScript(outcome=>{
+    localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:6,level:'auto',sound:false}));
+    localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify({enabled:true,volume:.55}));
+    localStorage.removeItem('doodle-fun:v2:listening-progress-v1');
+    window.__nativePreparation=[];window.__scheduledVoices=0;window.__failedAudioContexts=[];
+    // This failure-path context advances normally but must never receive a
+    // voice. It makes the bridge-denial test independent of host audio output.
+    class UnusedContext {
+      constructor(){this.state='running';this.destination={};this.listeners=new Set();window.__failedAudioContexts.push(this);}
+      get currentTime(){return performance.now()/1000;}
+      createGain(){return {gain:{value:0,setValueAtTime(){}},connect(){},disconnect(){}};}
+      createOscillator(){window.__scheduledVoices++;throw new Error('A denied native output must not schedule a voice');}
+      createBuffer(){window.__scheduledVoices++;throw new Error('A denied native output must not schedule a sample');}
+      resume(){return Promise.resolve();}
+      close(){this.state='closed';for(const listener of this.listeners)listener();return Promise.resolve();}
+      addEventListener(type,listener){this.listeners.add(listener);}
+      removeEventListener(type,listener){this.listeners.delete(listener);}
+    }
+    window.AudioContext=UnusedContext;window.webkitAudioContext=UnusedContext;
+    Object.defineProperty(window,'webkit',{configurable:true,value:{messageHandlers:{doodleAudio:{postMessage(message){
+      window.__nativePreparation.push(message);
+      if(outcome==='false')return Promise.resolve({ok:false,reason:'Native output is unavailable'});
+      if(outcome==='rejected')return Promise.reject(new Error('Native output preparation failed'));
+      return new Promise(()=>{});
+    }}}}});
+  },outcome);
+  for(const id of LISTENING_IDS){
+    await page.goto(`/?native-audio-failure=${outcome}-${id}#${id}`);
+    expect(await page.evaluate(()=>window.__nativePreparation)).toEqual([]);
+    expect(await page.evaluate(()=>window.__failedAudioContexts.length)).toBe(0);
+    await page.locator('[data-listening-listen]').click();
+    await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
+    await expect(page.locator('[data-listening-listen]')).toBeEnabled();
+    await expect(page.getByTestId('listening-feedback')).not.toHaveText('Tap Listen when you are ready.');
+    await expect(page.getByTestId('listening-feedback')).not.toHaveClass(/is-complete/);
+    for(const answer of await page.locator('[data-listening-answer],[data-listening-drum],[data-listening-check]').all())await expect(answer).toBeDisabled();
+    await expect(page.locator('.listening-echo-slot.is-filled')).toHaveCount(0);
+    expect(await page.evaluate(()=>window.__nativePreparation)).toEqual([{type:'prepareGameAudio'}]);
+    expect(await page.evaluate(()=>window.__scheduledVoices)).toBe(0);
+    await expect.poll(()=>page.evaluate(()=>window.__failedAudioContexts.length===1&&window.__failedAudioContexts[0].state==='closed')).toBe(true);
+    expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-progress-v1'))).toBeNull();
+  }
 });
 
 test('an unavailable AudioContext produces a retry message and cannot score an unheard challenge',async({page})=>{
