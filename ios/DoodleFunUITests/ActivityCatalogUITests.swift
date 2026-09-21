@@ -73,6 +73,11 @@ final class ActivityCatalogUITests: XCTestCase {
             // NATIVE_SAFE_AREA reports for the SE3 / iOS18.6 QA run confirm
             // top20/bottom0 in this 375×667 window (no home indicator).
             portraitTopInset = 20
+        } else if abs(frame.width - 440) < 1 && abs(frame.height - 956) < 1 {
+            // The retained Native audio portrait UIKit geometry report on
+            // iPhone 17 Pro Max / iOS 27 measures top62/bottom34 in the
+            // window, controller and WKWebView despite no AX StatusBar node.
+            portraitTopInset = 62
         } else {
             XCTFail("No native StatusBar frame or verified safe-area geometry for \(frame.size)")
         }
@@ -88,8 +93,8 @@ final class ActivityCatalogUITests: XCTestCase {
     private var web: XCUIElement { app.webViews.firstMatch }
 
     /// XCUI exposes native window/status-bar frames, but not safeAreaInsets.
-    /// Use the measured native status bar or the two independently verified
-    /// QA-phone profiles: 402×874 top62/bottom34; 375×667 top20/bottom0.
+    /// Use the measured native status bar or independently verified QA-phone
+    /// profiles: 402×874 and 440×956 top62/bottom34; 375×667 top20/bottom0.
     /// Native layout checks measured 62pt left/right and 20pt bottom in the
     /// taller phone's landscape view; the compact phone has zero landscape insets.
     /// Screenshots complement these full-target geometry assertions.

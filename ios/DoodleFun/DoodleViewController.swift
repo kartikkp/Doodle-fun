@@ -9,6 +9,14 @@ private final class WeakMessageHandler: NSObject, WKScriptMessageHandler {
     }
 }
 
+private final class WeakAudioMessageHandler: NSObject, WKScriptMessageHandlerWithReply {
+    weak var owner: DoodleViewController?
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
+        guard let owner else { replyHandler(["ok": false, "reason": "unavailable"], nil); return }
+        owner.prepareGameAudio(message, replyHandler: replyHandler)
+    }
+}
+
 /// Native UI: web content cannot supply or approve the answer. Each instance
 /// authorizes exactly the operation retained by its presenting controller.
 final class ParentGateViewController: UIViewController, UIAdaptivePresentationControllerDelegate {
@@ -147,6 +155,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
     private let document = Bundle.main.url(forResource: "index", withExtension: "html")!
     private let speaker = AVSpeechSynthesizer()
     private let messageHandler = WeakMessageHandler()
+    private let audioMessageHandler = WeakAudioMessageHandler()
     private let status = UIStackView()
     private let statusLabel = UILabel()
     private let retryButton = UIButton(type: .system)
@@ -179,6 +188,11 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         configuration.websiteDataStore = .default()
         messageHandler.owner = self
         configuration.userContentController.add(messageHandler, name: "doodleNative")
+        audioMessageHandler.owner = self
+        configuration.userContentController.addScriptMessageHandler(audioMessageHandler, contentWorld: .page, name: "doodleAudio")
+        // Declare output-only intent before WebKit starts. Activation is deferred
+        // until a foreground Listen/preview request, and any failure is returned then.
+        try? configureGameAudioSession()
         configuration.userContentController.addUserScript(WKUserScript(source: """
             (() => {
               const report = () => window.webkit.messageHandlers.doodleNative.postMessage({type:'route',hash:location.hash || '#'});
@@ -216,7 +230,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         setupStatus()
         backgroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
-            self.speaker.stopSpeaking(at: .immediate)
+            self.stopNarration()
             self.cancelParentAction()
             self.pendingListeningPause = true
             self.pauseListening()
@@ -231,6 +245,50 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         prepareDocument()
     }
 
+    private func stopNarration() {
+        guard speaker.isSpeaking || speaker.isPaused else { return }
+        speaker.stopSpeaking(at: .immediate)
+    }
+
+    private func configureGameAudioSession() throws {
+        let session = AVAudioSession.sharedInstance()
+        if session.category != .playback || session.mode != .default || session.categoryOptions != [.mixWithOthers] {
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        }
+    }
+
+    fileprivate func prepareGameAudio(_ message: WKScriptMessage, replyHandler: @escaping (Any?, String?) -> Void) {
+        func reject(_ reason: String) {
+            #if DEBUG
+            print("DOODLE_GAME_AUDIO ok=false reason=\(reason)")
+            #endif
+            replyHandler(["ok": false, "reason": reason], nil)
+        }
+        guard message.frameInfo.isMainFrame, NativeBridgePolicy.allows(message.frameInfo.request.url, document: document) else {
+            reject("invalid-source"); return
+        }
+        guard let body = message.body as? [String: Any], body["type"] as? String == "prepareGameAudio" else {
+            reject("unsupported-action"); return
+        }
+        guard UIApplication.shared.applicationState == .active, !pendingListeningPause else {
+            reject("inactive"); return
+        }
+        do {
+            try configureGameAudioSession()
+            let session = AVAudioSession.sharedInstance()
+            try session.setActive(true)
+            let outputs = session.currentRoute.outputs.map { $0.portType.rawValue }
+            #if DEBUG
+            print("DOODLE_GAME_AUDIO ok=true category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputVolume=\(session.outputVolume) outputs=\(outputs)")
+            #endif
+            replyHandler(["ok": true, "category": session.category.rawValue, "mode": session.mode.rawValue,
+                          "outputVolume": Double(session.outputVolume), "outputs": outputs], nil)
+        } catch {
+            // Codes are diagnostic; never include device names or route identifiers.
+            reject("audio-session-\((error as NSError).code)")
+        }
+    }
+
     private func pauseListening() {
         // This fixed native lifecycle event carries no web-supplied payload.
         // Repeated delivery only cancels the current listening attempt.
@@ -242,7 +300,11 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         let rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
         WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "DoodleOfflineOnly", encodedContentRuleList: rules) { [weak self] rules, error in
             guard let self else { return }
-            guard let rules, error == nil else { self.showError(); return }
+            guard let rules, error == nil else {
+                self.logWebEvent("content-rules-failed", error: error)
+                self.showError()
+                return
+            }
             self.webView.configuration.userContentController.add(rules)
             self.contentRulesReady = true
             #if DEBUG
@@ -296,12 +358,26 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
 
     private func loadDocument() {
         guard contentRulesReady else { showError(); return }
+        logWebEvent("load-requested")
         statusLabel.text = recovering ? "Opening your activity…" : "Opening Doodle Fun…"
         status.isHidden = false
         retryButton.isHidden = true
         var components = URLComponents(url: document, resolvingAgainstBaseURL: false)!
         components.fragment = String(currentHash.dropFirst())
         webView.loadFileURL(components.url!, allowingReadAccessTo: document)
+    }
+
+    private func logWebEvent(_ event: String, error: Error? = nil) {
+        #if DEBUG
+        // Keep device diagnostics separate from system logs. Do not log URLs,
+        // error descriptions/userInfo, or any child's artwork or progress.
+        let identity = Bundle.main.bundleIdentifier ?? "unknown"
+        if let error = error as NSError? {
+            NSLog("DOODLE_WEB %@ bundle=%@ domain=%@ code=%ld", event, identity, error.domain, error.code)
+        } else {
+            NSLog("DOODLE_WEB %@ bundle=%@", event, identity)
+        }
+        #endif
     }
 
     private func showError() {
@@ -316,19 +392,30 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
 
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { nil }
 
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        logWebEvent("navigation-started")
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // A finished navigation is not a claim that all JavaScript or audio worked.
+        logWebEvent("navigation-finished")
         recovering = false
         status.isHidden = true
         onContentReady?()
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { showError() }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        logWebEvent("navigation-failed", error: error)
+        showError()
+    }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        logWebEvent("navigation-provisional-failed", error: error)
         if (error as NSError).code != NSURLErrorCancelled { showError() }
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-        speaker.stopSpeaking(at: .immediate)
+        logWebEvent("web-content-terminated")
+        stopNarration()
         cancelParentAction()
         recoveryTimes = recoveryTimes.filter { Date().timeIntervalSince($0) < 30 }
         guard recoveryTimes.count < 2 else { showError(); return }
@@ -356,12 +443,12 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
             requestParentAction(.external(url))
         case "speak":
             guard let text = body["text"] as? String, !text.isEmpty, text.count <= 4000 else { return }
-            speaker.stopSpeaking(at: .immediate)
+            stopNarration()
             let utterance = AVSpeechUtterance(string: text)
             utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
             utterance.rate = 0.43
             speaker.speak(utterance)
-        case "stopSpeaking": speaker.stopSpeaking(at: .immediate)
+        case "stopSpeaking": stopNarration()
         default: break
         }
     }
@@ -377,7 +464,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         let gate = ParentGateViewController(purpose: action.purpose)
         pendingParentAction = (id, action)
         parentGate = gate
-        speaker.stopSpeaking(at: .immediate)
+        stopNarration()
         gate.onDecision = { [weak self, weak gate] approved in
             guard let self, let gate, self.pendingParentAction?.id == id else { return }
             guard approved, UIApplication.shared.applicationState == .active else { self.cancelParentAction(); return }
@@ -421,7 +508,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
             let file = directory.appendingPathComponent(image.filename)
             try image.png.write(to: file, options: .atomic)
             shareDirectory = directory
-            speaker.stopSpeaking(at: .immediate)
+            stopNarration()
             let sheet = UIActivityViewController(activityItems: [file], applicationActivities: nil)
             sheet.view.accessibilityIdentifier = "DoodleShareSheet"
             sheet.popoverPresentationController?.sourceView = view

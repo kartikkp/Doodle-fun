@@ -80,11 +80,86 @@ function audioLifecycle(t,plans=[]) {
   const original=Object.getOwnPropertyDescriptor(globalThis,'AudioContext');
   Object.defineProperty(globalThis,'AudioContext',{configurable:true,writable:true,value:ControlledContext});
   t.after(()=>{if(original)Object.defineProperty(globalThis,'AudioContext',original);else delete globalThis.AudioContext;});
-  const flush=async()=>{await Promise.resolve();await Promise.resolve();};
+  const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
   async function advance(milliseconds){await flush();const end=now+milliseconds;for(;;){const entry=[...timers.entries()].filter(([,timer])=>timer.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!entry)break;now=entry[1].at;timers.delete(entry[0]);entry[1].fn();await flush();}now=end;await flush();}
   return {contexts,advance,flush};
 }
 const shortTone=[{kind:'tone',duration:.08}];
+
+function replaceGlobal(t,name,value) {
+  const original=Object.getOwnPropertyDescriptor(globalThis,name);
+  Object.defineProperty(globalThis,name,{configurable:true,writable:true,value});
+  t.after(()=>{if(original)Object.defineProperty(globalThis,name,original);else delete globalThis[name];});
+}
+function nativePreparation(t) {
+  const requests=[];
+  replaceGlobal(t,'webkit',{messageHandlers:{doodleAudio:{postMessage(message){
+    let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
+    requests.push({message,resolve,reject});return promise;
+  }}}});
+  return requests;
+}
+
+for(const firstReady of ['native','context'])test(`native preparation and context resume both finish before scheduling, ${firstReady} first`,async t=>{
+  const clock=audioLifecycle(t,[{resume:'pending'}]),requests=nativePreparation(t);
+  const engine=createSoundEngine();let settled=false,pulses=0;
+  engine.setVolume(.6);
+  assert.equal(requests.length,0,'creating or configuring an engine must not activate native audio');
+  assert.equal(clock.contexts.length,0,'opening a game must not create an audio context');
+  const result=engine.play(shortTone,{onEvent:()=>pulses++});result.then(()=>{settled=true;});
+  assert.equal(requests.length,1,'native preparation starts before play returns');
+  assert.deepEqual(requests[0].message,{type:'prepareGameAudio'});
+  assert.equal(clock.contexts.length,1,'context construction stays in the original gesture');
+  const context=clock.contexts[0];
+  assert.equal(typeof context.finishResume,'function','resume starts before native preparation is awaited');
+  if(firstReady==='native')requests[0].resolve({ok:true});else context.finishResume();
+  await clock.advance(100);
+  assert.equal(context.sources.length,0,'neither readiness signal alone may schedule a sound');
+  assert.equal(pulses,0);assert.equal(settled,false);
+  if(firstReady==='native')context.finishResume();else requests[0].resolve({ok:true});
+  await clock.advance(200);
+  assert.equal((await result).status,'played');assert.equal(pulses,1);assert.ok(context.sources.length>0);
+});
+
+for(const outcome of ['false','rejected','timeout'])test(`native preparation ${outcome} fails without scheduling and a new tap can recover`,async t=>{
+  const clock=audioLifecycle(t),requests=nativePreparation(t),engine=createSoundEngine();let pulses=0;
+  const result=engine.play(shortTone,{onEvent:()=>pulses++});
+  if(outcome==='false')requests[0].resolve({ok:false,reason:'Output is unavailable'});
+  if(outcome==='rejected')requests[0].reject(new Error('Native preparation failed'));
+  await clock.advance(outcome==='timeout'?2600:100);
+  assert.equal((await result).status,'failed');
+  const old=clock.contexts[0];assert.equal(old.sources.length,0);assert.equal(pulses,0);
+  assert.ok(old.closeCalls>0,'failed preparation retires the context');
+  const retry=engine.play(shortTone);
+  assert.equal(requests.length,2,'a new explicit attempt requests native output again');
+  requests[0].resolve({ok:true});await clock.advance(100);
+  assert.equal(old.sources.length,0,'a late success from the failed attempt cannot schedule notes');
+  assert.equal(clock.contexts[1].sources.length,0,'retry must wait for its own native reply');
+  requests[1].resolve({ok:true});await clock.advance(200);
+  assert.equal((await retry).status,'played');assert.equal(pulses,0);
+});
+
+for(const action of ['stop','suspend'])test(`a native reply after ${action} cannot revive or complete the next attempt`,async t=>{
+  const clock=audioLifecycle(t),requests=nativePreparation(t),engine=createSoundEngine();let oldPulses=0,nextPulses=0,nextSettled=false;
+  const first=engine.play(shortTone,{onEvent:()=>oldPulses++});await clock.flush();
+  engine[action]();assert.equal((await first).status,'cancelled');
+  const next=engine.play(shortTone,{onEvent:()=>nextPulses++});next.then(()=>{nextSettled=true;});
+  requests[0].resolve({ok:true});await clock.advance(100);
+  assert.equal(oldPulses,0);assert.equal(nextPulses,0);assert.equal(nextSettled,false);
+  assert.ok(clock.contexts.every(context=>context.sources.length===0));
+  requests[1].resolve({ok:true});await clock.advance(200);
+  assert.equal((await next).status,'played');assert.equal(nextPulses,1);assert.equal(oldPulses,0);
+});
+
+test('an unsupported browser audio-session preference does not block gesture playback',async t=>{
+  const clock=audioLifecycle(t);let preferences=0;
+  replaceGlobal(t,'navigator',{audioSession:{set type(value){assert.equal(value,'playback');preferences++;throw new Error('Unsupported audio-session preference');}}});
+  const engine=createSoundEngine();assert.equal(preferences,0);assert.equal(clock.contexts.length,0);
+  const result=engine.play(shortTone);
+  assert.equal(preferences,1,'session preference is requested only on play');
+  assert.equal(clock.contexts.length,1,'unsupported preference must not defer context creation');
+  await clock.advance(200);assert.equal((await result).status,'played');
+});
 
 test('suspension retires the context before immediate replay; late old state events cannot interrupt the fresh job',async t=>{
   const clock=audioLifecycle(t,[{},{resume:'pending'}]);let interruptions=0;

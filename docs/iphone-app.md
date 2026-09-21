@@ -34,8 +34,10 @@ Choose an installed simulator name from `xcrun simctl list devices available`. T
 
 ```sh
 xcrun simctl install booted ios/build/Build/Products/Debug-iphonesimulator/DoodleFun.app
-xcrun simctl launch booted com.kartikkp.DoodleFun
+xcrun simctl launch booted com.minoli.DoodleFun
 ```
+
+The app uses `com.minoli.DoodleFun`; the test bundles use `.Tests` and `.UITests` suffixes. Changing from the earlier identifier creates a separate iPhone installation. Existing drawings and progress stay in the earlier app and do not automatically transfer.
 
 ### Full iPhone QA
 

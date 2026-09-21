@@ -1,12 +1,13 @@
 # Doodle Fun — release checklist
 
-September 20, 2026. Individual Apple Developer membership purchased; activation pending. No App Store Connect record, signed upload, or submission is confirmed by this checklist. Use the [metadata worksheet](metadata.md) for copy and questionnaire guidance, and the [current QA report](../consolidated-listening-qa.md) for version-specific evidence and remaining checks.
+September 20, 2026. Individual Apple Developer membership purchased; account activation still needs verification. No App Store Connect record, signed upload, or submission is confirmed by this checklist. The physical-phone audio report remains open: hotfix runtime **`1668feee4dc43ee0`** is installed as a signed Debug update, but audible playback is not yet confirmed. Use the [audio follow-up](../iphone-audio-fix.md), [metadata worksheet](metadata.md), and [current QA report](../consolidated-listening-qa.md) for version-specific evidence and remaining checks.
 
 ## Selected launch settings
 
 | Setting | Release value |
 | --- | --- |
 | App name | Doodle Fun: Draw & Discover — availability unverified |
+| Bundle identifier | `com.minoli.DoodleFun` — use this for the app record and new release archive |
 | Membership | Individual — exact legal seller name to verify in the account |
 | Language | English (U.S.) |
 | Pricing | Free; no advertising, in-app purchases, or subscriptions |
@@ -15,18 +16,18 @@ September 20, 2026. Individual Apple Developer membership purchased; activation 
 | Content rating | Expected 4+; Apple's questionnaire result is not assigned yet |
 | Devices | iPhone and iPad, iOS/iPadOS 17 or later |
 | Release | Manual release after review approval |
-| Public support email | pishahrodi+support@gmail.com — supplied; prepared locally, not yet published |
+| Public support email | pishahrodi+support@gmail.com — supplied; post-merge publication to verify |
 
 These choices are prepared locally and have not been entered or verified in App Store Connect. Kids ages 6–8 is the store audience; the app's adjustable practice ages remain 2–10.
 
 ## Finish while membership is pending
 
 - [x] Prepare the listing description, subtitle, keywords, reviewer instructions, support contact, and privacy copy. The prepared text fits the store field limits; final account answers still need verification.
-- [x] Build and inspect the unsigned Release archive for version 2.1.0 (1). The bundled app, policy, privacy manifest, and icons match the final source. Distribution signing and Apple's upload validation remain separate steps below.
-- [x] Complete the outstanding automated native QA and record results in the current QA report: full CI passed 80 Node, 640 browser, 283 native and four trusted sound cases; the separate final run passed all six focused iPhone checks. Physical-device testing remains below.
-- [x] Replace, verify and visually review all ten store screenshots for the current 21-family, 34-mode app. Both capture tests passed on the final runtime; consult the [screenshot manifest and status](screenshots/README.md) for source identity and original-image provenance.
-- [x] Finalize the release source and assets in [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6), preserving the owner's signing configuration. Merge and publication remain separate steps.
-- [ ] Merge PR #6, wait for the automatic GitHub Pages deployment from `main`, and verify the current privacy/support pages, support email, and links. Both public URLs returned HTTP 200 on September 20, but still served September 8 content for the earlier 30-activity app. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy.
+- [ ] Build and inspect an unsigned Release archive for hotfix runtime `1668feee4dc43ee0`. The audited 2.1.0 (1) archive belongs to prior runtime `0f22199625622369`; the signed physical Debug build does not replace a Release audit. Distribution signing and Apple's upload validation remain separate steps below.
+- [x] Complete the hotfix's nine bridge and four trusted sound UI checks: **13/13 passed**, no failures/skips. Node **88/88** and targeted browser **96/96** also passed. The native result records audio-session activation warnings. Prior full CI totals of 80 Node, 640 browser, 283 native, four sound cases and six focused iPhone checks remain historical `0f` evidence, not a full retest of this change.
+- [x] Prepare and visually review all ten store screenshots for the 21-family, 34-mode app. Their capture source is `0f22199625622369`; the hotfix leaves visible UI unchanged. Preserve the [screenshot manifests and status](screenshots/README.md) as the original provenance when checking listing accuracy against the submitted build.
+- [ ] Finalize the audio hotfix and its release evidence in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`, preserving the owner's signing configuration. Source `fa41ab9` and metadata `24c6a8d` were excluded from merged PR #6. Physical listening confirmation remains pending.
+- [ ] Verify merged PR #6's GitHub Pages deployment and current privacy/support pages, support email, and links. The pre-merge September 20 check returned HTTP 200 with September 8 content; post-merge publication has not been checked. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy. Recheck after audio PR #7 merges.
 - [x] Receive the public support email and private App Review contact. Private contact details are stored separately from the repository and still need to be entered in App Store Connect.
 - [ ] Verify the correct copyright year/rights holder and the individual membership's legal seller name. Do not infer them from file paths or repository ownership.
 
@@ -35,7 +36,7 @@ These choices are prepared locally and have not been entered or verified in App 
 Record device, OS version, app version/build, result, and any defect. Use the intended release build; repeat affected checks after fixes.
 
 - [ ] Open every activity family and its modes; check readable instructions, Coach, easier/harder controls, age selection, portrait/landscape layout, and a recoverable wrong answer or retry where applicable.
-- [ ] Complete Sound detective, Higher or lower, Melody echo, and Beat studio. Check speakers and headphones, media volume and Silent mode, independent Game sound/Read aloud settings, replay, and background/return recovery with a fresh Listen before scoring.
+- [ ] Confirm audible Sound detective, Higher or lower, Melody echo, and Beat studio on the installed hotfix. The owner reported silence with Silent mode off; the original cause is unproven and no physical listening reply or activation log has arrived. Check speakers and headphones, media volume and Silent mode, independent Game sound/Read aloud settings, replay, and background/return recovery with a fresh Listen before scoring.
 - [ ] Draw a picture and export a PNG to both Photos and Files. Verify the saved image, cancellation preserving artwork, and a fresh grown-up check for each share or external link.
 - [ ] In airplane mode, open activities, play generated sounds, and read the privacy policy. Relaunch the app and confirm artwork, settings, and progress persist. Optional system speech depends on available device voices.
 - [ ] Check VoiceOver navigation and labels, larger text, and reachable controls on both device sizes. Record limitations honestly; do not select unsupported accessibility claims in the listing.
