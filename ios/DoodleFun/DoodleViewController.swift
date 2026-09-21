@@ -300,7 +300,11 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         let rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
         WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "DoodleOfflineOnly", encodedContentRuleList: rules) { [weak self] rules, error in
             guard let self else { return }
-            guard let rules, error == nil else { self.showError(); return }
+            guard let rules, error == nil else {
+                self.logWebEvent("content-rules-failed", error: error)
+                self.showError()
+                return
+            }
             self.webView.configuration.userContentController.add(rules)
             self.contentRulesReady = true
             #if DEBUG
@@ -354,12 +358,26 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
 
     private func loadDocument() {
         guard contentRulesReady else { showError(); return }
+        logWebEvent("load-requested")
         statusLabel.text = recovering ? "Opening your activity…" : "Opening Doodle Fun…"
         status.isHidden = false
         retryButton.isHidden = true
         var components = URLComponents(url: document, resolvingAgainstBaseURL: false)!
         components.fragment = String(currentHash.dropFirst())
         webView.loadFileURL(components.url!, allowingReadAccessTo: document)
+    }
+
+    private func logWebEvent(_ event: String, error: Error? = nil) {
+        #if DEBUG
+        // Keep device diagnostics separate from system logs. Do not log URLs,
+        // error descriptions/userInfo, or any child's artwork or progress.
+        let identity = Bundle.main.bundleIdentifier ?? "unknown"
+        if let error = error as NSError? {
+            NSLog("DOODLE_WEB %@ bundle=%@ domain=%@ code=%ld", event, identity, error.domain, error.code)
+        } else {
+            NSLog("DOODLE_WEB %@ bundle=%@", event, identity)
+        }
+        #endif
     }
 
     private func showError() {
@@ -374,18 +392,29 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
 
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? { nil }
 
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        logWebEvent("navigation-started")
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        // A finished navigation is not a claim that all JavaScript or audio worked.
+        logWebEvent("navigation-finished")
         recovering = false
         status.isHidden = true
         onContentReady?()
     }
 
-    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) { showError() }
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        logWebEvent("navigation-failed", error: error)
+        showError()
+    }
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        logWebEvent("navigation-provisional-failed", error: error)
         if (error as NSError).code != NSURLErrorCancelled { showError() }
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        logWebEvent("web-content-terminated")
         stopNarration()
         cancelParentAction()
         recoveryTimes = recoveryTimes.filter { Date().timeIntervalSince($0) < 30 }
