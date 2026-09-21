@@ -1,6 +1,6 @@
 # Consolidated catalog and listening QA
 
-Updated September 20, 2026. [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) contains 21 activity families and 34 modes. The owner subsequently reported silent physical-phone playback despite game animations and Silent mode being off. An audio-session hotfix now supersedes the earlier release candidate; physical resolution is **not confirmed**. This report is not an App Store submission sign-off.
+Updated September 20, 2026. Merged [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) contains 21 activity families and 34 modes (`dda0d548`, head `c8a6f06`). The owner subsequently reported silent physical-phone playback despite game animations and Silent mode being off. The later audio-session hotfix in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) was excluded from that merge and now supersedes the earlier release candidate; physical resolution is **not confirmed**. This report is not an App Store submission sign-off.
 
 ## Current release candidate
 
@@ -66,7 +66,7 @@ No paper-visibility or artwork-recovery assertion was weakened. The native layou
 ## Remaining release work
 
 1. Verify exact copyright/seller identity and active individual membership, then create/verify the App Store Connect listing and account fields.
-2. Finish PR review and merge, wait for GitHub Pages' automatic deployment from `main`, and verify the updated privacy/support content and email. September 20 checks still found the September 8 published version; HTTP 200 alone does not prove current content. Nothing has been merged or publicly deployed yet.
+2. Review and merge audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7). PR #6 is already merged; verify its GitHub Pages deployment and privacy/support content, then recheck after the audio update merges. The September 20 pre-merge check found September 8 content; post-merge publication has not been checked. HTTP 200 alone does not prove current content.
 3. Validate distribution signing and provisioning, upload the signed build, and confirm processing. Complete physical iPhone/iPad TestFlight checks: speaker/headphone audibility, media volume/Silent mode, background recovery, Photos/Files destinations, offline persistence, VoiceOver, larger text and Pencil behavior. Reconcile listing answers, submit for App Review and release manually when authorized. The final ten screenshots are prepared and visually reviewed; see [screenshot status](app-store/screenshots/README.md).
 
 Prepared settings are **Doodle Fun: Draw & Discover**, free/no ads or purchases, Education, Kids ages 6–8, United States and manual release. Public support email is supplied; private review contact is stored outside Git. Name availability, account fields, signed upload and submission are unverified. See the [release checklist](app-store/release-checklist.md) and [metadata worksheet](app-store/metadata.md).

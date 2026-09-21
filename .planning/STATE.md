@@ -1,6 +1,6 @@
 # Current state
 
-Updated September 20, 2026. The 21-family, 34-mode app is in [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6), branch `codex/consolidated-listening-play`. After prior release preparation passed, the owner reported silent physical-phone sound games despite animation and Silent mode being off. A new audio-session hotfix is installed as a signed Debug update on the real phone, but physical resolution is **not confirmed**. Focused automated hotfix checks pass; physical listening confirmation and a new Release archive remain pending. No signed upload, App Store record, review submission, merge, or public deployment is established.
+Updated September 20, 2026. The 21-family, 34-mode app's [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) merged at September 21 01:14:07 UTC, head `c8a6f06`, merge `dda0d548`. Later audio source `fa41ab9` and metadata `24c6a8d` were excluded; they are tracked in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`. After prior release preparation passed, the owner reported silent physical-phone sound games despite animation and Silent mode being off. A new audio-session hotfix is installed as a signed Debug update on the real phone, but physical resolution is **not confirmed**. Focused automated hotfix checks pass; physical listening confirmation and a new Release archive remain pending. No signed upload, App Store record or review submission is established. Post-merge Pages deployment and content have not been verified.
 
 ## Product and release choices
 
@@ -8,7 +8,7 @@ Updated September 20, 2026. The 21-family, 34-mode app is in [PR #6](https://git
 - Listening uses offline generated sound, requires successful playback before scoring, and supports replay, hints and interruption recovery. Game sound/volume are separate from Read aloud. No microphone, account, advertising, purchases, analytics or developer backend was added.
 - Selected preparation: **Doodle Fun: Draw & Discover**, free, English (U.S.), Education, Made for Kids ages 6–8, United States, manual release. Account entry, name availability and Apple's assigned rating remain unverified.
 - Public support: **pishahrodi+support@gmail.com**, exactly supplied. The public page offers email; offline help/policy show plain text with the existing gated support-website button. Email is voluntary and attaches no app data automatically. Private App Review contact is supplied and stored outside Git with mode 0600; do not put private values in public code, documents or artifacts.
-- Exact legal seller/copyright identity still needs verification. Public privacy/support URLs returned HTTP 200 September 20 but still serve September 8 content. Merge/deploy the current pages and verify their content before submission.
+- Exact legal seller/copyright identity still needs verification. The September 20 pre-merge privacy/support check returned HTTP 200 with September 8 content. Verify post-merge Pages deployment and current content before submission.
 
 ## Current bundle and verification
 
@@ -44,7 +44,7 @@ Full details, earlier failed runs and their corrections are in [the QA report](.
 
 1. Obtain physical listening confirmation. If silence persists, collect activation/output-route evidence; do not assign the original cause without it. Build and audit the new runtime's Release archive.
 2. Verify exact legal seller/copyright identity, active individual membership and App Store Connect listing/account fields.
-3. Finish PR review and merge; verify the resulting GitHub Pages privacy/support content and email. PR #6 remains unmerged, and no public deployment has occurred.
+3. Review and merge audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7). PR #6 is already merged; verify its GitHub Pages privacy/support content and email, then verify the audio update after its merge.
 4. Validate/sign/upload the verified build, confirm processing, and complete physical iPhone/iPad TestFlight checks before App Review and an authorized manual release. Follow the [release checklist](../docs/app-store/release-checklist.md); earlier archive/CI completion is not carried forward automatically to the hotfix.
 
 Physical speaker/headphone audibility, media volume/Silent mode, actual Photos/Files destinations, offline persistence, VoiceOver, larger text and Pencil behavior remain distinct device checks. Automated gameplay and simulator screenshots do not establish child enjoyment or learning outcomes; supervised child playtesting is recommended product research.

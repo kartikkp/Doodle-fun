@@ -15,7 +15,7 @@ September 20, 2026. Individual Apple Developer membership purchased; account act
 | Content rating | Expected 4+; Apple's questionnaire result is not assigned yet |
 | Devices | iPhone and iPad, iOS/iPadOS 17 or later |
 | Release | Manual release after review approval |
-| Public support email | pishahrodi+support@gmail.com — supplied; prepared locally, not yet published |
+| Public support email | pishahrodi+support@gmail.com — supplied; post-merge publication to verify |
 
 These choices are prepared locally and have not been entered or verified in App Store Connect. Kids ages 6–8 is the store audience; the app's adjustable practice ages remain 2–10.
 
@@ -25,8 +25,8 @@ These choices are prepared locally and have not been entered or verified in App 
 - [ ] Build and inspect an unsigned Release archive for hotfix runtime `1668feee4dc43ee0`. The audited 2.1.0 (1) archive belongs to prior runtime `0f22199625622369`; the signed physical Debug build does not replace a Release audit. Distribution signing and Apple's upload validation remain separate steps below.
 - [x] Complete the hotfix's nine bridge and four trusted sound UI checks: **13/13 passed**, no failures/skips. Node **88/88** and targeted browser **96/96** also passed. The native result records audio-session activation warnings. Prior full CI totals of 80 Node, 640 browser, 283 native, four sound cases and six focused iPhone checks remain historical `0f` evidence, not a full retest of this change.
 - [x] Prepare and visually review all ten store screenshots for the 21-family, 34-mode app. Their capture source is `0f22199625622369`; the hotfix leaves visible UI unchanged. Preserve the [screenshot manifests and status](screenshots/README.md) as the original provenance when checking listing accuracy against the submitted build.
-- [ ] Finalize the audio hotfix and its release evidence in [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6), preserving the owner's signing configuration. Physical listening confirmation remains pending. Merge and publication remain separate steps.
-- [ ] Merge PR #6, wait for the automatic GitHub Pages deployment from `main`, and verify the current privacy/support pages, support email, and links. Both public URLs returned HTTP 200 on September 20, but still served September 8 content for the earlier 30-activity app. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy.
+- [ ] Finalize the audio hotfix and its release evidence in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`, preserving the owner's signing configuration. Source `fa41ab9` and metadata `24c6a8d` were excluded from merged PR #6. Physical listening confirmation remains pending.
+- [ ] Verify merged PR #6's GitHub Pages deployment and current privacy/support pages, support email, and links. The pre-merge September 20 check returned HTTP 200 with September 8 content; post-merge publication has not been checked. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy. Recheck after audio PR #7 merges.
 - [x] Receive the public support email and private App Review contact. Private contact details are stored separately from the repository and still need to be entered in App Store Connect.
 - [ ] Verify the correct copyright year/rights holder and the individual membership's legal seller name. Do not infer them from file paths or repository ownership.
 

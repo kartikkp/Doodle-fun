@@ -4,7 +4,7 @@ September 20, 2026. The owner reported that all four sound games animate but are
 
 ## Current build and behavior
 
-Source commit **`fa41ab9`**, runtime **`1668feee4dc43ee0`**, standalone/native HTML SHA-256 **`bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`**. This supersedes `0f22199625622369` as the candidate being verified.
+Source commit **`fa41ab9`**, runtime **`1668feee4dc43ee0`**, standalone/native HTML SHA-256 **`bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`**. This supersedes `0f22199625622369` as the candidate being verified. Audio source `fa41ab9` and metadata `24c6a8d` were excluded from PR #6's merge (`dda0d548`, head `c8a6f06`); they are tracked in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`.
 
 - A weak native reply bridge activates `AVAudioSession` with the playback category and mixing enabled when sound is requested.
 - On the same user gesture, supported WebKit audio sessions select `playback` and the app starts `AudioContext.resume()`. Notes wait for both native activation and context readiness. Native denial fails the attempt and allows retry rather than awarding unheard progress.
