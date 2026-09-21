@@ -7,6 +7,7 @@ September 20, 2026. Individual Apple Developer membership purchased; account act
 | Setting | Release value |
 | --- | --- |
 | App name | Doodle Fun: Draw & Discover — availability unverified |
+| Bundle identifier | `com.minoli.DoodleFun` — use this for the app record and new release archive |
 | Membership | Individual — exact legal seller name to verify in the account |
 | Language | English (U.S.) |
 | Pricing | Free; no advertising, in-app purchases, or subscriptions |

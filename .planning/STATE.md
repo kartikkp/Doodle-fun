@@ -12,6 +12,8 @@ Updated September 20, 2026. The 21-family, 34-mode app's [PR #6](https://github.
 
 ## Current bundle and verification
 
+The owner subsequently requested the native identifier **`com.minoli.DoodleFun`**. All six app/test Debug/Release identifiers now use `com.minoli`; the existing signing team remains unchanged. A fresh signed Debug 2.1.0 (1) build passed code-signature and application-entitlement checks, with evidence in `work/bundle-identifier-2026-09-20`. This renamed build has **not** been installed; the earlier physical audio update below used the previous identifier. A new identifier creates a separate installation, so old artwork/progress do not transfer automatically. Use the new identifier for the App Store record and fresh Release archive.
+
 Current runtime **`1668feee4dc43ee0`**, standalone/native HTML SHA-256 **`bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`**. Native playback activation through a weak reply bridge, WebKit playback-session selection and same-gesture context resume precede notes. Both activation paths must succeed; native denial permits retry. Idle speech cancellation is skipped. The precise original physical cause is unproven; see [the audio follow-up](../docs/iphone-audio-fix.md).
 
 - **88/88 Node and 96/96 targeted browser checks passed** (86 existing listening, four session and six activation-failure cases).
@@ -51,6 +53,6 @@ Physical speaker/headphone audibility, media volume/Silent mode, actual Photos/F
 
 ## Preserve owner state
 
-The owner's uncommitted `ios/DoodleFun.xcodeproj/project.pbxproj` stays excluded from commits. Protected September 20 SHA-256: **`ce3c3a060fa0785f89d273c9c3057d527eb327484fbcea168dd53c7bd7226acc`**. Do not restore an older hash. Tests/captures use copied projects and dedicated simulators. Never touch personal simulator **`139E0398-D2DC-4BC2-86D3-C543BADC3C56`**.
+The owner's signing and Xcode formatting edits in `ios/DoodleFun.xcodeproj/project.pbxproj` remain uncommitted. Only the explicitly requested six bundle-identifier replacements are committed. The prior `ce3c3a060fa0785f89d273c9c3057d527eb327484fbcea168dd53c7bd7226acc` project was preserved except for those exact replacements; its new protected SHA-256 is **`2e791a5bd2c9db4081f91afc6115669507c014b30fee9161ca0fcbd6e7c2acbd`**. Do not restore an older hash. Tests/captures use copied projects and dedicated simulators. Never touch personal simulator **`139E0398-D2DC-4BC2-86D3-C543BADC3C56`**.
 
 September 14 cleanup removed older raw xcresults after verified JSON export. Use `work/cleanup-2026-09-14/qa-summaries/index.json`; do not claim deleted raw bundles remain. Historical CI 34787562004 and native sound evidence are retained under `work/consolidation-qa/ci-34787562004.log` and `work/consolidation-qa-ci-audio-34787562004`.
