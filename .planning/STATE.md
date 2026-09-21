@@ -12,6 +12,8 @@ Updated September 20, 2026. The 21-family, 34-mode app's [PR #6](https://github.
 
 ## Current bundle and verification
 
+The owner's later console excerpt did not establish an app-loading or audio cause. A diagnostic-only follow-up adds DEBUG `DOODLE_WEB` lifecycle/error-domain/code logs while preserving read scope and recovery behavior. Signed Debug and unsigned Release builds passed; binary inspection confirms the logs are absent from Release. This diagnostic build is not installed and gameplay was not rerun. See [console triage](../docs/iphone-console-diagnostics.md).
+
 The owner subsequently requested the native identifier **`com.minoli.DoodleFun`**. All six app/test Debug/Release identifiers now use `com.minoli`; the existing signing team remains unchanged. A fresh signed Debug 2.1.0 (1) build passed code-signature and application-entitlement checks, with evidence in `work/bundle-identifier-2026-09-20`. This renamed build has **not** been installed; the earlier physical audio update below used the previous identifier. A new identifier creates a separate installation, so old artwork/progress do not transfer automatically. Use the new identifier for the App Store record and fresh Release archive.
 
 Current runtime **`1668feee4dc43ee0`**, standalone/native HTML SHA-256 **`bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`**. Native playback activation through a weak reply bridge, WebKit playback-session selection and same-gesture context resume precede notes. Both activation paths must succeed; native denial permits retry. Idle speech cancellation is skipped. The precise original physical cause is unproven; see [the audio follow-up](../docs/iphone-audio-fix.md).
