@@ -1,5 +1,7 @@
 # Consolidated activities and listening play
 
+**Later physical audio follow-up:** runtime `1668feee4dc43ee0` supersedes the application below with explicit native/WebKit audio-session preparation. Targeted tests pass and the update is installed on the owner's iPhone; physical audibility confirmation remains pending. The archive and screenshot evidence below retain their original source identity. See [the audio report](../../../docs/iphone-audio-fix.md).
+
 Updated September 20, 2026. Source implementation, unsigned release packaging, final native follow-ups and ten store screenshots are complete. The final images passed independent artifact validation and visual review. [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) remains unmerged. Nothing has been uploaded or submitted to App Store Connect.
 
 ## Delivered behavior

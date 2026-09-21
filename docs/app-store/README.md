@@ -1,5 +1,7 @@
 # Doodle Fun — App Store kit
 
+**Physical audio follow-up:** the later runtime `1668feee4dc43ee0` adds explicit iPhone audio-session preparation and is installed on the owner's phone. Its targeted tests pass; audible playback still needs the owner's confirmation. The prior unsigned archive and screenshot manifests identify the earlier `0f22199625622369` source. Rebuild the release archive after accepting this fix; see the [audio report](../iphone-audio-fix.md) and [release checklist](release-checklist.md).
+
 The native app groups 34 practice modes into 21 activities for chosen starting ages 2–10. Create, Letters, Numbers, Discover, and Listen include four games with sounds generated offline. Game sound and volume are separate from optional Read aloud; no microphone or voice recording is used. The app also includes an offline privacy policy and a fresh grown-up check before sharing pictures or opening external websites.
 
 ## Listing and public pages
@@ -21,8 +23,8 @@ The selected public support email is **pishahrodi+support@gmail.com**, exactly a
 
 ## Use this kit
 
-1. Automated release QA, unsigned archive inspection and screenshot review are complete. While membership is pending, review the prepared text and questionnaire recommendations in `metadata.md`, and verify the owner's copyright information. Keep the supplied private review-contact details outside the repository.
-2. Use the five numbered PNGs in each of `screenshots/iphone` and `screenshots/ipad`; their manifests match the current runtime `0f22199625622369`. Recheck that identity if application code changes before submission. The screenshot README records native capture, independent byte verification and visual review.
+1. Confirm physical sound playback for the audio follow-up and rebuild the release archive from the accepted source. Review the prepared text and questionnaire recommendations in `metadata.md`, and verify the owner's copyright information. Keep the supplied private review-contact details outside the repository.
+2. The five numbered PNGs in each of `screenshots/iphone` and `screenshots/ipad` were captured from runtime `0f22199625622369`. The audio fix changes no pictured UI, but their manifests remain evidence for that earlier source. Review them against the build being submitted. The screenshot README records native capture, independent byte verification and visual review.
 3. Merge PR #6, wait for its automatic GitHub Pages deployment, and verify the updated privacy/support pages. Once membership is active, verify the individual account/team, accept required account agreements, and create or confirm the app record. Check name availability and enter the selected listing settings, current public URLs and private review contact.
 4. Validate and upload the signed release archive. Complete physical iPhone/iPad checks through TestFlight, reconcile the privacy and age-rating answers with that build, and select the verified build for review.
 

@@ -1,12 +1,18 @@
 # Consolidated catalog and listening QA
 
-Updated September 20, 2026. [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) contains 21 activity families and 34 modes. Release source, unsigned packaging, final native follow-ups and store screenshot preparation are complete. Isolated GitHub macOS simulators completed the remaining technical checks while the local Mac stayed locked; all ten final screenshots passed visual review. PR #6 remains unmerged and nothing has been published. This report is not an App Store submission sign-off.
+Updated September 20, 2026. [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) contains 21 activity families and 34 modes. The owner subsequently reported silent physical-phone playback despite game animations and Silent mode being off. An audio-session hotfix now supersedes the earlier release candidate; physical resolution is **not confirmed**. This report is not an App Store submission sign-off.
 
 ## Current release candidate
 
-Runtime **`0f22199625622369`**, standalone/native HTML SHA-256 **`72c6446e6281d47f8778407df192801956a215040e9dac60c3d7570fd9d842fe`**, application commit **`3fc4971`**. Final test/workflow revision **`a52187e04f902a67eab1ef0241429d2d13a12ee9`** preserves that application runtime. Source, root HTML, and native resources match. All 30 earlier exercises remain, plus Sound detective, Higher or lower, Melody echo, and Beat studio. Starting ages 2–10, per-mode Coach/support, old links, artwork and progress remain available.
+Runtime **`1668feee4dc43ee0`**, standalone/native HTML SHA-256 **`bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`**. Native playback activation, a weak reply bridge, WebKit playback-session selection and same-gesture context resume now precede notes; native denial permits retry, and idle speech cancellation is avoided. **88/88 Node and 96/96 targeted browser checks passed.** Initial native bridge checks passed 2/2; four sound UI cases failed before playback on missing/unrecognized geometry. A scene-backed geometry/activation check then passed 1/1 and established the new 440×956 profile's actual 62/34 safe insets. The final **13/13 native cases passed** with no failures/skips: nine bridge and four trusted sound UI cases on iOS 27.0 simulator (24A434). The result records main-thread audio-session activation warnings; see the linked follow-up for details.
 
-| Current candidate check | Result |
+A signed Debug 2.1.0 (1) update was installed and launched on the owner's real iPhone 17 Pro Max / iOS 27.0 (24A437). No physical audibility confirmation or activation log has been received. The original cause remains unproven, and a new unsigned Release archive is still pending. See [the audio follow-up](iphone-audio-fix.md) for scope, evidence and remaining checks. Earlier full CI, archive and screenshots below retain their original source identity; none is relabeled as a full hotfix retest. The visible UI is unchanged.
+
+## Prior release candidate — `0f22199625622369`
+
+Standalone/native HTML SHA-256 **`72c6446e6281d47f8778407df192801956a215040e9dac60c3d7570fd9d842fe`**, application commit **`3fc4971`**. Test/workflow revision **`a52187e04f902a67eab1ef0241429d2d13a12ee9`** preserved that runtime. Its source, root HTML, and native resources matched. All 30 earlier exercises remained, plus Sound detective, Higher or lower, Melody echo, and Beat studio, with starting ages 2–10 and per-mode Coach/support.
+
+| Prior candidate check | Result |
 | --- | --- |
 | Syntax and Node tests | **80/80 passed**, no failures or skips. |
 | Focused drawing browser suite | **24/24 passed**, 12 Chromium and 12 WebKit cases. Includes all nine coloring pages, cloud containment, Undo/Redo, touch/export/recovery, three supported landscape sizes, and padding-only navigation changes. |
