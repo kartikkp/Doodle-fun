@@ -21,10 +21,12 @@ These choices are prepared locally and have not been entered or verified in App 
 
 ## Finish while membership is pending
 
-- [ ] Finish the outstanding native QA and record results in the current QA report. Do not treat simulator or automated results as completed physical-device testing.
-- [ ] Replace and visually review all ten store screenshots for the current 21-family, 34-mode app. Recapture/review is in progress; consult the [screenshot manifest and status](screenshots/README.md) before using any images.
-- [ ] Finalize the release source in [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6), preserving the owner's signing configuration.
-- [ ] After PR #6 is merged, publish the current privacy/support pages and verify their content, support email, and links. Both public URLs returned HTTP 200 on September 20, but still served September 8 content for the earlier 30-activity app. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy.
+- [x] Prepare the listing description, subtitle, keywords, reviewer instructions, support contact, and privacy copy. The prepared text fits the store field limits; final account answers still need verification.
+- [x] Build and inspect the unsigned Release archive for version 2.1.0 (1). The bundled app, policy, privacy manifest, and icons match the final source. Distribution signing and Apple's upload validation remain separate steps below.
+- [x] Complete the outstanding automated native QA and record results in the current QA report: full CI passed 80 Node, 640 browser, 283 native and four trusted sound cases; the separate final run passed all six focused iPhone checks. Physical-device testing remains below.
+- [x] Replace, verify and visually review all ten store screenshots for the current 21-family, 34-mode app. Both capture tests passed on the final runtime; consult the [screenshot manifest and status](screenshots/README.md) for source identity and original-image provenance.
+- [x] Finalize the release source and assets in [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6), preserving the owner's signing configuration. Merge and publication remain separate steps.
+- [ ] Merge PR #6, wait for the automatic GitHub Pages deployment from `main`, and verify the current privacy/support pages, support email, and links. Both public URLs returned HTTP 200 on September 20, but still served September 8 content for the earlier 30-activity app. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy.
 - [x] Receive the public support email and private App Review contact. Private contact details are stored separately from the repository and still need to be entered in App Store Connect.
 - [ ] Verify the correct copyright year/rights holder and the individual membership's legal seller name. Do not infer them from file paths or repository ownership.
 

@@ -20,8 +20,8 @@ Prepared September 8, 2026; product copy updated September 13, 2026 for the cons
 | Availability | United States only | Selected; no territories have been configured by this document |
 | Release option | Manual release after approval | Selected; public release still requires the owner's launch authorization |
 | Platforms | iPhone and iPad; iOS/iPadOS 17 or later | Match the final archive's deployment target |
-| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 on September 20, 2026; published September 8 content is stale. Publish the current policy after PR #6 is merged and verify it against the release bundle before submission. |
-| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. Publish the current page with the owner's supplied support email after PR #6 is merged. |
+| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 on September 20, 2026; published September 8 content is stale. Merge PR #6, wait for the automatic GitHub Pages deployment, and verify the current policy against the release bundle before submission. |
+| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. After PR #6 is merged and GitHub Pages deploys it, verify the current page and the owner's supplied support email. |
 | Public support email | pishahrodi+support@gmail.com | Supplied by the owner; prepared on the support page and in offline help/policy; not yet published |
 | Marketing URL | https://kartikkp.github.io/Doodle-fun/ | Existing project website; verify before entering |
 | Privacy Choices URL | Leave blank | Optional; deletion and backup choices are in the privacy policy |
@@ -182,7 +182,7 @@ These are submission prerequisites, not values to guess. No account or external 
 | Kids category and age band | Enter the selected Made for Kids, ages 6–8 positioning; verify the final parental gates and Kids-category requirements before submission. |
 | Privacy and content rights | Confirm the questionnaire against the final build and actual collection practices; confirm rights to all app content and store assets. |
 | Price and territory | Enter the selected free price, no IAP, and U.S.-only availability. Broader distribution requires a separate owner review of regional account/compliance fields. |
-| Live policy/support pages | Both URLs were reachable with HTTP 200 on September 20, 2026, but still serve September 8 content for the earlier 30-activity app. After PR #6 is merged, publish the current 21-family/34-mode pages, including game-sound and volume information, then verify their content and links over HTTPS. The same policy body must be present offline in the submitted app. |
+| Live policy/support pages | Both URLs were reachable with HTTP 200 on September 20, 2026, but still serve September 8 content for the earlier 30-activity app. Merge PR #6 and wait for the automatic GitHub Pages deployment from `main`, then verify the current 21-family/34-mode pages, game-sound and volume information, and links over HTTPS. The same policy body must be present offline in the submitted app. |
 | Screenshots / preview | Supply actual screenshots of the submitted app for required device sizes. Do not use a mock screen or claim untested accessibility support. An app preview is optional. |
 | Release authorization | Confirm final content and account fields, then submit for review; release manually only when the owner authorizes it. |
 
