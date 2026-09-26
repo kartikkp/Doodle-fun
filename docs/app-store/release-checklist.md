@@ -1,14 +1,15 @@
 # Doodle Fun — release checklist
 
-September 20, 2026. Individual Apple Developer membership purchased; account activation still needs verification. No App Store Connect record, signed upload, or submission is confirmed by this checklist. The physical-phone audio report remains open: hotfix runtime **`1668feee4dc43ee0`** is installed as a signed Debug update, but audible playback is not yet confirmed. Use the [audio follow-up](../iphone-audio-fix.md), [metadata worksheet](metadata.md), and [current QA report](../consolidated-listening-qa.md) for version-specific evidence and remaining checks.
+September 26, 2026. **Current target: TestFlight.** Individual membership and App Store Connect access are active; Terms of Service were accepted with explicit owner approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) exists. A signed Release archive was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Upload succeeded September 26 at 21:15:20 UTC; Apple processing is Complete and build 2.1.0 (1) is assigned to Doodle Fun Internal. Recipient confirmation, tester access and physical checks are pending; no invitations have been sent. The owner has not checked the latest audio build. See the [audio follow-up](../iphone-audio-fix.md), [metadata worksheet](metadata.md), and [QA report](../consolidated-listening-qa.md).
 
 ## Selected launch settings
 
 | Setting | Release value |
 | --- | --- |
-| App name | Doodle Fun: Draw & Discover — availability unverified |
-| Bundle identifier | `com.minoli.DoodleFun` — use this for the app record and new release archive |
-| Membership | Individual — exact legal seller name to verify in the account |
+| App name | Doodle Fun: Draw & Discover — app record created |
+| Apple ID / SKU | `6816519633` / `doodlefun-ios` |
+| Bundle identifier | `com.minoli.DoodleFun` — app record and current archive |
+| Membership | Individual, active — exact legal seller name still to verify |
 | Language | English (U.S.) |
 | Pricing | Free; no advertising, in-app purchases, or subscriptions |
 | Availability | United States |
@@ -16,19 +17,19 @@ September 20, 2026. Individual Apple Developer membership purchased; account act
 | Content rating | Expected 4+; Apple's questionnaire result is not assigned yet |
 | Devices | iPhone and iPad, iOS/iPadOS 17 or later |
 | Release | Manual release after review approval |
-| Public support email | pishahrodi+support@gmail.com — supplied; post-merge publication to verify |
+| Public support email | pishahrodi+support@gmail.com — published and verified September 26 |
 
-These choices are prepared locally and have not been entered or verified in App Store Connect. Kids ages 6–8 is the store audience; the app's adjustable practice ages remain 2–10.
+Name, Apple ID, SKU, bundle ID, English (U.S.) and iOS platform are verified in the created record. Price, territory, category, rating and public-release settings remain prepared choices for a later store listing. Kids ages 6–8 is the selected store audience; adjustable practice ages remain 2–10.
 
-## Finish while membership is pending
+## Preparation completed and remaining verification
 
 - [x] Prepare the listing description, subtitle, keywords, reviewer instructions, support contact, and privacy copy. The prepared text fits the store field limits; final account answers still need verification.
-- [ ] Build and inspect an unsigned Release archive for hotfix runtime `1668feee4dc43ee0`. The audited 2.1.0 (1) archive belongs to prior runtime `0f22199625622369`; the signed physical Debug build does not replace a Release audit. Distribution signing and Apple's upload validation remain separate steps below.
+- [x] Build and audit the contents of signed Release 2.1.0 (1), `com.minoli.DoodleFun`, runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`, with Xcode 27 (27A266a). The subsequent App Store export re-signed the app correctly; its distribution profile and code signature are verified. The subsequent upload and processing are complete; internal build assignment is verified below.
 - [x] Complete the hotfix's nine bridge and four trusted sound UI checks: **13/13 passed**, no failures/skips. Node **88/88** and targeted browser **96/96** also passed. The native result records audio-session activation warnings. Prior full CI totals of 80 Node, 640 browser, 283 native, four sound cases and six focused iPhone checks remain historical `0f` evidence, not a full retest of this change.
 - [x] Prepare and visually review all ten store screenshots for the 21-family, 34-mode app. Their capture source is `0f22199625622369`; the hotfix leaves visible UI unchanged. Preserve the [screenshot manifests and status](screenshots/README.md) as the original provenance when checking listing accuracy against the submitted build.
-- [ ] Finalize the audio hotfix and its release evidence in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`, preserving the owner's signing configuration. Source `fa41ab9` and metadata `24c6a8d` were excluded from merged PR #6. Physical listening confirmation remains pending.
-- [ ] Verify merged PR #6's GitHub Pages deployment and current privacy/support pages, support email, and links. The pre-merge September 20 check returned HTTP 200 with September 8 content; post-merge publication has not been checked. Current pages must describe the consolidated catalog, sound/volume behavior, and voluntary email support; the public policy must match the offline release policy. Recheck after audio PR #7 merges.
-- [x] Receive the public support email and private App Review contact. Private contact details are stored separately from the repository and still need to be entered in App Store Connect.
+- [x] Merge the audio hotfix: [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) merged as `97cd87f`; PR #6 is also merged. Source [CI 35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. Current release work is on `codex/testflight-release`; physical listening remains pending.
+- [x] Verify published pages: privacy, support and homepage returned HTTP 200 September 26 and exactly matched current local source. The consolidated catalog, sound/volume guidance, September 20 policy and voluntary support email are published. The earlier stale-page preflight remains historical.
+- [x] Receive the public support email and private review contact. TestFlight review contact is saved and verified; private details remain outside the repository.
 - [ ] Verify the correct copyright year/rights holder and the individual membership's legal seller name. Do not infer them from file paths or repository ownership.
 
 ## Physical iPhone and iPad release checks
@@ -42,17 +43,25 @@ Record device, OS version, app version/build, result, and any defect. Use the in
 - [ ] Check VoiceOver navigation and labels, larger text, and reachable controls on both device sizes. Record limitations honestly; do not select unsupported accessibility claims in the listing.
 - [ ] Recommended product research: observe a supervised child playtest for comprehension, enjoyment, and difficulty. This is optional research, not an Apple submission requirement or evidence of learning outcomes.
 
-## Once membership activates
+## TestFlight handoff
 
-- [ ] Verify the individual account/team and legal seller name; accept required account agreements.
-- [ ] Create or confirm the App Store Connect record, name availability, language, bundle ID, and SKU. Match the bundle ID to the release archive.
+- [x] Confirm active membership and App Store Connect access; accept Terms of Service with explicit owner approval.
+- [x] Create the iOS app record: Doodle Fun: Draw & Discover, Apple ID `6816519633`, SKU `doodlefun-ios`, English (U.S.), bundle ID `com.minoli.DoodleFun`.
+- [x] Export Release 2.1.0 (1) for App Store distribution. Verify the re-signed export: profile for `com.minoli.DoodleFun`, `LocalProvision=false`, no provisioned devices, `get-task-allow=false`, and valid code signature. The cached archive profile no longer blocks distribution.
+- [x] Upload the verified export: exit code 0, “Upload succeeded” and “Uploaded DoodleFun” at September 26 21:15:20 UTC. Apple has subsequently completed processing.
+- [x] Save and verify TestFlight description, feedback contact, marketing/privacy URLs, private review contact and notes; no sign-in is required.
+- [x] Confirm processing: Build Uploads shows **Complete** for 2.1.0 (1), UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f`. Its TestFlight status is Ready to Submit before tester access; this is not an App Review submission.
+- [x] Save What to Test: all four sound games, ages/modes/coaching, drawing, offline behavior and layout.
+- [x] Create **Doodle Fun Internal** with automatic distribution off and assign build 2.1.0 (1). Group detail verifies **0 testers and 1 build**.
+- [ ] Confirm the intended recipient and add the appropriate internal tester. No invitations have been sent.
+- [ ] Make the processed build available to the intended testers and install through TestFlight on physical iPhone/iPad. Complete the checks above, especially audible sound and interruption recovery.
+
+## Later App Store submission — outside the current target
 - [ ] Enter the selected price, territory, Education/Kids settings, and manual release option. Review the lasting Kids-category commitment in the metadata worksheet.
 - [ ] Add the prepared description, subtitle, keywords, reviewed current screenshots, public privacy/support URLs, copyright, private review contact, and reviewer instructions. No demo account is needed.
 - [ ] Complete App Privacy against the actual final build and operating practices; “Data Not Collected” remains the expected answer, subject to that verification. Validate the privacy manifest and required-reason API declarations in the archive separately.
 - [ ] Complete Apple's age-rating, export-compliance/encryption, and content-rights questions accurately for the submitted build. Do not guess a rating or encryption exemption to clear a form.
-- [ ] Create and validate the signed App Store archive with a unique build number; confirm the correct team, bundle identifier, app version, icon, and bundled web content. Upload and resolve processing/validation issues.
-- [ ] Recommended release validation: install the processed build through TestFlight on physical iPhone/iPad and complete the checks above. TestFlight is the chosen testing route, not a requirement to run a public beta.
 - [ ] Select the verified build and submit the completed listing to App Review. Address any review questions or required fixes.
 - [ ] After approval, release manually when the owner is ready to launch.
 
-Prepared documents and passing QA do not create a store record, reserve an app name, activate membership, or publish the app.
+The app record exists and distribution export is verified. Upload, processing and internal build assignment are complete. Recipient confirmation, tester access and physical TestFlight checks remain pending. Nothing has been submitted to App Review or released publicly.

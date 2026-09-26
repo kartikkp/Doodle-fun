@@ -1,14 +1,21 @@
-# Doodle Fun — App Store submission draft
+# Doodle Fun — App Store Connect and TestFlight worksheet
 
-Prepared September 8, 2026; product copy updated September 13, 2026 for the consolidated catalog and listening games. Release choices updated September 20, 2026 after the owner authorized preparation and purchased an individual Apple Developer membership. **Membership activation pending; not submitted.** This document records the selected release settings and prepares questionnaire answers. It does not establish that an App Store Connect record, signing entitlement, legal seller identity, or submitted build has been verified. Reconcile the final answers with the release archive and the owner's actual practices before submission.
+Updated September 26, 2026. **The current target is TestFlight, not App Review or public release.** Individual membership is active, App Store Connect access is confirmed, and its Terms of Service were accepted with the owner's explicit approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) has been created. A signed Release archive for 2.1.0 (1) was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Exported signing and provisioning passed verification. Upload succeeded on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. Recipient confirmation, tester access and physical testing remain pending; no invitations have been sent. The store copy below is prepared for a later public listing; unentered fields remain marked as such.
 
 ## Listing settings
 
 | Field | Prepared value | Status |
 | --- | --- | --- |
-| Enrollment | Individual | Purchased by the owner; activation pending |
-| Primary language | English (U.S.) | Selected for preparation; not entered in App Store Connect |
-| App name | Doodle Fun: Draw & Discover | Selected; 27 characters; availability in the owner's account unverified |
+| Enrollment | Individual | Active; App Store Connect access confirmed September 26 |
+| Primary language | English (U.S.) | Set in the created app record |
+| App name | Doodle Fun: Draw & Discover | Created in App Store Connect; 27 characters |
+| Apple ID / SKU | `6816519633` / `doodlefun-ios` | Created in the active account |
+| Bundle identifier | `com.minoli.DoodleFun` | Matches the app record and current archive |
+| Immediate target | TestFlight | Upload and processing complete; build assigned internally; recipient and physical checks pending |
+| TestFlight build | 2.1.0 (1), `d1297f42-0e32-43a6-87cc-a3e7c358629f` | Build Uploads: Complete; build status: Ready to Submit before tester access, not an App Review submission |
+| TestFlight information | Description, feedback contact, marketing/privacy URLs, private review contact and notes; no sign-in | Saved and verified in App Store Connect |
+| Internal testing group | Doodle Fun Internal | Build 2.1.0 (1) assigned; automatic distribution off; group verifies 0 testers and 1 build; recipient confirmation pending, no invitations sent |
+| What to Test | Four sound games; ages, modes and coaching; drawing; offline behavior and layout | Saved on the processed build |
 | Subtitle | Create, explore & listen | 24 characters |
 | Primary category | Education | Selected; not entered in App Store Connect |
 | Secondary category | None | Prepared; no second category needed |
@@ -19,11 +26,11 @@ Prepared September 8, 2026; product copy updated September 13, 2026 for the cons
 | Advertising | None | Selected; current app has no advertising implementation |
 | Availability | United States only | Selected; no territories have been configured by this document |
 | Release option | Manual release after approval | Selected; public release still requires the owner's launch authorization |
-| Platforms | iPhone and iPad; iOS/iPadOS 17 or later | Match the final archive's deployment target |
-| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 on September 20, 2026; published September 8 content is stale. Merge PR #6, wait for the automatic GitHub Pages deployment, and verify the current policy against the release bundle before submission. |
-| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. After PR #6 is merged and GitHub Pages deploys it, verify the current page and the owner's supplied support email. |
-| Public support email | pishahrodi+support@gmail.com | Supplied by the owner; prepared on the support page and in offline help/policy; not yet published |
-| Marketing URL | https://kartikkp.github.io/Doodle-fun/ | Existing project website; verify before entering |
+| Platforms | iPhone and iPad; iOS/iPadOS 17 or later | iOS app record created; match the distribution archive |
+| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 September 26; bytes match current local policy, including September 20 revision and voluntary email support |
+| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 September 26; bytes match current local page, including 21 families/34 modes, sound guidance and email link |
+| Public support email | pishahrodi+support@gmail.com | Published address and email link verified September 26; plain text remains available offline |
+| Marketing URL | https://kartikkp.github.io/Doodle-fun/ | HTTP 200 September 26; bytes match current runtime `1668feee4dc43ee0` |
 | Privacy Choices URL | Leave blank | Optional; deletion and backup choices are in the privacy policy |
 | Sign-in required | No | No demo account is needed |
 | Custom EULA | None proposed | Use Apple's standard EULA unless the owner supplies another |
@@ -166,26 +173,26 @@ The app is designed for touch in portrait and landscape on iPhone and iPad. Savi
 
 ## Owner and account handoff
 
-These are submission prerequisites, not values to guess. No account or external submission was changed by preparing this document.
+The app record and account access below are verified; unknown legal and questionnaire values must not be guessed. TestFlight upload and Apple processing are complete; internal build assignment is verified, with recipient confirmation pending. PR #6 and audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) are merged; PR #7 merged as `97cd87f`. Source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`.
 
 | Field / action | Required owner input or verification |
 | --- | --- |
-| Apple Developer membership / account holder | Individual membership purchased; wait for activation, then verify the correct account/team and required agreements. Existing project signing settings do not establish active membership or ownership. |
+| Apple Developer membership / account holder | Membership active; App Store Connect access confirmed and Terms of Service accepted with explicit approval. App Store distribution signing/provisioning is now verified. |
 | Legal seller / developer name | Verify the exact legal name shown by the individual membership in App Store Connect. No name is inferred from local paths, repository ownership, or this worksheet. |
 | Copyright | Supply the correct year and rights-holder name; do not use a placeholder in the submitted record. |
-| Public support contact | The owner supplied pishahrodi+support@gmail.com. Publish the prepared support page and verify the email link/address before submission. GitHub issues remains an optional public developer bug tracker. |
-| App Review contact | Supplied and stored separately from the repository. Enter the private first/last name, email, and telephone in App Store Connect and verify them there; do not add private values to public documentation. |
-| App record / Apple ID / SKU | Confirm or create in the correct account. These values are not known or reserved by this draft. |
-| Bundle ID and signing | Verify the release archive matches the registered app identifier and distribution team. |
-| Version/build and selected archive | Confirm the final marketing version, unique build number, uploaded archive, and processing status. |
-| App name availability | Check the prepared 27-character name in the owner's App Store Connect account. |
+| Public support contact | pishahrodi+support@gmail.com is published and verified. GitHub issues remains an optional public developer bug tracker. |
+| Review contact | Supplied and stored separately from the repository; TestFlight review contact saved and verified. Keep private values out of public documentation and recheck them for any later App Review submission. |
+| App record / Apple ID / SKU | Created: [Doodle Fun: Draw & Discover](https://appstoreconnect.apple.com/apps/6816519633/distribution), Apple ID `6816519633`, SKU `doodlefun-ios`, English (U.S.), iOS. |
+| Bundle ID and signing | Record/export identifier is `com.minoli.DoodleFun`. Export re-signed with its App Store distribution profile: `LocalProvision=false`, no provisioned devices and `get-task-allow=false`. Code-signature verification passed; the cached archive profile is no longer a blocker. |
+| Version/build and selected archive | Release 2.1.0 (1) built and payload audited with Xcode 27 (27A266a), runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`. App Store distribution export and signature verification passed. Upload succeeded at September 26 21:15:20 UTC with exit code 0; Apple processing is Complete; build UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f` is assigned to Doodle Fun Internal. Tester access remains pending. |
+| App name availability | Name accepted when creating the current app record; no public listing or release is established. |
 | Kids category and age band | Enter the selected Made for Kids, ages 6–8 positioning; verify the final parental gates and Kids-category requirements before submission. |
 | Privacy and content rights | Confirm the questionnaire against the final build and actual collection practices; confirm rights to all app content and store assets. |
 | Price and territory | Enter the selected free price, no IAP, and U.S.-only availability. Broader distribution requires a separate owner review of regional account/compliance fields. |
-| Live policy/support pages | Both URLs were reachable with HTTP 200 on September 20, 2026, but still serve September 8 content for the earlier 30-activity app. Merge PR #6 and wait for the automatic GitHub Pages deployment from `main`, then verify the current 21-family/34-mode pages, game-sound and volume information, and links over HTTPS. The same policy body must be present offline in the submitted app. |
-| Screenshots / preview | Supply actual screenshots of the submitted app for required device sizes. Do not use a mock screen or claim untested accessibility support. An app preview is optional. |
-| Release authorization | Confirm final content and account fields, then submit for review; release manually only when the owner authorizes it. |
+| Live policy/support pages | Both returned HTTP 200 on September 26 and exactly matched local source. The earlier stale-page preflight is historical; keep the published policy and offline release policy synchronized. |
+| Screenshots / preview | Ten native PNGs remain usable for the unchanged pictured UI: five 1320×2868 iPhone and five 2064×2752 iPad images, hashes matching their manifests. Their actual capture runtime remains `0f22199625622369`; do not rewrite provenance. Store screenshots and an optional preview concern the later public listing. |
+| Current testing / later release | Confirm the intended internal tester, enable access to the assigned build, then complete physical checks. App Review and public release are outside the current target; retain the selected manual-release setting for a later store submission. |
 
-The public support page offers the owner's supplied email address. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements. The separate private App Review contact has been supplied and still needs to be entered and verified in the publishing account. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
+The public support page offers the owner's supplied email address. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements. The separate private review contact has been saved and verified in TestFlight information; later App Review fields remain a separate check. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
 
 The prepared public pages use local system fonts and no scripts, tracking, or remote assets. `privacy.html` is the policy source of truth: the build embeds the contents of its single `privacy-policy-content` article into the offline app. Keep that article and the published page synchronized through the normal build and native-sync process.

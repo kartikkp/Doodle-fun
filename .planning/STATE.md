@@ -1,16 +1,28 @@
 # Current state
 
-Updated September 20, 2026. The 21-family, 34-mode app's [PR #6](https://github.com/kartikkp/Doodle-fun/pull/6) merged at September 21 01:14:07 UTC, head `c8a6f06`, merge `dda0d548`. Later audio source `fa41ab9` and metadata `24c6a8d` were excluded; they are tracked in [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`. After prior release preparation passed, the owner reported silent physical-phone sound games despite animation and Silent mode being off. A new audio-session hotfix is installed as a signed Debug update on the real phone, but physical resolution is **not confirmed**. Focused automated hotfix checks pass; physical listening confirmation and a new Release archive remain pending. No signed upload, App Store record or review submission is established. Post-merge Pages deployment and content have not been verified.
+Updated September 26, 2026. Immediate target: **TestFlight**, as explicitly requested. The owner completed Xcode sign-in. Active paid membership and App Store Connect access are verified; the displayed App Store Connect Terms of Service were accepted with explicit at-action approval. App **Doodle Fun: Draw & Discover**, Apple ID **6816519633**, SKU **doodlefun-ios**, primary language **English (U.S.)**, iOS bundle **com.minoli.DoodleFun**, is created. PR #7 merged as **97cd87f**; source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. Work continues on `codex/testflight-release`.
+
+Release **2.1.0 (1)** was archived with Xcode **27 (27A266a)** / iOS 27 SDK, exported with App Store distribution signing, verified, and **uploaded successfully on September 26 at 21:15:20 UTC**. Xcode reported the uploaded package was processing. The export replaces the archive's cached Personal Team profile with **iOS Team Store Provisioning Profile: com.minoli.DoodleFun** (team `L4B78NW74S`, `LocalProvision=false`, no provisioned devices, `get-task-allow=false`, expiration September 26, 2027). Both archive and exported app pass code-signature verification. Runtime **1668feee4dc43ee0** and bundled HTML SHA-256 **bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d** are retained. No test bundles or DEBUG web diagnostic strings occur in Release.
+
+TestFlight beta information was saved, including description, feedback email, website/privacy URLs, private App Review contact and review instructions. No login is required. Apple processing completed, with Build Uploads showing **Complete**. Build **2.1.0 (1)** is assigned to internal group **Doodle Fun Internal**, with automatic distribution off. The build-specific What to Test checklist is saved. No testers are invited; the recipient question is pending. TestFlight shows **Ready to Submit** before tester assignment. Installation availability for a tester is not established yet. The owner has not checked physical audio in the latest build; make those four listening checks a TestFlight objective. No public App Review submission or public release was requested or performed.
+
+Public home, privacy and support pages returned HTTP 200 on September 26 and exactly match current source. The ten store screenshots still match their manifests and remain suitable for the unchanged pictured UI; their original capture runtime is retained. Fresh archive, IPA, signing audits and upload logs are in workspace `work/testflight-release-2026-09-26`, outside the Git repository.
+
+## Current remaining work
+
+1. Invite only the owner-authorized tester(s) and confirm access. Processing is complete and the build is assigned to the internal group; the tester-recipient question is pending.
+2. Install through TestFlight and confirm the four listening games are audible on physical iPhone; check interruption recovery, saved work and native sharing. Physical iPad and accessibility checks remain distinct from simulator evidence.
+3. Before a later public App Review submission, finish legal seller/copyright verification and listing/questionnaires, select the intended free U.S. Kids release settings, and obtain release authorization. Do not infer that an uploaded TestFlight build is publicly published.
 
 ## Product and release choices
 
 - All 30 original exercises remain, plus Sound detective, Higher or lower, Melody echo, and Beat studio. Families expose related modes; old links, artwork and progress remain supported. Starting ages 2–10 and per-mode Coach/easier/harder controls remain available.
 - Listening uses offline generated sound, requires successful playback before scoring, and supports replay, hints and interruption recovery. Game sound/volume are separate from Read aloud. No microphone, account, advertising, purchases, analytics or developer backend was added.
-- Selected preparation: **Doodle Fun: Draw & Discover**, free, English (U.S.), Education, Made for Kids ages 6–8, United States, manual release. Account entry, name availability and Apple's assigned rating remain unverified.
+- Selected preparation: **Doodle Fun: Draw & Discover**, free, English (U.S.), Education, Made for Kids ages 6–8, United States, manual release. The account and app name are verified; Apple's assigned rating and public listing settings remain pending.
 - Public support: **pishahrodi+support@gmail.com**, exactly supplied. The public page offers email; offline help/policy show plain text with the existing gated support-website button. Email is voluntary and attaches no app data automatically. Private App Review contact is supplied and stored outside Git with mode 0600; do not put private values in public code, documents or artifacts.
-- Exact legal seller/copyright identity still needs verification. The September 20 pre-merge privacy/support check returned HTTP 200 with September 8 content. Verify post-merge Pages deployment and current content before submission.
+- Exact legal seller/copyright identity still needs verification. The September 26 public privacy/support pages returned HTTP 200 and exactly match current source.
 
-## Current bundle and verification
+## September 20 implementation and device-check history
 
 The owner's later console excerpt did not establish an app-loading or audio cause. A diagnostic-only follow-up adds DEBUG `DOODLE_WEB` lifecycle/error-domain/code logs while preserving read scope and recovery behavior. Signed Debug and unsigned Release builds passed; binary inspection confirms the logs are absent from Release. This diagnostic build is not installed and gameplay was not rerun. See [console triage](../docs/iphone-console-diagnostics.md).
 
@@ -22,7 +34,7 @@ Current runtime **`1668feee4dc43ee0`**, standalone/native HTML SHA-256 **`bc7741
 - Initial native iOS 27 bridge checks passed **2/2**. Four sound UI cases failed before playback because StatusBar geometry was unavailable and the 440×956 device profile was unrecognized; this failure remains retained. A scene-backed geometry/activation follow-up passed **1/1**, establishing actual top62/bottom34 insets. Only this measured profile was added.
 - Final **13/13 native cases passed**, zero failures/skips: nine bridge and four trusted sound UI cases on iPhone 17 Pro Max / iOS 27.0 simulator (24A434). The result includes main-thread audio-session activation warnings. No full browser/native matrix retest is claimed for this hotfix.
 - Signed Debug **2.1.0 (1)** was built with the owner's team, installed without erasing app data and launched on a real **iPhone 17 Pro Max / iOS 27.0 (24A437)**. The separately retained app passed code-signature verification. No physical listening confirmation or activation log has been received.
-- A new unsigned Release archive is **pending**. Prior store screenshots show unchanged UI but retain their older source identity; installation and earlier QA do not establish this hotfix's release readiness.
+- At that time a new Release archive was pending. The September 26 archive/export/upload above now supersedes that packaging status; physical listening remains unconfirmed. Store screenshots retain their original source identity.
 
 Hotfix evidence is retained in workspace `work/audio-device-fix-2026-09-20`. Preserve the failed initial native run and distinguish simulator activation/playback checks from audible output on physical hardware.
 
@@ -44,12 +56,6 @@ Version-specific evidence (do not relabel earlier results as final):
 
 Full details, earlier failed runs and their corrections are in [the QA report](../docs/consolidated-listening-qa.md). Prior release evidence is retained in workspace `work/release-prep-2026-09-20`. Only completed task-created DerivedData caches were removed; raw current results, archives, logs, manifests and images remain. The local Mac was locked during those prior follow-ups; isolated CI completed their technical checks and captures without changing security or power settings. This historical limitation does not describe the later physical hotfix installation.
 
-## Remaining steps
-
-1. Obtain physical listening confirmation. If silence persists, collect activation/output-route evidence; do not assign the original cause without it. Build and audit the new runtime's Release archive.
-2. Verify exact legal seller/copyright identity, active individual membership and App Store Connect listing/account fields.
-3. Review and merge audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7). PR #6 is already merged; verify its GitHub Pages privacy/support content and email, then verify the audio update after its merge.
-4. Validate/sign/upload the verified build, confirm processing, and complete physical iPhone/iPad TestFlight checks before App Review and an authorized manual release. Follow the [release checklist](../docs/app-store/release-checklist.md); earlier archive/CI completion is not carried forward automatically to the hotfix.
 
 Physical speaker/headphone audibility, media volume/Silent mode, actual Photos/Files destinations, offline persistence, VoiceOver, larger text and Pencil behavior remain distinct device checks. Automated gameplay and simulator screenshots do not establish child enjoyment or learning outcomes; supervised child playtesting is recommended product research.
 

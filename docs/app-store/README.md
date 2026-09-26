@@ -1,31 +1,40 @@
-# Doodle Fun — App Store kit
+# Doodle Fun — TestFlight and App Store kit
 
-**Physical audio follow-up:** the later runtime `1668feee4dc43ee0` adds explicit iPhone audio-session preparation and is installed on the owner's phone. Its targeted tests pass; audible playback still needs the owner's confirmation. The prior unsigned archive and screenshot manifests identify the earlier `0f22199625622369` source. Rebuild the release archive after accepting this fix; see the [audio report](../iphone-audio-fix.md) and [release checklist](release-checklist.md).
+**September 26, 2026: the current target is TestFlight.** Individual membership is active, App Store Connect access is confirmed, and Terms of Service were accepted with the owner's explicit approval. The app record is created; upload and Apple processing are complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. Recipient confirmation remains pending. App Review and public release are later steps.
 
-The native app groups 34 practice modes into 21 activities for chosen starting ages 2–10. Create, Letters, Numbers, Discover, and Listen include four games with sounds generated offline. Game sound and volume are separate from optional Read aloud; no microphone or voice recording is used. The app also includes an offline privacy policy and a fresh grown-up check before sharing pictures or opening external websites.
+| App record | Verified value |
+| --- | --- |
+| Name | Doodle Fun: Draw & Discover |
+| Apple ID | `6816519633` |
+| Bundle identifier | `com.minoli.DoodleFun` |
+| SKU | `doodlefun-ios` |
+| Primary language / platform | English (U.S.) / iOS |
+| App Store Connect | [Open app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) |
 
-## Listing and public pages
+A signed Release **2.1.0 (1)** archive was built and its contents audited with Xcode 27 (27A266a). It contains runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`. App Store distribution export succeeded and re-signed the app with `iOS Team Store Provisioning Profile: com.minoli.DoodleFun`, expiring September 26, 2027. The exported profile has `LocalProvision=false`, no provisioned devices and `get-task-allow=false`; code-signature verification passed. The cached archive profile is no longer a blocker. Upload succeeded with exit code 0 on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is now Complete. The processed build UUID is `d1297f42-0e32-43a6-87cc-a3e7c358629f`; its TestFlight status is Ready to Submit before tester access, not an App Review submission.
 
-- [Release checklist](release-checklist.md): account activation, remaining device checks, listing setup, and upload-to-release steps.
-- [Store copy and questionnaire worksheet](metadata.md): name, subtitle, promotional text, keywords, description, privacy answers, age-rating guidance, and reviewer instructions.
-- [Native iPhone and iPad screenshots](screenshots/README.md): five scenes per device family, with exact dimensions and source manifests.
-- [Current catalog and listening QA](../consolidated-listening-qa.md): tested runtime, source/browser/native evidence and physical-device limits.
-- Privacy URL: https://kartikkp.github.io/Doodle-fun/privacy.html
-- Support URL: https://kartikkp.github.io/Doodle-fun/support.html
+Audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) merged as `97cd87f`; PR #6 is also merged. Source [CI 35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`. The owner has not checked the latest physical audio build; audibility remains pending despite passing automated tests. See the [audio report](../iphone-audio-fix.md).
 
-Both public URLs returned HTTP 200 in the September 20, 2026 pre-merge check, which found September 8 content for the earlier 30-activity app. PR #6 has since merged (`dda0d548`); post-merge publication has not been checked. The current local pages describe the 21 activity families, 34 modes, game sound and volume. GitHub Pages is configured to deploy the repository root from `main`. Verify the completed deployment and page content against the release build before submission. Reachability alone does not establish that the public policy and support information are current.
+The app groups 34 practice modes into 21 activities for starting ages 2–10, including four listening games generated offline. Game sound and volume are separate from optional Read aloud; no microphone or voice recording is used. Privacy is readable offline, and a fresh grown-up check precedes sharing or external websites.
 
-The owner has approved preparing **Doodle Fun: Draw & Discover** as a **free** app, without ads or in-app purchases, with **Education** as its category, **Kids ages 6–8** as its primary audience, **United States** availability, and **manual release**. These are the selected release settings; they have not been entered or verified in App Store Connect. Name availability remains unverified. The app still offers all nine starting ages from 2 through 10.
+## Prepared materials
 
-The owner purchased an **individual Apple Developer membership** and is awaiting activation. Use that membership for this release. The exact legal seller identity and copyright holder still need to be verified. Private App Review contact details have been supplied and stored separately from the repository; they have not been entered in App Store Connect.
+- [Release checklist](release-checklist.md): TestFlight signing/upload, processing and physical checks, followed by later store steps.
+- [Metadata worksheet](metadata.md): verified account facts, prepared listing copy and questionnaire guidance.
+- [Native screenshots](screenshots/README.md): five scenes per device family with original manifests.
+- [Catalog and listening QA](../consolidated-listening-qa.md): versioned automated evidence and physical-device limits.
 
-The selected public support email is **pishahrodi+support@gmail.com**, exactly as supplied by the owner. The support page offers an email link; the offline help and privacy policy show the address as text. Email is voluntary, sends nothing automatically, and is separate from local app data. GitHub issues remains an optional public developer bug tracker. The policy explains both channels.
+[Privacy](https://kartikkp.github.io/Doodle-fun/privacy.html), [support](https://kartikkp.github.io/Doodle-fun/support.html) and the [homepage](https://kartikkp.github.io/Doodle-fun/) returned HTTP 200 on September 26 and exactly matched local source. The current policy includes the September 20 revision, local sound behavior and voluntary email support. The support page describes the consolidated catalog and publishes **pishahrodi+support@gmail.com** with a working email link. The earlier September 8 stale-page check is historical.
 
-## Use this kit
+All ten checked-in screenshots still match their manifests: five 1320×2868 iPhone images and five 2064×2752 iPad images. The audio and bundle-identifier changes do not alter the pictured UI, so recapture is unnecessary for those changes. Keep their actual `0f22199625622369` capture provenance; they are not evidence that the new physical build is audible.
 
-1. Confirm physical sound playback for the audio follow-up and rebuild the release archive from the accepted source. Review the prepared text and questionnaire recommendations in `metadata.md`, and verify the owner's copyright information. Keep the supplied private review-contact details outside the repository.
-2. The five numbered PNGs in each of `screenshots/iphone` and `screenshots/ipad` were captured from runtime `0f22199625622369`. The audio fix changes no pictured UI, but their manifests remain evidence for that earlier source. Review them against the build being submitted. The screenshot README records native capture, independent byte verification and visual review.
-3. Verify merged PR #6's GitHub Pages deployment and updated privacy/support pages. Review and merge audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) on `codex/iphone-audio-output`, then recheck its deployment. Once membership is active, verify the individual account/team, accept required account agreements, and create or confirm the app record. Check name availability and enter the selected listing settings, current public URLs and private review contact.
-4. Validate and upload the signed release archive. Complete physical iPhone/iPad checks through TestFlight, reconcile the privacy and age-rating answers with that build, and select the verified build for review.
+TestFlight information is saved and verified: description, feedback contact, marketing/privacy URLs, private review contact and notes, with no sign-in required. The **Doodle Fun Internal** group has build 2.1.0 (1) assigned, with automatic distribution off; the group page verifies 0 testers and 1 build. No invitations have been sent. Confirmation of the intended recipient is pending. The saved What to Test checklist covers all four sound games, ages/modes/coaching, drawing, offline behavior and layout.
 
-Creating the App Store Connect record, uploading a signed archive, physical-device TestFlight checks, and submitting to Apple remain the next release steps. Preparing this kit does not submit an app or authorize its public release; use manual release after approval and the owner's launch authorization.
+## Next TestFlight steps
+
+1. Confirm the intended internal tester and add that tester to Doodle Fun Internal; the processed build is already assigned.
+2. Make the build available to the intended tester. Install it through TestFlight on physical iPhone/iPad and complete the [device checks](release-checklist.md), including all four sound games, headphones and background recovery.
+
+For the later public listing, selected settings remain free/no ads or purchases, Education, Made for Kids ages 6–8, United States and manual release. These store settings and questionnaires have not been entered or verified. Exact legal seller/copyright information still needs verification; private review-contact details are supplied and stored outside Git. The app's adjustable practice ages remain 2–10.
+
+Upload, processing and internal build assignment are complete. Recipient confirmation, tester access and physical checks remain pending. No App Review submission or public release has occurred.
