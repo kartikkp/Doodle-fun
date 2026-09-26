@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LISTENING_IDS,LISTENING_INFO,soundProfile,buildListeningRound,evaluateBeat} from '../listening.js';
 import {getProfile} from '../core.js';
-import {TIMBRES,MAX_MASTER_GAIN,createSoundEngine} from '../audio.js';
+import {TIMBRES,createSoundEngine} from '../audio.js';
 
 test('four sound activities and all nine effective-age profiles have distinct, bounded challenges',()=>{
   assert.equal(new Set(LISTENING_IDS).size,4);
@@ -11,7 +11,6 @@ test('four sound activities and all nine effective-age profiles have distinct, b
   assert.equal(soundProfile(getProfile({age:10,challengeOffset:-2})).age,8);
   assert.equal(soundProfile(getProfile({age:2,level:'maker'})).age,9);
   assert.equal(soundProfile(-5).age,2);assert.equal(soundProfile(900).age,10);
-  assert.ok(MAX_MASTER_GAIN<=.5);
   profiles.forEach(p=>{assert.ok(p.padCount<=5);assert.ok(p.melodyLength<=6);assert.ok(p.beatCount<=7);assert.ok(p.timbreChoices<=4);});
 });
 test('every generated sound, pitch, melody and rhythm is internally correct across ages and rounds',()=>{
@@ -72,6 +71,7 @@ function audioLifecycle(t,plans=[]) {
     removeEventListener(type,fn){assert.equal(type,'statechange');this.listeners.delete(fn);}
     emit(){for(const listener of this.listeners)listener();}
     createGain(){return {gain:parameter(),connect(){},disconnect(){}};}
+    createWaveShaper(){return {connect(){},disconnect(){}};}
     createOscillator(){const source={frequency:parameter(),connect(){},disconnect(){},start(){},stopCalls:0,stop(){this.stopCalls++;}};this.sources.push(source);return source;}
     resume(){if(this.plan.resume==='reject')return Promise.reject(new Error('Output unavailable'));if(this.plan.resume==='pending')return new Promise(resolve=>{this.finishResume=()=>{this.state='running';this.emit();resolve();};});this.state='running';return Promise.resolve();}
     suspend(){this.suspendCalls++;return new Promise(resolve=>setTimeout(()=>{this.state='suspended';this.emit();resolve();},80));}
@@ -103,7 +103,7 @@ function nativePreparation(t) {
 for(const firstReady of ['native','context'])test(`native preparation and context resume both finish before scheduling, ${firstReady} first`,async t=>{
   const clock=audioLifecycle(t,[{resume:'pending'}]),requests=nativePreparation(t);
   const engine=createSoundEngine();let settled=false,pulses=0;
-  engine.setVolume(.6);
+  assert.equal('setVolume' in engine,false,'device media volume is the only level control');
   assert.equal(requests.length,0,'creating or configuring an engine must not activate native audio');
   assert.equal(clock.contexts.length,0,'opening a game must not create an audio context');
   const result=engine.play(shortTone,{onEvent:()=>pulses++});result.then(()=>{settled=true;});

@@ -5,10 +5,24 @@ export const TIMBRES = Object.freeze({
   shaker:{name:'Shaker',symbol:'▥',description:'A soft, sandy shh.'},
   wood:{name:'Wood block',symbol:'▰',description:'A short, hollow knock.'},
 });
-// Digital output gain, not a device volume or sound-pressure limit. Individual
-// voices retain headroom at the UI's maximum .8 volume. The former .18 cap and
-// near-instant exponential fade made short effects especially hard to hear.
-export const MAX_MASTER_GAIN = .5;
+// Device media volume is the only user volume control. Keep the game signal
+// present at ordinary media levels, then bound the mixed waveform below full
+// scale even when several scheduled notes overlap. These are digital values,
+// not a claim about speaker sound pressure or a physical listening level.
+export const FIXED_OUTPUT_GAIN = 1.15;
+export const OUTPUT_CEILING = .92;
+const mixCurve=Float32Array.from({length:4097},(_,i)=>{
+  const input=i/2048-1;
+  return OUTPUT_CEILING*Math.tanh(input*4*FIXED_OUTPUT_GAIN/OUTPUT_CEILING);
+});
+export function createSoundOutput(context,destination=context.destination) {
+  const input=context.createGain(),limiter=context.createWaveShaper(),output=context.createGain();
+  // Reserve four voices of input range for the curve. Its center has fixed
+  // gain 1.15; its smooth shoulders protect headroom instead of hard clipping.
+  input.gain.value=.25;limiter.curve=mixCurve;limiter.oversample='none';output.gain.value=1;
+  input.connect(limiter);limiter.connect(output);output.connect(destination);
+  return {input,nodes:[input,limiter,output]};
+}
 const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
 
 /** Shared by live playback and OfflineAudioContext signal tests. Returns every
@@ -52,16 +66,16 @@ export function scheduleSound(context, destination, event, at=context.currentTim
   else if(kind==='drum'||kind==='stomp') {
     // A harmonic body and a brief midrange strike survive small speakers much
     // better than the old pure sine sweep ending at 55 Hz.
-    voice('triangle',320,.64,duration,170);
-    voice('sine',520,.28,Math.min(duration,.12),280);
+    voice('triangle',380,.64,duration,230,.35);
+    voice('sine',620,.28,Math.min(duration,.12),340,.3);
     noise(.4,Math.min(duration,.09),1600,9137);
   } else if(kind==='bell') {
     voice('sine',740,.6,duration,null,.28);
     voice('sine',1110,.24,duration*.85,null,.2);
     voice('sine',1850,.1,duration*.65);
   } else if(kind==='wood'||kind==='tap') {
-    voice('sine',450,.78,Math.min(duration,.18));
-    voice('triangle',920,.2,Math.min(duration,.11));
+    voice('sine',450,.78,Math.min(duration,.18),null,.3);
+    voice('triangle',920,.2,Math.min(duration,.11),null,.25);
   } else {
     voice('sine',frequency,.67,duration,null,.5);
     // A quiet octave keeps lower notes recognizable on a phone while the
@@ -72,7 +86,7 @@ export function scheduleSound(context, destination, event, at=context.currentTim
 }
 
 export function createSoundEngine({onInterrupt=()=>{}}={}) {
-  let context=null,master=null,stateHandler=null,volume=.55,generation=0,active=null;
+  let context=null,master=null,outputNodes=[],stateHandler=null,generation=0,active=null;
   const release=(job)=>{
     for(const timer of job.timers)clearTimeout(timer);
     for(const source of job.sources){try{source.stop();}catch{/* Already ended. */}}
@@ -86,10 +100,10 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     if(!expected||expected!==context)return;
     // Clear ownership before close: its state event or pending resume may arrive
     // after a later user gesture has already created a replacement context.
-    const oldMaster=master,oldHandler=stateHandler;
-    context=null;master=null;stateHandler=null;
+    const oldOutputNodes=outputNodes,oldHandler=stateHandler;
+    context=null;master=null;outputNodes=[];stateHandler=null;
     if(oldHandler)expected.removeEventListener('statechange',oldHandler);
-    try{oldMaster?.disconnect();}catch{/* Already detached. */}
+    for(const node of oldOutputNodes){try{node.disconnect();}catch{/* Already detached. */}}
     // WebKit can deliver a delayed output-start event even after close resolves.
     // Keep this guard on the retired context alone so that event re-closes it,
     // without interrupting a replacement context or retaining a global timer.
@@ -108,7 +122,7 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     if(!context||context.state==='closed') {
       const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;
       if(!Audio)throw new Error('Audio is not available in this browser.');
-      const created=new Audio();context=created;master=created.createGain();master.gain.value=MAX_MASTER_GAIN*volume;master.connect(created.destination);
+      const created=new Audio();context=created;const output=createSoundOutput(created);master=output.input;outputNodes=output.nodes;
       stateHandler=()=>{
         if(context!==created||created.state==='running')return;
         const job=active;
@@ -173,5 +187,5 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     // create a fresh context only on the next explicit Listen or pad gesture.
     stop();retireContext();
   }
-  return {play,stop,suspend,setVolume(value){volume=clamp(Number(value)||.55,.15,.8);if(master)master.gain.setValueAtTime(MAX_MASTER_GAIN*volume,context.currentTime);},get state(){return context?.state||'uninitialized';}};
+  return {play,stop,suspend,get state(){return context?.state||'uninitialized';}};
 }
