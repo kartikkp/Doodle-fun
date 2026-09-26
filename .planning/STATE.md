@@ -1,4 +1,14 @@
-# Current state
+# Current state — system volume and Beat Studio follow-up
+
+Updated September 26, 2026. Owner reports Beat Studio drum pads are still faint and requests device-controlled volume with no game mute. Whether the physical report used build 2 is still unverified. Branch **`codex/audible-effects-older-challenges`**; commits `709d09e` and `f28dc5e` remove saved/app attenuation and strengthen short percussion without changing native audio-session policy or optional Read aloud.
+
+Candidate **2.1.0 (3)**, runtime **`38dd5ac3d8d348ae`**, HTML SHA-256 **`0f698b6b171679905e0ebb20f64fcfc7b130a4dc73ce1016390aa74b28feac71`**. The archive is built, matches the native bundle, and passes signature verification. Distribution export failed with **No Accounts / no iOS Distribution certificate with private key**. The Mac is locked; a user request to unlock is pending. Do not claim build 3 uploaded or available. Build 2 remains the last verified internal distribution. Preserve the owner's project hash `2e791a5bd2c9db4081f91afc6115669507c014b30fee9161ca0fcbd6e7c2acbd`; build 3 uses a command-line version override.
+
+**Verification:** 95 unit and 10 real offline signal checks passed. All **122/122 focused browser playback/recovery/migration cases passed**, with zero skips/failures/flaky results (132 browser cases including the 10 signal tests). Ten phone/tablet views passed visual and touch-target checks. Native trusted test code compiled; runtime execution is not yet verified because UI access is blocked by the lock. [Fresh CI 36280837350](https://github.com/kartikkp/Doodle-fun/actions/runs/36280837350) is running on source `f28dc5e`; no completed native CI result is claimed. Before/after drum output is substantially stronger at actual 0.16-second duration; retain the distinction between digital amplitude and physical audibility. See [current QA](../docs/system-volume-audio-qa.md).
+
+**Resume distribution:** unlock the Mac, inspect Xcode account/certificate availability, retry export and audit the distribution payload before upload. Run/confirm native audio checks, upload version 2.1.0 build 3, then verify processing and assign the existing internal group. Inspect current external review status before assigning build 3: the last verified build 1 status is In Review, with Apple blocking another same-version external submission. Both authorized external testers are already added. Do not recreate groups, invite additional people, cancel existing review, expire builds or create a public link. Preserve current test/archive evidence in `work/system-volume-qa-2026-09-26` and `work/testflight-build3-2026-09-26`; What to Test is prepared there. Coordinate Safari use with “Deploy to TestFlight” if it becomes active again; the user explicitly authorized that coordination.
+
+# Previous build 2 state
 
 Updated September 26, 2026. Current work: fix physical TestFlight feedback about faint/missing effects and insufficient age-10 challenge. Branch **`codex/audible-effects-older-challenges`**; implementation commits `8219ae0`, `6223d15`, CI coverage `4f95f36`.
 

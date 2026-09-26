@@ -1,6 +1,6 @@
 # Doodle Fun — TestFlight and App Store kit
 
-**September 26, 2026: TestFlight build 2 is the current candidate.** The owner reported faint effects and insufficient older-child difficulty in build 1. Build 2 addresses those reports; public App Store submission remains a later step.
+**September 26, 2026: build 3 is prepared but not uploaded.** It removes game mute/volume controls, ignores old muted/low settings, and strengthens Beat Studio percussion. Device media volume controls game sound; Read aloud controls optional spoken help. The archive passed signature/content checks, but distribution export reports no available account/distribution certificate while the Mac is locked. Native runtime verification and successful export/upload remain pending. See [current audio QA](../system-volume-audio-qa.md). Build 2 remains the last verified internal TestFlight distribution; its record below is retained.
 
 | App record | Verified value |
 | --- | --- |
@@ -9,7 +9,7 @@
 | Bundle identifier | `com.minoli.DoodleFun` |
 | SKU | `doodlefun-ios` |
 | Language / platform | English (U.S.) / iOS |
-| Current candidate | **2.1.0 (2)** |
+| Current candidate / last internal build | **2.1.0 (3), not uploaded** / **2.1.0 (2), Testing** |
 | App Store Connect | [Open TestFlight](https://appstoreconnect.apple.com/apps/6816519633/testflight/ios) |
 
 Build 2 contains runtime `cf73382cbd44d40f`, HTML SHA-256 `6ac96b9c96bc20af831ce5508f3adea191e575de7cd1b9c530946934f53d5895`. The Xcode 27 / iOS 27 signed archive and App Store distribution IPA passed signature/content audits. The IPA has the correct team/bundle entitlement, no development devices or debugging entitlement, and no test bundles or DEBUG web diagnostics. Exported profile expiry is September 26, 2027. Archive used `CURRENT_PROJECT_VERSION=2`, preserving the owner's local project/signing file. Increment the build number for any later upload.

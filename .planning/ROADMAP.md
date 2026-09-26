@@ -38,3 +38,5 @@ Success: every visible card launches and plays, the downloaded HTML works indepe
 1. Improve effect audibility, add Clap/Tap/Stomp feedback and silent Rest, and verify shared volume and interruption behavior.
 2. Add age 9–10 arithmetic, numeric rules, equivalent-value memory and ordered maze checkpoints; retain younger practice and show effective support.
 3. Verify the bundled app in both browser engines and native iPhone tests, then distribute TestFlight build 2 to the existing test groups. Keep physical audibility and child playtesting distinct from automated results.
+
+4. Follow-up: remove separate game mute/volume and ignore legacy attenuation; strengthen short Beat Studio feedback with a bounded fixed output. Verify actual short-duration signals and publish build 3 after native/signing prerequisites pass.

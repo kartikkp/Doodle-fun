@@ -1,5 +1,7 @@
 # Doodle Fun — release checklist
 
+**Build 3 follow-up:** system media volume replaces all game mute/volume controls, and Beat Studio percussion is stronger. Candidate runtime `38dd5ac3d8d348ae` is archived, but not uploaded. Export reports no available account/distribution certificate; the Mac is locked. Complete native verification and successful export/audit/upload, then verify group assignment. See [current audio QA](../system-volume-audio-qa.md).
+
 **Build 2 update — September 26:** 2.1.0 (2), runtime `cf73382cbd44d40f`, passed 95 unit, 702 browser and 289 native cases and distribution-signature checks. Upload and Apple processing are complete. Testing notes are saved, and the internal group is **Testing** build 2. The external group has two authorized testers; build 1 is **In Review**, and Apple blocks assigning build 2 externally until that review finishes. Invitation emails remain pending approval. See the [current release status](README.md) and [audio/difficulty QA](../audio-difficulty-qa.md). The build-1 preparation history below remains version-specific.
 
 ## Build 1 preparation record
