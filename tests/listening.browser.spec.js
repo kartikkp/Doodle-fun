@@ -311,6 +311,6 @@ test('actual OfflineAudioContext rendering has bounded nonzero, distinct voices 
       rows.push({name:entry.name,rms:Math.sqrt(sum/data.length),peak,hash});
     }return rows;
   },{moduleURL,cases});
-  for(const row of results){expect(row.rms,`${row.name}: nonzero output`).toBeGreaterThan(.00005);expect(row.peak,`${row.name}: bounded peak`).toBeLessThan(.2);}
+  for(const row of results){expect(row.rms,`${row.name}: nonzero output`).toBeGreaterThan(.00005);expect(row.peak,`${row.name}: bounded peak`).toBeLessThan(.5);}
   expect(new Set(results.slice(0,4).map(row=>row.hash)).size,'four distinct rendered percussion waveforms').toBe(4);
 });

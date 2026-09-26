@@ -378,6 +378,54 @@ final class ActivityCatalogUITests: XCTestCase {
         leaveListening()
     }
 
+    func testTrustedPicturePracticePlaysModelThenCompletesWithSoundAndMuted() {
+        openListening("melody-echo")
+        reveal(control(["Picture practice"]), toward: .down).tap()
+        XCTAssertTrue(text("Play the picture pattern.").waitForExistence(timeout: 10))
+        XCTAssertTrue(control(["Listen to pattern"]).exists, "Opening picture practice does not autoplay.")
+        XCTAssertFalse(control(["Stop pattern"]).exists)
+        XCTAssertFalse(control(["Hear the instructions"]).isEnabled, "Game sound remains independent of read-aloud.")
+
+        // Read the visible age-two model through native accessibility. Its
+        // clap/tap order is randomized; do not assume a hidden test sequence.
+        let firstStep = control(["1: Clap", "1: Tap"])
+        let secondStep = control(["2: Clap", "2: Tap"])
+        XCTAssertTrue(firstStep.waitForExistence(timeout: 10))
+        XCTAssertTrue(secondStep.exists)
+        let sequence = [firstStep.label, secondStep.label].map {
+            String($0.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        XCTAssertEqual(Set(sequence), Set(["Clap", "Tap"]))
+        let success = text("✓ You played the whole pattern at your own pace!")
+        XCTAssertFalse(success.exists)
+
+        reveal(control(["Listen to pattern"])).tap()
+        XCTAssertTrue(text("Your turn. Follow the pictures or try remembering the pattern.").waitForExistence(timeout: 12),
+                      "A trusted native tap must finish real WKWebView playback before the model reports success.")
+        XCTAssertFalse(success.exists, "Listening to the model must not complete the visual activity.")
+        for label in sequence { XCTAssertTrue(control([label]).isEnabled, "Model playback has not already answered either step.") }
+
+        reveal(control([sequence[0]])).tap()
+        XCTAssertTrue(text("Keep your pattern going.").waitForExistence(timeout: 10))
+        XCTAssertFalse(success.exists, "One action cannot finish a two-step pattern.")
+        reveal(control([sequence[1]])).tap()
+        XCTAssertTrue(success.waitForExistence(timeout: 10))
+        capture("Picture practice completed through native clap and tap gestures")
+
+        reveal(control(["↶ Try again", "Try again"])).tap()
+        XCTAssertFalse(success.exists)
+        reveal(control(["Game sound on"]), toward: .down).tap()
+        XCTAssertTrue(control(["Game sound off"]).exists)
+        XCTAssertFalse(control(["Listen to pattern"]).isEnabled)
+        for label in sequence { reveal(control([label])).tap() }
+        XCTAssertTrue(success.waitForExistence(timeout: 10), "Muting effects preserves playable picture practice.")
+
+        reveal(control(["Listen & echo"]), toward: .down).tap()
+        XCTAssertTrue(control(["Game sound off"]).waitForExistence(timeout: 10), "Game mute is shared across practice modes.")
+        XCTAssertFalse(control(["Listen"]).isEnabled)
+        leaveListening()
+    }
+
     func testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps() {
         openListening("beat-studio")
         let drum = control(["Tap drum"])

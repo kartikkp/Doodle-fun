@@ -1,5 +1,6 @@
 import { getProfile, readStore, writeStore } from './core.js';
 import { canSpeak, speak, stopSpeaking } from './speech.js';
+import { createSoundEngine } from './audio.js';
 
 export const ADVENTURE_IDS=['size-order','picture-sequence','directions','make-a-shape','rhythm','sharing'];
 export const ADVENTURE_TITLES={'size-order':'Growing garden','picture-sequence':'Story steps',directions:'Follow the arrows','make-a-shape':'Shape builder',rhythm:'Tap the pattern',sharing:'Fair shares'};
@@ -75,6 +76,19 @@ function flower(size) { const node=el('span','adventure-flower','✿');node.styl
 function progressStore() { const stored=readStore('adventures-progress-v1',{});return Object.fromEntries(ADVENTURE_IDS.map(id=>[id,Number.isSafeInteger(stored?.[id])?Math.max(0,Math.min(100000,stored[id])):0])); }
 export function createAdventures(container,{getSettings,getTitle=()=>null,onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}) {
   let active=false,id='size-order',profile=getProfile(getSettings()),state,progress=progressStore();const sessions=new Map();
+  let audioEpoch=0,patternPlaying=false,soundOn=true,volume=.55;
+  const engine=createSoundEngine({onInterrupt:()=>suspendAudio()});
+  function loadAudio(){const saved=readStore('listening-audio-v1',{});soundOn=saved?.enabled!==false;volume=Math.max(.15,Math.min(.8,Number(saved?.volume)||.55));engine.setVolume(volume);}
+  function saveAudio(){writeStore('listening-audio-v1',{enabled:soundOn,volume});}
+  function suspendAudio(){audioEpoch++;engine.suspend();patternPlaying=false;if(active&&id==='rhythm')render();}
+  function playSounds(events){
+    if(!soundOn)return Promise.resolve({status:'muted'});
+    stopSpeaking();const token=++audioEpoch;
+    return engine.play(events).then(result=>{
+      if(token===audioEpoch&&active&&id==='rhythm'&&result.status==='failed')tell('Sound could not play. Check Game volume and try Listen again. You can still follow the pictures.','retry');
+      return {status:token===audioEpoch?result.status:'cancelled'};
+    });
+  }
   container.classList.add('adventure-screen');
   container.innerHTML=`<header class="activity-header adventure-header"><button class="icon-button adventure-back" aria-label="Back to activities">←</button><div><p class="adventure-eyebrow">TRY A LITTLE ADVENTURE</p><h1 class="adventure-title"></h1></div><button class="icon-button adventure-hear" aria-label="Hear the instructions">♪</button></header><div class="adventure-main"><p class="adventure-round"></p><h2 class="adventure-objective" tabindex="-1"></h2><p class="adventure-instructions"></p><div class="adventure-play"></div><p class="adventure-status" role="status" aria-live="polite"></p><div class="adventure-footer"><button class="button adventure-hint">✦ Hint</button><button class="button adventure-retry">↶ Try again</button><button class="button button-primary adventure-next">Next <span aria-hidden="true">→</span></button></div></div>`;
   const $=selector=>container.querySelector(selector),play=$('.adventure-play'),status=$('.adventure-status');
@@ -83,7 +97,7 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
   function fresh(index=0,round=buildAdventureRound(id,profile.challengeAge,index)){return{index,round,placed:[],path:['0'],position:round.start,step:0,done:false,recorded:false,message:'',kind:'',showModel:round.config.model,ready:id!=='rhythm'||round.age<=6,sharing:{counts:Array(round.friends?.length||0).fill(0),leftover:0,remaining:round.total},moves:[]};}
   function session(){const key=`${id}:${profile.challengeAge}`;if(!sessions.has(key))sessions.set(key,fresh());state=sessions.get(key);}
   function tell(text,kind=''){state.message=text;state.kind=kind;status.textContent=text;status.className=`adventure-status ${kind?`is-${kind}`:''}`;}
-  function complete(text){state.done=true;if(!state.recorded){state.recorded=true;progress[id]=Math.min(100000,progress[id]+1);writeStore('adventures-progress-v1',progress);report();}tell(`✓ ${text}`,'success');say(text);}
+  function complete(text,narrate=true){state.done=true;if(!state.recorded){state.recorded=true;progress[id]=Math.min(100000,progress[id]+1);writeStore('adventures-progress-v1',progress);report();}tell(`✓ ${text}`,'success');if(narrate)say(text);}
   function picture(piece){return id==='size-order'?flower(piece.size):emoji(piece.emoji);}
   function setObjective(title,instructions){$('.adventure-objective').textContent=title;$('.adventure-instructions').textContent=instructions;}
   function choosePiece(value){if(state.done)return;const next=sequenceStep(state.round.solution,state.placed,value);if(next===state.placed){tell(id==='size-order'?'Compare the flowers still waiting. Which size comes next?':'Look at what happens before and after this step. Try another picture.','retry');return;}state.placed=next;if(next.length===state.round.solution.length)complete(id==='size-order'?'Your flowers are all in size order!':'You put the whole story in order!');else tell('That fits. What comes next?');render();}
@@ -109,12 +123,30 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
     const trail=document.createElementNS(svg.namespaceURI,'polyline');trail.setAttribute('points',state.path.map(id=>round.vertices.find(v=>v.id===id)).map(v=>`${v.x},${v.y}`).join(' '));trail.setAttribute('class','adventure-shape-trail');svg.append(trail);plane.append(svg);
     round.dots.forEach(dot=>{const node=btn(dot.id==='0'?'★':round.age<=5?String(Number(dot.id)+1):'●',`adventure-vertex ${state.path.at(-1)===dot.id?'is-current':''}`,()=>vertex(dot.id));node.dataset.vertex=dot.id;node.setAttribute('aria-label',`Dot ${Number(dot.id)+1}${dot.id==='0'?', start':''}`);node.style.left=`${dot.x}%`;node.style.top=`${dot.y}%`;node.disabled=state.done;plane.append(node);});play.append(plane,el('p','adventure-note',`${Math.min(state.path.length-1,round.vertices.length)} of ${round.vertices.length} sides joined`));
   }
-  function beat(value){if(state.done||!state.ready)return;const next=sequenceStep(state.round.solution,state.placed,value);if(next===state.placed){tell('Take your time. Look at the next picture, or use Hint to see the pattern.','retry');return;}state.placed=next;if(next.length===state.round.solution.length)complete('You played the whole pattern at your own pace!');else tell('Keep your pattern going.');render();}
+  function beat(value){
+    if(state.done||!state.ready||patternPlaying)return;
+    const sounded=playSounds([{kind:value,duration:.24}]),roundState=state;
+    const next=sequenceStep(state.round.solution,state.placed,value);
+    if(next===state.placed){tell('Take your time. Look at the next picture, or use Hint to see the pattern.','retry');return;}
+    state.placed=next;
+    if(next.length===state.round.solution.length){
+      const text='You played the whole pattern at your own pace!';complete(text,false);
+      sounded.then(result=>{if(active&&state===roundState&&result.status!=='cancelled')say(text);});
+    }else tell('Keep your pattern going.');render();
+  }
   function renderRhythm(){
-    const round=state.round;setObjective('Tap your own little beat.',state.ready?'Tap the picture buttons in order. There is no rush and no timing score.':'Look at the pattern. Tap Ready when you want to try remembering it.');
+    const round=state.round;setObjective('Play the picture pattern.',state.ready?'Tap the picture buttons in order. Each action has its own sound; Rest is quiet. There is no timing score.':'Look at or listen to the pattern. Tap Ready when you want to try remembering it.');
+    const controls=el('div','adventure-audio-controls');
+    const toggle=btn(`Game sound ${soundOn?'on':'off'}`,'button adventure-sound',()=>{soundOn=!soundOn;saveAudio();suspendAudio();});toggle.setAttribute('aria-pressed',String(soundOn));controls.append(toggle);
+    const label=el('label','adventure-volume','Game volume'),slider=el('input');slider.type='range';slider.min='.15';slider.max='.8';slider.step='.05';slider.value=String(volume);slider.setAttribute('aria-label','Game volume');slider.addEventListener('input',()=>{volume=Number(slider.value);engine.setVolume(volume);saveAudio();});label.append(slider);controls.append(label);
+    const listen=btn(patternPlaying?'Stop pattern':'Listen to pattern','button adventure-listen',()=>{
+      if(patternPlaying){suspendAudio();return;}
+      const played=playSounds(round.sequence.map((kind,i)=>({kind,time:i*.55,duration:.24}))),token=audioEpoch;
+      patternPlaying=true;render();played.then(result=>{if(token!==audioEpoch||!active||id!=='rhythm')return;patternPlaying=false;render();if(result.status==='played')tell('Your turn. Follow the pictures or try remembering the pattern.');});
+    });listen.disabled=!soundOn;controls.append(listen);play.append(controls);
     const sequence=el('div','adventure-beat-sequence');round.sequence.forEach((value,index)=>{const pad=round.pads.find(pad=>pad.id===value),visible=round.age<=6||!state.ready||state.showModel||index<state.placed.length;const node=el('span',`adventure-beat-token ${index<state.placed.length?'is-done':''} ${index===state.placed.length?'is-current':''}`,visible?pad.emoji:'·');node.dataset.step=String(index);node.setAttribute('aria-label',visible?`${index+1}: ${pad.name}`:`Step ${index+1}, hidden`);sequence.append(node);});play.append(sequence);
     if(!state.ready)play.append(btn('Ready · try the pattern','button button-primary adventure-ready',()=>{state.ready=true;state.showModel=false;tell('Play what you remember. Hint can show the pattern again.');render();}));
-    const pads=el('div','adventure-beat-pads');round.pads.forEach(pad=>{const node=btn('','adventure-beat-pad',()=>beat(pad.id));node.dataset.beat=pad.id;node.setAttribute('aria-label',pad.name);node.disabled=!state.ready||state.done;node.append(emoji(pad.emoji),el('strong','',pad.name));pads.append(node);});play.append(pads);
+    const pads=el('div','adventure-beat-pads');round.pads.forEach(pad=>{const node=btn('','adventure-beat-pad',()=>beat(pad.id));node.dataset.beat=pad.id;node.setAttribute('aria-label',pad.name);node.disabled=!state.ready||state.done||patternPlaying;node.append(emoji(pad.emoji),el('strong','',pad.name));pads.append(node);});play.append(pads);
     if(round.pads.length===4)play.append(el('p','adventure-note','Rest means a quiet moment. Tap the hand when the pattern shows it.'));
   }
   function give(basket){if(state.done)return;const next=sharingStep(state.round,state.sharing,basket);if(next===state.sharing){tell('All the cookies have a place. Check your shares or undo a cookie.');return;}state.moves.push(basket);state.sharing=next;tell(`${next.remaining} ${next.remaining===1?'cookie still needs':'cookies still need'} a place.`);render();}
@@ -131,7 +163,7 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
     tell(state.message||'Explore one step at a time. Hint is here whenever you need it.',state.kind);$('.adventure-next').classList.toggle('is-ready',state.done);
   }
   function hint(){
-    if(!active||state.done)return;const round=state.round;let text='',target;
+    if(!active||state.done)return;suspendAudio();const round=state.round;let text='',target;
     if(id==='size-order'||id==='picture-sequence'){state.showModel=true;render();const piece=round.pieces.find(piece=>piece.id===round.solution[state.placed.length]);target=`[data-piece="${piece.id}"]`;text=id==='size-order'?`Compare the flowers still waiting. Choose the ${round.descending?'largest':'smallest'} one next.`:`Next: ${piece.name.toLowerCase()}. Follow the picture story above.`;}
     else if(id==='directions'){const direction=round.commands[state.step];target=`[data-direction="${direction}"]`;text=`The next arrow points ${direction}. Tap that arrow once.`;}
     else if(id==='make-a-shape'){const direction=state.path.length===1?1:Number(state.path[1])===1?1:-1,next=(Number(state.path.at(-1))+direction+round.vertices.length)%round.vertices.length;target=`[data-vertex="${next}"]`;text=state.path.length===round.vertices.length?'Close the shape by returning to the starting star.':'Follow the outline around the outside. The outlined corner comes next.';}
@@ -139,10 +171,12 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
     else {const smallest=Math.min(...state.sharing.counts),index=smallest<round.each?state.sharing.counts.indexOf(smallest):-1;target=index>=0?`[data-basket="${index}"]`:'[data-basket="leftover"]';text=`Give one to each friend in turn. Each friend needs ${round.each}${round.remainder?`, and ${round.remainder} stay in Left over`:''}. You can undo cookies to make the shares equal.`;}
     play.querySelectorAll('.is-hint').forEach(node=>node.classList.remove('is-hint'));play.querySelector(target)?.classList.add('is-hint');tell(text,'hint');say(text);
   }
-  $('.adventure-back').addEventListener('click',onBack);$('.adventure-hear').addEventListener('click',()=>say(`${$('.adventure-objective').textContent} ${$('.adventure-instructions').textContent}`));$('.adventure-hint').addEventListener('click',hint);
-  $('.adventure-next').addEventListener('click',()=>{state=fresh(state.index+1);sessions.set(`${id}:${profile.challengeAge}`,state);render();$('.adventure-objective').focus({preventScroll:true});});
-  $('.adventure-retry').addEventListener('click',()=>{const recorded=state.recorded;state=fresh(state.index,state.round);state.recorded=recorded;sessions.set(`${id}:${profile.challengeAge}`,state);render();tell('A fresh start. Take it one step at a time.');});
+  $('.adventure-back').addEventListener('click',onBack);$('.adventure-hear').addEventListener('click',()=>{suspendAudio();say(`${$('.adventure-objective').textContent} ${$('.adventure-instructions').textContent}`);});$('.adventure-hint').addEventListener('click',hint);
+  $('.adventure-next').addEventListener('click',()=>{suspendAudio();state=fresh(state.index+1);sessions.set(`${id}:${profile.challengeAge}`,state);render();$('.adventure-objective').focus({preventScroll:true});});
+  $('.adventure-retry').addEventListener('click',()=>{suspendAudio();const recorded=state.recorded;state=fresh(state.index,state.round);state.recorded=recorded;sessions.set(`${id}:${profile.challengeAge}`,state);render();tell('A fresh start. Take it one step at a time.');});
   document.addEventListener('keydown',event=>{if(!active||id!=='directions'||event.target.closest?.('dialog,input,select,textarea'))return;const value={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[event.key];if(value){event.preventDefault();direction(value);}});
   report();
-  return {open(next){if(!ADVENTURE_IDS.includes(next))throw new Error(`Unknown adventure: ${next}`);active=true;id=next;profile=getProfile(getSettings());session();render();},close(){active=false;stopSpeaking();},settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!getSettings().sound)stopSpeaking();if(active){if(changed){session();render();}else $('.adventure-hear').disabled=!getSettings().sound||!canSpeak();}},hint};
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendAudio();});
+  globalThis.addEventListener?.('pagehide',suspendAudio);globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
+  return {open(next){if(!ADVENTURE_IDS.includes(next))throw new Error(`Unknown adventure: ${next}`);active=true;id=next;loadAudio();profile=getProfile(getSettings());session();render();},close(){active=false;suspendAudio();stopSpeaking();},settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!getSettings().sound)stopSpeaking();if(active){if(changed){suspendAudio();session();render();}else $('.adventure-hear').disabled=!getSettings().sound||!canSpeak();}},hint,suspendAudio};
 }

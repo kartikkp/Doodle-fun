@@ -11,7 +11,7 @@ test('four sound activities and all nine effective-age profiles have distinct, b
   assert.equal(soundProfile(getProfile({age:10,challengeOffset:-2})).age,8);
   assert.equal(soundProfile(getProfile({age:2,level:'maker'})).age,9);
   assert.equal(soundProfile(-5).age,2);assert.equal(soundProfile(900).age,10);
-  assert.ok(MAX_MASTER_GAIN<=.2);
+  assert.ok(MAX_MASTER_GAIN<=.5);
   profiles.forEach(p=>{assert.ok(p.padCount<=5);assert.ok(p.melodyLength<=6);assert.ok(p.beatCount<=7);assert.ok(p.timbreChoices<=4);});
 });
 test('every generated sound, pitch, melody and rhythm is internally correct across ages and rounds',()=>{

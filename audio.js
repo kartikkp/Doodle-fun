@@ -5,40 +5,69 @@ export const TIMBRES = Object.freeze({
   shaker:{name:'Shaker',symbol:'▥',description:'A soft, sandy shh.'},
   wood:{name:'Wood block',symbol:'▰',description:'A short, hollow knock.'},
 });
-export const MAX_MASTER_GAIN = .18;
+// Digital output gain, not a device volume or sound-pressure limit. Individual
+// voices retain headroom at the UI's maximum .8 volume. The former .18 cap and
+// near-instant exponential fade made short effects especially hard to hear.
+export const MAX_MASTER_GAIN = .5;
 const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
 
 /** Shared by live playback and OfflineAudioContext signal tests. Returns every
- * source and node so an interrupted route can cancel even future notes. */
+ * source and node so an interrupted route can cancel even future notes.
+ * Picture-practice actions can use stomp/clap/tap; rest deliberately has no sound. */
 export function scheduleSound(context, destination, event, at=context.currentTime) {
   const kind=event.kind||'tone',duration=clamp(Number(event.duration)||.28,.08,.65);
   const frequency=clamp(Number(event.frequency)||392,100,1600);
   const sources=[],nodes=[];
-  const voice=(type,freq,peak,decay=duration,ending=null)=>{
+  if(kind==='rest')return {sources,nodes,end:at+duration};
+  const envelope=(gain,peak,decay,hold=.12)=>{
+    gain.setValueAtTime(0,at);
+    gain.linearRampToValueAtTime(peak,at+.006);
+    gain.setValueAtTime(peak,at+Math.max(.006,decay*hold));
+    // Preserve a useful body and ring; the old peak-to-.0001 ramp spent most of
+    // each note nearly silent. The short final release still avoids a click.
+    gain.exponentialRampToValueAtTime(peak*.08,at+decay);
+    gain.linearRampToValueAtTime(0,at+decay+.012);
+  };
+  const voice=(type,freq,peak,decay=duration,ending=null,hold=.12)=>{
     const oscillator=context.createOscillator(),gain=context.createGain();
     oscillator.type=type;oscillator.frequency.setValueAtTime(freq,at);
     if(ending)oscillator.frequency.exponentialRampToValueAtTime(ending,at+decay*.8);
-    gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(peak,at+.008);
-    gain.gain.exponentialRampToValueAtTime(.0001,at+decay);
-    gain.gain.linearRampToValueAtTime(0,at+decay+.012);
+    envelope(gain.gain,peak,decay,hold);
     oscillator.connect(gain);gain.connect(destination);
     oscillator.start(at);oscillator.stop(at+decay+.02);
     sources.push(oscillator);nodes.push(oscillator,gain);
   };
-  if(kind==='shaker') {
-    const buffer=context.createBuffer(1,Math.ceil(context.sampleRate*duration),context.sampleRate);
-    const samples=buffer.getChannelData(0);let seed=4711;
-    for(let i=0;i<samples.length;i++){seed=(seed*1664525+1013904223)>>>0;samples[i]=(seed/4294967296*2-1)*.62;}
+  const noise=(peak,decay,frequency,seed=4711)=>{
+    const buffer=context.createBuffer(1,Math.ceil(context.sampleRate*(decay+.02)),context.sampleRate);
+    const samples=buffer.getChannelData(0);
+    for(let i=0;i<samples.length;i++){seed=(seed*1664525+1013904223)>>>0;samples[i]=seed/4294967296*2-1;}
     const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
-    source.buffer=buffer;filter.type='bandpass';filter.frequency.value=2200;filter.Q.value=.7;
-    gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.7,at+.012);
-    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
-    source.connect(filter);filter.connect(gain);gain.connect(destination);source.start(at);source.stop(at+duration+.02);
+    source.buffer=buffer;filter.type='bandpass';filter.frequency.value=frequency;filter.Q.value=.6;
+    envelope(gain.gain,peak,decay,.18);
+    source.connect(filter);filter.connect(gain);gain.connect(destination);source.start(at);source.stop(at+decay+.02);
     sources.push(source);nodes.push(source,filter,gain);
-  } else if(kind==='drum')voice('sine',150,.85,duration,55);
-  else if(kind==='bell'){voice('sine',740,.48,duration);voice('sine',1110,.15,duration*.7);}
-  else if(kind==='wood'){voice('sine',450,.7,Math.min(duration,.16));voice('triangle',680,.12,Math.min(duration,.11));}
-  else voice('sine',frequency,.7,duration);
+  };
+  if(kind==='shaker')noise(1.5,duration,2600);
+  else if(kind==='clap')noise(1.5,Math.min(duration,.18),1400,8123);
+  else if(kind==='drum'||kind==='stomp') {
+    // A harmonic body and a brief midrange strike survive small speakers much
+    // better than the old pure sine sweep ending at 55 Hz.
+    voice('triangle',320,.64,duration,170);
+    voice('sine',520,.28,Math.min(duration,.12),280);
+    noise(.4,Math.min(duration,.09),1600,9137);
+  } else if(kind==='bell') {
+    voice('sine',740,.6,duration,null,.28);
+    voice('sine',1110,.24,duration*.85,null,.2);
+    voice('sine',1850,.1,duration*.65);
+  } else if(kind==='wood'||kind==='tap') {
+    voice('sine',450,.78,Math.min(duration,.18));
+    voice('triangle',920,.2,Math.min(duration,.11));
+  } else {
+    voice('sine',frequency,.67,duration,null,.5);
+    // A quiet octave keeps lower notes recognizable on a phone while the
+    // requested fundamental still determines the heard melody and pitch.
+    voice('sine',frequency*2,.12,duration,null,.4);
+  }
   return {sources,nodes,end:at+duration+.03};
 }
 

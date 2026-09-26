@@ -203,7 +203,7 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     const body=el('div','listening-body'),main=el('div','listening-main'),side=el('aside','listening-side');
     const audioControls=el('div','listening-audio-controls');
     const toggle=btn(`Game sound ${soundOn?'on':'off'}`,()=>{soundOn=!soundOn;settingsAudio();suspendAudio();feedback=soundOn?'Game sound is on. Tap Listen.':'Game sound is off. Turn it on when you want to listen.';render();});toggle.dataset.listeningSound='';toggle.setAttribute('aria-pressed',String(soundOn));audioControls.append(toggle);
-    const volumeLabel=el('label','listening-volume','Gentle volume'),slider=el('input');slider.type='range';slider.min='.15';slider.max='.8';slider.step='.05';slider.value=String(volume);slider.setAttribute('aria-label','Game volume');slider.addEventListener('input',()=>{volume=Number(slider.value);engine.setVolume(volume);settingsAudio();});volumeLabel.append(slider);audioControls.append(volumeLabel);main.append(audioControls);
+    const volumeLabel=el('label','listening-volume','Game volume'),slider=el('input');slider.type='range';slider.min='.15';slider.max='.8';slider.step='.05';slider.value=String(volume);slider.setAttribute('aria-label','Game volume');slider.addEventListener('input',()=>{volume=Number(slider.value);engine.setVolume(volume);settingsAudio();});volumeLabel.append(slider);audioControls.append(volumeLabel);main.append(audioControls);
     main.append(el('p','listening-age',`Age ${profile.age} · Your pace`),el('h2','listening-prompt',question.prompt),el('p','listening-intro',question.intro));
     const listenButton=btn(busy?'Listening…':previewBusy?'Hearing a sound…':'Listen',listen,'listening-listen listening-primary');listenButton.dataset.listeningListen='';listenButton.disabled=busy||previewBusy||!soundOn;main.append(listenButton);
     const pulses=el('div','listening-pulses');pulses.setAttribute('aria-hidden','true');question.events.forEach((_,i)=>{const pulse=el('span',`listening-pulse ${i===activePulse?'is-active':''}`);pulse.dataset.listeningPulse='';pulses.append(pulse);});main.append(pulses);
@@ -217,7 +217,7 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   // A rapid native app transition may leave WKWebView's document visible.
   // The shell also delivers this pause on return if background JS was deferred.
   globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
-  return {open(nextId='sound-match') {cancel();id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
+  return {open(nextId='sound-match') {cancel();const saved=readStore('listening-audio-v1',{});soundOn=saved?.enabled!==false;volume=Math.max(.15,Math.min(.8,Number(saved?.volume)||.55));engine.setVolume(volume);id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
     close(){cancel();engine.suspend();id=null;container.replaceChildren();},
     settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age){profile=nextProfile;round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,suspendAudio};
 }
