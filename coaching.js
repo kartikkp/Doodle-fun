@@ -33,7 +33,7 @@ export const COACHING = {
   'picture-sequence':['Look at the pictures and talk about what is happening.','Find what must happen first. Use the story clue to work out the next step.','What tells you that one step must happen before another?','Act out a familiar routine and tell it in order.'],
   directions:['Find your character. Read the first arrow and move that way.','Follow one arrow at a time. Keep your place in the sequence.','How would you describe the way back?','Guide a toy with one-step directions: up, down, left, or right.'],
   'make-a-shape':['Look at the outline. Join the next corner to build the shape.','Follow the edges in order. Count each side as you make it.','How many corners and sides does your shape have?','Build a shape with sticks, then count its sides.'],
-  rhythm:['Look at the pattern. Tap the matching symbols in order.','Say the sequence slowly. You can look again; there is no timer.','Could you turn that pattern into claps and knee taps?','Take turns making a short clapping pattern for someone to copy.'],
+  rhythm:['Look at or listen to the pattern. Tap Clap, Tap, Stomp, or Rest in order.','Each action makes a different sound; Rest is quiet. Game sound is separate from Read aloud. Replay freely; there is no timer.','Could you turn that pattern into claps and knee taps?','Take turns making a short clapping pattern for someone to copy.'],
   sharing:['Give one object to each friend in turn.','Keep going around the group so each friend receives the same amount. Older puzzles may have leftovers.','How can you check that the shares are fair?','Share a few blocks equally between toy friends.'],
 };
 
@@ -45,13 +45,31 @@ export function coachingFor(id, age) {
     content[0]='Read the direction: small to big, or big to small. Compare sizes before choosing the first flower.';
     content[1]='Keep the direction in mind. Compare two flowers at a time and choose the next size.';
   }
-  if(age===10 && id==='number-order') {
+  if(age>=9 && id==='number-order') {
     content[0]='Read the direction. Start with the biggest or the smallest number, as the clue asks.';
     content[1]='Check whether your path goes up or down. Look for the gap between numbers, then follow that direction.';
   }
-  if(age===10 && id==='subtraction') {
-    content[0]='Look for the missing part: how many are left, or how many were taken away?';
-    content[1]='Crossed-out objects were taken away. Uncrossed objects are left. Count the group the question asks for.';
+  if(age>=8 && id==='subtraction') {
+    content[0]='Find the missing number: the starting amount, the amount taken away, or what remains.';
+    content[1]='Use place value and exchange a ten when needed. Add the difference back to check your subtraction.';
+  }
+  if(age>=8 && ['compare','number-bonds','number-order'].includes(id)) {
+    content[1]=id==='compare'?'Compare hundreds, then tens, then ones. Subtract to find the difference.':id==='number-bonds'?'Decide whether you need the whole or a missing part. Use addition or subtraction and check with the opposite operation.':'Compare the place values. Follow the requested direction and look for the gap between numbers.';
+  }
+  if(age>=9 && ['addition','equal-groups'].includes(id)) {
+    content[0]=id==='addition'?'Combine the numbers, keeping hundreds, tens and ones in their places.':'Find the total without counting one object at a time.';
+    content[1]=id==='addition'?'Add the ones first. Exchange ten ones for one ten when needed, then combine the tens and hundreds.':'Split a multiplication into facts you know. Add the partial products and check the size of your answer.';
+  }
+  if(age>=9 && id==='patterns') {
+    content[0]='Study the number sequence and find the missing value.';
+    content[1]='Compare neighboring numbers. Does one change repeat, or do two different changes alternate? Test your rule on every visible pair.';
+  }
+  if(age>=9 && id==='memory') {
+    content[0]='Find two cards that have the same value, even when they look different.';
+    content[1]=age===9?'Work out each multiplication fact, then remember where its product is hidden.':'Find equivalent fractions. Multiply or divide the numerator and denominator by the same number.';
+  }
+  if(age>=9 && id==='maze') {
+    content[1]='Plan a route through the numbered checkpoints in order before reaching the carrot. Undo is always available.';
   }
   if(age===10 && id==='ten-frame') {
     content[0]='Read the target carefully: are you making filled spaces or leaving empty spaces?';

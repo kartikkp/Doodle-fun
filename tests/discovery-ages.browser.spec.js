@@ -9,7 +9,7 @@ for(let age=2;age<=10;age++)for(const id of DISCOVERY_IDS){
     if(['shape-match','color-match','patterns','odd-one-out'].includes(id)){
       let answer;
       if(id==='shape-match'||id==='color-match')answer=id==='shape-match'?'circle':'red';
-      else if(id==='patterns')answer=(await page.locator('.discover-pattern-token').first().getAttribute('aria-label')).split(': ')[1];
+      else if(id==='patterns'){if(age>=9){await hint();answer=(await page.locator('.discover-status').textContent()).match(/missing number is (\d+)/)[1];}else answer=(await page.locator('.discover-pattern-token').first().getAttribute('aria-label')).split(': ')[1];}
       else answer='0';
       const correct=id==='patterns'?page.getByRole('button',{name:answer,exact:true}):page.locator(`[data-choice="${answer}"]`);
       const value=await correct.getAttribute('data-choice');await page.locator(`[data-choice]:not([data-choice="${value}"])`).first().tap();
@@ -22,7 +22,7 @@ for(let age=2;age<=10;age++)for(const id of DISCOVERY_IDS){
       for(let i=0;i<7&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();await page.locator('.is-hint[data-card]').tap();}
     }else{
       await page.locator('[data-cell="0"]').tap();await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);
-      for(let i=0;i<36&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();await page.locator('.is-hint[data-cell]').tap();}
+      for(let i=0;i<(age>=9?120:36)&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();await page.locator('.is-hint[data-cell]').tap();}
     }
     await expect(page.locator('.discover-next')).toHaveClass(/is-ready/);await expect(page.locator('.discover-status')).toHaveClass(/is-success/);
     await page.locator('.discover-restart').tap();await expect(page.locator('.discover-next')).not.toHaveClass(/is-ready/);

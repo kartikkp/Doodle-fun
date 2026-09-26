@@ -123,9 +123,26 @@ test('every exact age gets valid bounded quantity questions and age ten combines
     const profile=getProfile({age});
     for(let round=0;round<30;round++)for(const mode of ['count','add','groups']) {
       const question=buildQuantityQuestion(round% (profile.numberMax+1),mode,profile.numberMax,round,age);
-      assert.ok(question.answer>=0&&question.answer<=profile.numberMax);
+      assert.ok(question.answer>=0&&question.answer<=(question.maxValue??profile.numberMax));
       if(mode==='add'){assert.equal(question.operands.reduce((sum,value)=>sum+value,0),question.answer);assert.equal(question.operands.length,age===10?3:2);}
       assert.ok(question.strategy.length>20);
     }
+  }
+});
+
+test('older addition regroups and equal groups use multiplication beyond twenty without changing counting',()=>{
+  for(const age of [9,10]) {
+    const totals=new Set();
+    for(let round=0;round<24;round++) {
+      for(const mode of ['add','groups']) {
+        const q=buildQuantityQuestion(11,mode,20,round,age);totals.add(q.answer);
+        assert.equal(q.representation,'place-value');assert.ok(q.worked.length>15);
+        assert.equal(q.answer,mode==='add'?q.operands.reduce((a,b)=>a+b,0):q.groups*q.each);
+        if(age===10)assert.ok(q.answer>20);
+      }
+      const count=buildQuantityQuestion(round%21,'count',20,round,age);assert.equal(count.answer,round%21);assert.equal(count.representation,undefined);
+    }
+    assert.ok(totals.size>15,'rounds change the mathematical problem');
+    assert.ok(buildQuantityQuestion(11,'add',20,0,age).operands.reduce((sum,value)=>sum+value%10,0)>=10,'opening round requires regrouping');
   }
 });

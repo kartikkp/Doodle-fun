@@ -224,6 +224,23 @@ export function evaluateTrace(targets, ink, options={}) {
 
 export function buildQuantityQuestion(value, mode='count', max=10, variant=0, age=6) {
   const number=Number.isFinite(value)?Math.max(0,Math.min(max,Math.floor(value))):0;
+  const n=Math.max(0,Math.floor(Number(variant)||0));
+  if(age>=9&&mode==='add') {
+    const operands=age===9?[27+(n*17)%61,18+(n*13)%67]:[126+(n*37)%173,57+(n*19)%128,38+(n*23)%96];
+    const answer=operands.reduce((sum,amount)=>sum+amount,0);
+    return {answer,operands,left:operands[0],middle:operands.length===3?operands[1]:0,right:operands.at(-1),mode,representation:'place-value',maxValue:age===9?200:700,
+      prompt:`${operands.join(' + ')} = ?`,spoken:`What is ${operands.join(' plus ')}?`,
+      strategy:`Split each number into hundreds, tens and ones. Add the ones, exchange ten ones for one ten if needed, then combine the tens and hundreds.`,
+      worked:operands.map(amount=>`${amount} = ${Math.floor(amount/100)*100} + ${Math.floor(amount/10)%10*10} + ${amount%10}`).join('; ')};
+  }
+  if(age>=9&&mode==='groups') {
+    const groups=age===9?4+n%6:3+n%7,each=age===9?4+(n*3)%7:12+(n*7)%24,answer=groups*each;
+    const tens=Math.floor(each/10)*10,ones=each%10;
+    return {groups,each,answer,mode,representation:'place-value',maxValue:age===9?100:350,
+      prompt:`${groups} groups of ${each}. How many?`,spoken:`There are ${groups} groups with ${each} in each group. How many altogether?`,
+      strategy:age===9?`Use a fact you know. Split ${groups} groups into ${groups-1} groups and one more group of ${each}.`:`Split each group into ${tens} and ${ones}. Multiply each part by ${groups}, then add the two products.`,
+      worked:age===9?`${groups} × ${each} = (${groups-1} × ${each}) + ${each}`:`${groups} × ${each} = (${groups} × ${tens}) + (${groups} × ${ones})`};
+  }
   if (mode==='add') {
     const left=age>=10?Math.floor(number/3):(Math.floor(number/2)+Math.abs(Math.floor(variant)))%(number+1);
     const middle=age>=10?(Math.floor(number/3)+Math.abs(Math.floor(variant)))%(number-left+1):0,right=number-left-middle;

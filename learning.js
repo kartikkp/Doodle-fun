@@ -262,7 +262,12 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       }
       return box;
     };
-    if(countMode==='groups') {
+    if(question.representation==='place-value') {
+      frames.dataset.representation='place-value';frames.classList.add('learn-place-values');
+      if(countMode==='add')question.operands.forEach((amount,i)=>{if(i)frames.append(element('span','learn-count-plus','+'));const tile=element('div','learn-number-card',String(amount));tile.setAttribute('aria-label',`${amount}`);frames.append(tile);});
+      else {const tile=element('div','learn-number-card',`${question.groups} × ${question.each}`);tile.setAttribute('aria-label',`${question.groups} groups of ${question.each}`);frames.append(tile);}
+      const strategy=element('p','learn-place-strategy',question.worked);strategy.hidden=true;frames.append(strategy);
+    }else if(countMode==='groups') {
       frames.classList.add('learn-equal-groups');
       for(let group=0;group<question.groups;group++) {
         const wrapper=element('div','learn-equal-group');wrapper.append(element('p','',`Group ${group+1}`),frame(question.each));frames.append(wrapper);
@@ -271,11 +276,16 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       frames.classList.add('learn-add-frames');if(question.operands.length===3)frames.classList.add('learn-three-addends');
       question.operands.forEach((amount,i)=>{if(i)frames.append(element('span','learn-count-plus','+'));frames.append(frame(amount));});
     }else frames.append(frame(question.answer));
-    card.append(frames,element('p','learn-count-hint',question.answer===0?'An empty group has zero things.':'Tip: tap each dot as you count.'));
+    card.append(frames,element('p','learn-count-hint',question.representation?'Try a mental strategy. Show the steps whenever you need help.':question.answer===0?'An empty group has zero things.':'Tip: tap each dot as you count.'));
     const answers=element('div','learn-answers');answers.setAttribute('role','group');answers.setAttribute('aria-label','Choose your answer');
     const choiceCount=profile.choiceCount,values=new Set([question.answer]);
+    if(question.representation==='place-value') {
+      // Keep two alternatives with the same ones digit: checking only that digit
+      // must not identify the answer to a multi-digit calculation.
+      for(const distance of [10,100,20])for(const candidate of [question.answer-distance,question.answer+distance])if(candidate>=0&&candidate<=question.maxValue&&values.size<Math.min(choiceCount,3))values.add(candidate);
+    }
     for(let distance=1;values.size<choiceCount;distance++) {
-      for(const candidate of [question.answer-distance,question.answer+distance])if(candidate>=0&&candidate<=profile.numberMax&&values.size<choiceCount)values.add(candidate);
+      for(const candidate of [question.answer-distance,question.answer+distance])if(candidate>=0&&candidate<=(question.maxValue??profile.numberMax)&&values.size<choiceCount)values.add(candidate);
     }
     const choices=[...values].sort((a,b)=>((a*13+countRound*11)%17)-((b*13+countRound*11)%17));
     countButtons=choices.map(value=>{
@@ -288,10 +298,10 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     status=element('p','learn-feedback');status.setAttribute('role','status');status.setAttribute('aria-live','polite');card.append(status);
     updateStatus(countAnswered?`${question.answer} — you found it! Great counting.`:'Choose a number. There’s plenty of time.',countAnswered);
     card.append(button('Show counting steps','button learn-count-coach',hint),button('Next puzzle →','button button-primary learn-next-puzzle',nextCount));
-    const help=element('div','learn-help');help.append(element('span','learn-help-icon','✿'),element('h2','','Numbers are everywhere'),element('p','',countMode==='groups'?'Each group has the same number. Try counting by groups, then tap every dot to check your total.':countMode==='add'?question.operands.length===3?'Count the first two groups together. Then count on with the third group. How many are there altogether?':'Count the first group. Count the second group. How many are there altogether?':'Touch one dot for each number you say. The last number tells you how many.'));
+    const help=element('div','learn-help');help.append(element('span','learn-help-icon','✿'),element('h2','','Numbers are everywhere'),element('p','',question.representation?question.strategy:countMode==='groups'?'Each group has the same number. Try counting by groups, then tap every dot to check your total.':countMode==='add'?question.operands.length===3?'Count the first two groups together. Then count on with the third group. How many are there altogether?':'Count the first group. Count the second group. How many are there altogether?':'Touch one dot for each number you say. The last number tells you how many.'));
     help.append(speechButton('♪ Read the question',()=>speak(question.spoken)));
     side.append(help);
-    const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${profile.numberMax}`),element('p','',profile.challengeAge<=4?'Explore together: point and count with a grown-up. Every picture and hint is here to help.':`Practice for age ${profile.challengeAge}. A strategy matters more than speed. Use the help or adjust this activity whenever you like.`));side.append(range);
+    const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${question.maxValue??profile.numberMax}`),element('p','',profile.challengeAge<=4?'Explore together: point and count with a grown-up. Every picture and hint is here to help.':`Practice for age ${profile.challengeAge}. A strategy matters more than speed. Use the help or adjust this activity whenever you like.`));side.append(range);
     side.append(button('Try writing a number →','button',()=>{
       if(managedModes){onModeChange({set:'nums',mode:'trace',kind:'letters',pageMode:'trace'});return;}
       set='nums';index=Math.min(countValue,9);pageMode='trace';ink=[];done=false;reportMode();render();
@@ -315,6 +325,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     if(!opened)return;
     if(pageMode==='trace'){showDemo();return;}
     if(countAnswered||!countQuestion)return;
+    if(countQuestion.representation){container.querySelector('.learn-place-strategy').hidden=false;updateStatus(`${countQuestion.strategy} ${countQuestion.worked}. Combine the parts to find your answer.`);return;}
     countMarked.clear();container.querySelectorAll('.learn-count-dot').forEach((dot,i)=>{countMarked.set(i,i+1);dot.textContent=String(i+1);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${i+1}`);});
     updateStatus(`${countQuestion.strategy} ${countQuestion.answer?`The last dot is ${countQuestion.answer}.`:'Zero means none.'}`);
   }

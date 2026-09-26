@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDiscoveryRound, discoveryConfig, makeMaze, mazeStep, DISCOVERY_IDS } from '../discovery.js';
+import { buildDiscoveryRound, discoveryConfig, makeMaze, mazeStep, mazeRoute, mazeCheckpointProgress, DISCOVERY_IDS } from '../discovery.js';
 
 function random(seed = 1) { return () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 2 ** 32; }; }
 const tiers = ['little', 'explorer', 'maker'];
@@ -18,16 +18,16 @@ test('every shape and color round has one valid answer and age-scaled choices', 
 });
 
 test('patterns repeat exactly and advance from AB to longer repeating units', () => {
-  for (const tier of tiers) for (let index = 0; index < 24; index++) {
+  for (const tier of [3,6,8]) for (let index = 0; index < 24; index++) {
     const round = buildDiscoveryRound('patterns', tier, index, random(index));
     assert.ok(round.sequence.length >= round.repeat.length * 2);
     round.sequence.forEach((token, i) => assert.equal(token.id, round.repeat[i % round.repeat.length].id));
     assert.equal(round.answer, round.repeat[round.sequence.length % round.repeat.length].id);
     assert.equal(round.choices.filter(token => token.id === round.answer).length, 1);
-    if (tier === 'little') { assert.equal(round.repeat.length, 2); assert.notEqual(round.repeat[0].id, round.repeat[1].id); }
+    if (tier === 3) { assert.equal(round.repeat.length, 2); assert.notEqual(round.repeat[0].id, round.repeat[1].id); }
   }
   assert.equal(buildDiscoveryRound('patterns', 'explorer', 1, random()).repeat.length, 3);
-  assert.equal(buildDiscoveryRound('patterns', 'maker', 2, random()).repeat.length, 5);
+  assert.equal(buildDiscoveryRound('patterns', 8, 2, random()).repeat.length, 4);
 });
 
 test('sorting gives each picture one meaningful category and multiple items per basket', () => {
@@ -52,7 +52,7 @@ test('odd-one-out has precisely one item different in the stated property', () =
   }
 });
 
-test('memory scales to 2/4/6 pairs with unique cards and exactly two of each picture', () => {
+test('memory scales to 2/4/6 pairs with unique cards and exactly two of each relationship', () => {
   for (const tier of tiers) for (let index = 0; index < 20; index++) {
     const round = buildDiscoveryRound('memory', tier, index, random(index));
     assert.equal(round.pairs, discoveryConfig(tier).memoryPairs);
@@ -107,4 +107,62 @@ test('nine exact-age configurations stay finite and every generator supports the
     for(const id of DISCOVERY_IDS){const round=buildDiscoveryRound(id,age,1,random(age));assert.equal(round.age,age);if(round.choices)assert.equal(round.choices.filter(item=>item.id===round.answer).length,1);}
   }
   assert.equal(signatures.size,9);
+});
+
+
+test('older number patterns vary rules and missing position, with one answer that fits every step',()=>{
+  for(const age of [9,10]) {
+    const positions=new Set(),rules=new Set(),answers=new Set();
+    for(let index=0;index<54;index++) {
+      const q=buildDiscoveryRound('patterns',age,index,random(index));
+      assert.equal(q.kind,'number-rule');positions.add(q.missingIndex);rules.add(q.rule);answers.add(q.answer);
+      assert.equal(q.values.length,7);assert.equal(q.sequence[q.missingIndex].id,q.answer);
+      assert.equal(q.choices.length,4);assert.equal(new Set(q.choices.map(c=>c.id)).size,4);
+      assert.equal(q.choices.filter(c=>c.id===q.answer).length,1);
+      assert.ok(q.values.every(n=>Number.isSafeInteger(n)&&n>0&&n<1000));
+      assert.notEqual(q.target.text,q.sequence[0].text,'Copying the first visible number cannot solve the new puzzle.');
+      const differences=q.values.slice(1).map((n,i)=>n-q.values[i]);
+      if(age===9&&index%3===0)assert.ok(differences.every(n=>n===differences[0]));
+      if(age===9&&index%3===1)assert.ok(q.values.slice(1).every((n,i)=>n===q.values[i]*2));
+      if(age===9&&index%3===2)assert.ok(differences.every((n,i)=>n===(i%2===0?differences[0]:2)));
+      if(age===10&&index%3===0)assert.ok(differences.every((n,i)=>n===(i%2===0?differences[0]:-2)));
+      if(age===10&&index%3===1)assert.deepEqual(differences,[2,3,4,5,6,7]);
+      if(age===10&&index%3===2)assert.ok(q.values.slice(1).every((n,i)=>n===(i%2===0?q.values[i]*2:q.values[i]-3)));
+    }
+    assert.equal(positions.size,3);assert.ok(rules.size>=3);assert.ok(answers.size>=20);
+  }
+});
+
+test('older memory uses six unambiguous equivalent-value pairs, not identical pictures',()=>{
+  const value=text=>text.includes('×')?text.split('×').map(Number).reduce((a,b)=>a*b):text.includes('/')?text.split('/').map(Number).reduce((a,b)=>a/b):Number(text);
+  for(const age of [9,10])for(let index=0;index<30;index++){
+    const q=buildDiscoveryRound('memory',age,index,random(index));
+    assert.equal(q.relation,age===9?'products':'fractions');assert.equal(q.cards.length,12);
+    const values=new Set();
+    for(const id of new Set(q.cards.map(c=>c.id))){
+      const [a,b]=q.cards.filter(c=>c.id===id);assert.notEqual(a.text,b.text);assert.equal(value(a.text),value(b.text));
+      assert.ok(!values.has(value(a.text)),'Different pairs cannot share a numerical value.');values.add(value(a.text));
+      assert.match(a.meaning,/ = /);assert.equal(a.meaning,b.meaning);
+    }
+    assert.equal(values.size,6);
+  }
+});
+
+test('older maze checkpoints are distinct, ordered, reachable, undoable and bounded',()=>{
+  for(const age of [9,10])for(let seed=0;seed<100;seed++){
+    const q=buildDiscoveryRound('maze',age,seed,random(seed));
+    assert.equal(q.checkpoints.length,age-8);assert.equal(new Set(q.checkpoints).size,q.checkpoints.length);
+    assert.ok(q.checkpoints.every(n=>n!==q.start&&n!==q.goal));
+    let path=[q.start];
+    for(let i=0;i<q.checkpoints.length;i++){
+      const route=mazeRoute(q,path.at(-1),q.checkpoints[i]);assert.ok(route.length>1);
+      path.push(...route.slice(1));assert.equal(mazeCheckpointProgress(q,path),i+1);
+      assert.equal(mazeCheckpointProgress(q,path.slice(0,-1)),i,'Undo reverses the newly reached checkpoint.');
+    }
+    path.push(...mazeRoute(q,path.at(-1),q.goal).slice(1));
+    assert.equal(path.at(-1),q.goal);assert.equal(mazeCheckpointProgress(q,path),q.checkpoints.length);assert.ok(path.length<=106);
+    assert.equal(mazeCheckpointProgress(q,[q.start]),0);
+    if(age===10)assert.equal(mazeCheckpointProgress(q,mazeRoute(q,q.start,q.checkpoints[1])),0,'Visiting checkpoint2 before1 earns no credit.');
+  }
+  for(let age=2;age<=8;age++)assert.equal(buildDiscoveryRound('maze',age,0,random()).checkpoints,undefined);
 });

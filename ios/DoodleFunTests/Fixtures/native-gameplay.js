@@ -124,30 +124,32 @@ async function trace(qa) {
 async function quantity(qa) {
   qa.assert(qa.el(`[data-activity-mode="${qa.id}"]`).getAttribute('aria-pressed')==='true','Correct number mode selected');
   const answer=Number(qa.el('[data-testid="quantity-frame"]').dataset.quantity);
-  qa.assert(qa.all('.learn-count-dot').length===answer,'Answer quantity equals actual visible dot count');
+  const compact=qa.el('[data-testid="quantity-frame"]').dataset.representation==='place-value';
+  qa.assert(qa.all('.learn-count-dot').length===(compact?0:answer),'Quantity uses its correct compact or countable representation');
   if(qa.id==='equal-groups') {
     const sizes=qa.all('.learn-equal-group').map(group=>group.querySelectorAll('.learn-count-dot').length);
-    qa.assert(sizes.length>0&&sizes.every(size=>size===sizes[0]),'Each equal group contains the same amount');
     const prompt=qa.text('.learn-count-prompt').match(/^(\d+) groups of (\d+)\. How many\?$/);
-    qa.assert(prompt&&Number(prompt[1])===sizes.length&&Number(prompt[2])===sizes[0],'Printed group counts match the actual groups and their contents');
+    if(compact)qa.assert(prompt&&qa.text('.learn-number-card')===`${prompt[1]} × ${prompt[2]}`,'Compact multiplication model matches both printed factors');
+    else {qa.assert(sizes.length>0&&sizes.every(size=>size===sizes[0]),'Each equal group contains the same amount');qa.assert(prompt&&Number(prompt[1])===sizes.length&&Number(prompt[2])===sizes[0],'Printed group counts match the actual groups and their contents');}
     qa.assert(Number(prompt[1])*Number(prompt[2])===answer,'Printed equal-group question yields the accepted total');
   } else if(qa.id==='addition') {
     const prompt=qa.text('.learn-count-prompt');
     qa.assert(/^\d+(?: \+ \d+){1,2} = \?$/.test(prompt),'Addition has a readable numeric question');
     const operands=prompt.replace(' = ?','').split(' + ').map(Number);
-    const frames=qa.all('.learn-dot-frame').map(frame=>frame.querySelectorAll('.learn-count-dot').length);
+    const frames=compact?qa.all('.learn-number-card').map(tile=>Number(tile.textContent)):qa.all('.learn-dot-frame').map(frame=>frame.querySelectorAll('.learn-count-dot').length);
     qa.assert(operands.join(',')===frames.join(','),'Every printed addition operand matches its own dot frame');
     qa.assert(operands.reduce((total,value)=>total+value,0)===answer,'Printed addition question yields the accepted total');
   }
   const wrong=qa.all('.learn-answer').find(button=>Number(button.textContent)!==answer);
   qa.click(wrong);
   qa.assert(!complete('.learn-feedback')&&qa.text('.learn-feedback').includes('try another number'),'Wrong quantity gives recoverable feedback');
-  if(answer>0) {
+  if(answer>0&&!compact) {
     qa.click(qa.all('.learn-count-dot')[answer-1]);
     qa.assert(qa.all('.learn-count-dot')[answer-1].textContent==='1','First tapped dot receives ordinal one');
   }
   qa.click('.learn-count-coach');
-  qa.assert(qa.all('.learn-count-dot.is-counted').length===answer,'Counting hint covers every dot');
+  if(compact)qa.assert(!qa.el('.learn-place-strategy').hidden&&qa.text('.learn-place-strategy').length>15,'Place-value hint reveals a worked strategy without reducing the exercise to hundreds of tap targets');
+  else qa.assert(qa.all('.learn-count-dot.is-counted').length===answer,'Counting hint covers every dot');
   qa.check('wrong answer, one-to-one counting and visual hint');
   qa.click(qa.all('.learn-answer').find(button=>Number(button.textContent)===answer));
   qa.assert(complete('.learn-feedback'),'Correct quantity completes puzzle');
@@ -164,7 +166,10 @@ async function challenge(qa) {
   const wrongNumeric=()=>qa.click(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`);
   if(qa.id==='compare') {
     const groups=qa.all('.challenge-quantity');
-    qa.assert(groups[0].querySelectorAll('.challenge-dot').length===q.left&&groups[1].querySelectorAll('.challenge-dot').length===q.right,'Comparison quantities match their visible dots');
+    if(q.model==='place-value') {
+      qa.assert(groups.map(group=>Number(group.querySelector('.challenge-quantity-number').textContent)).join(',')===[q.left,q.right].join(','),'Printed comparison numbers match the generated quantities');
+      qa.assert(qa.all('.challenge-dot,.challenge-pair-row').length===0,'Older quantities use compact numerals, never hundreds of dots');
+    } else qa.assert(groups[0].querySelectorAll('.challenge-dot').length===q.left&&groups[1].querySelectorAll('.challenge-dot').length===q.right,'Comparison quantities match their visible dots');
     qa.click(`[data-answer="${q.answer==='same'?'left':'same'}"]`);
     qa.assert(!feedback()&&!qa.el('.challenge-comparison-model').hidden,'Wrong comparison reveals a pairing model without credit');
     qa.click('.challenge-hint-button');
@@ -183,9 +188,18 @@ async function challenge(qa) {
     for(const number of q.sequence)qa.click(`[data-tile="${number}"]`);
     qa.assert(qa.all('.challenge-slot.is-filled').map(slot=>Number(slot.textContent)).join(',')===q.sequence.join(','),'Rendered sequence follows the requested order');
   } else if(qa.id==='subtraction'||qa.id==='number-bonds') {
-    if(qa.id==='subtraction')qa.assert(qa.all('.challenge-dot.is-crossed').length===q.removed,'Crossed-out objects show the removed quantity');
+    if(q.model==='place-value') {
+      qa.assert(qa.text('.challenge-prompt')===q.prompt,'Printed place-value equation matches the requested unknown');
+      qa.assert(qa.all('.challenge-dot').length===0,'Older arithmetic avoids object-counting shortcuts');
+      qa.assert(qa.el('.challenge-place-support').hidden,'Strategy is optional before an attempt');
+      const expected=qa.id==='subtraction'?{start:q.removed+q.remaining,removed:q.start-q.remaining,remaining:q.start-q.removed}[q.ask]:q.ask==='total'?q.firstPart+q.secondPart:q.total-q.part;
+      qa.assert(q.answer===expected,'Accepted unknown satisfies the complete equation');
+    } else if(qa.id==='subtraction')qa.assert(qa.all('.challenge-dot.is-crossed').length===q.removed,'Crossed-out objects show the removed quantity');
     wrongNumeric();qa.assert(!feedback(),'Wrong numeric answer does not complete');
-    if(qa.id==='number-bonds') {
+    if(q.model==='place-value') {
+      qa.assert(qa.text('.challenge-feedback').includes('Check:'),'Retry checks the proposed value against the original equation');
+      qa.click('.challenge-hint-button');qa.assert(!qa.el('.challenge-place-support').hidden,'Place-value strategy is available without granting credit');qa.assert(!feedback(),'Opening a strategy does not complete the equation');
+    } else if(qa.id==='number-bonds') {
       qa.assert(!qa.el('.challenge-bond-support').hidden,'Wrong missing part reveals the picture');
       qa.assert(qa.all('.challenge-bond-support .challenge-dot.is-empty').length===q.answer,'Empty dots represent the actual missing part');
     } else qa.click('.challenge-hint-button');

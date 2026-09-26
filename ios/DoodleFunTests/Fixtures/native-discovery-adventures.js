@@ -37,10 +37,17 @@ function discoveryAnswer(qa) {
   if (qa.id === 'shape-match') name = qa.text('.discover-model strong');
   else if (qa.id === 'color-match') name = qa.text('.discover-objective').replace(/^Find this color:\s*/i, '').replace(/\.$/, '');
   else if (qa.id === 'patterns') {
-    const unit = qa.all('.discover-pattern-token.is-hint');
-    const shown = qa.all('.discover-pattern-token:not(.discover-pattern-blank)');
-    assert(qa, unit.length >= 2 && unit.length < shown.length, 'Hint highlights a repeating unit');
-    name = unit[shown.length % unit.length].getAttribute('aria-label').replace(/^\d+: /, '');
+    if(qa.age>=9) {
+      const clue=qa.text('.discover-status').match(/Rule: (.+) The missing number is (\d+)\./);
+      assert(qa,Boolean(clue),'Older hint explains a number rule and the missing value');
+      name=clue[2];
+      assert(qa,qa.all('.discover-pattern-token').length===7&&qa.all('.discover-pattern-blank').length===1,'The whole seven-position numerical puzzle has one missing value');
+    }else{
+      const unit = qa.all('.discover-pattern-token.is-hint');
+      const shown = qa.all('.discover-pattern-token:not(.discover-pattern-blank)');
+      assert(qa, unit.length >= 2 && unit.length < shown.length, 'Hint highlights a repeating unit');
+      name = unit[shown.length % unit.length].getAttribute('aria-label').replace(/^\d+: /, '');
+    }
   } else {
     const names = choices.map(choiceName);
     const unique = names.filter(value => names.filter(other => other === value).length === 1);
@@ -78,7 +85,7 @@ async function solveDiscovery(qa) {
     await qa.click(discoveryAnswer(qa));
     return;
   }
-  const limit = qa.id === 'maze' ? 37 : qa.id === 'sorting' ? 14 : 7;
+  const limit = qa.id === 'maze' ? (qa.age>=9?120:37) : qa.id === 'sorting' ? 14 : 7;
   for (let step = 0; step < limit && !ready(qa, 'discover'); step++) {
     await hint(qa, 'discover');
     if (qa.id === 'sorting') {
@@ -156,8 +163,18 @@ async function discovery(qa) {
   assert(qa, ready(qa, 'discover'), 'success makes the next round ready');
   assert(qa, Number.parseInt(qa.text('.discover-round-count'), 10) === beforeCount + 1, 'completion is recorded once');
   if (qa.id === 'sorting') assert(qa, qa.all('.discover-play [data-item]').every(node => node.classList.contains('is-sorted')), 'every picture was sorted');
-  if (qa.id === 'memory') assert(qa, qa.all('.discover-play [data-card]').every(node => node.dataset.matched === 'true'), 'every pair was matched');
-  if (qa.id === 'maze') assert(qa, qa.el('.discover-play [data-current="true"]').dataset.goal === 'true', 'Bunny physically reaches the carrot square');
+  if (qa.id === 'memory') {
+    assert(qa, qa.all('.discover-play [data-card]').every(node => node.dataset.matched === 'true'), 'every pair was matched');
+    if(qa.age>=9){
+      const faces=qa.all('.discover-memory-card .discover-number').map(node=>node.textContent),values=faces.map(text=>text.includes('×')?text.split('×').map(Number).reduce((a,b)=>a*b):text.includes('/')?text.split('/').map(Number).reduce((a,b)=>a/b):Number(text));
+      assert(qa,faces.length===12&&new Set(faces).size===12,'Older memory uses distinct expressions rather than identical pictures');
+      assert(qa,new Set(values).size===6&&values.every(v=>values.filter(other=>other===v).length===2),'Exactly two cards represent each mathematical value');
+    }
+  }
+  if (qa.id === 'maze') {
+    assert(qa, qa.el('.discover-play [data-current="true"]').dataset.goal === 'true', 'Bunny reaches the carrot square');
+    if(qa.age>=9)assert(qa,qa.all('.discover-checkpoint.is-visited').length===qa.age-8,'All ordered checkpoints are visited before finishing');
+  }
   qa.check('Hint-assisted full round completed');
 
   await qa.click('.discover-restart');

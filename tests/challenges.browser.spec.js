@@ -55,15 +55,22 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
       await expect(page.locator('.challenge-slot.is-filled')).toHaveCount(q.sequence.length);
     });
     test('subtraction models the groups and accepts the requested unknown',async({page})=>{
-      const q=await start(page,'subtraction',age);await expect(page.locator('.challenge-dot.is-crossed')).toHaveCount(q.removed);
+      const q=await start(page,'subtraction',age);await expect(page.locator('.challenge-dot.is-crossed')).toHaveCount(q.model==='place-value'?0:q.removed);
       await page.locator(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`).click();await expect(page.getByTestId('challenge-feedback')).not.toHaveClass(/is-complete/);
       await page.locator(`[data-answer="${q.answer}"]`).click();await passed(page);
     });
     test('missing parts give an optional counting picture and verify the complete whole',async({page})=>{
       const q=await start(page,'number-bonds',age);
       await page.locator(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`).click();
-      await expect(page.locator('.challenge-bond-support')).toBeVisible();
-      await expect(page.locator('.challenge-bond-support .challenge-dot.is-empty')).toHaveCount(q.answer);
+      if(q.model==='place-value') {
+        await expect(page.getByTestId('place-value-strategy')).toBeHidden();
+        await page.getByRole('button',{name:'Show a place-value strategy',exact:true}).click();
+        await expect(page.getByTestId('place-value-strategy')).toBeVisible();
+        await expect(page.locator('.challenge-dot')).toHaveCount(0);
+      } else {
+        await expect(page.locator('.challenge-bond-support')).toBeVisible();
+        await expect(page.locator('.challenge-bond-support .challenge-dot.is-empty')).toHaveCount(q.answer);
+      }
       await page.locator(`[data-answer="${q.answer}"]`).click();await passed(page);
     });
     test('frames allow changing a dot and require the exact target',async({page})=>{

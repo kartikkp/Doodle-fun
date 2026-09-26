@@ -71,6 +71,49 @@ export function makeMaze(size, random = Math.random) {
 export function mazeStep(maze, path, next) {
   return Number.isInteger(next) && maze.cells[path[path.length - 1]]?.includes(next) ? [...path, next] : path;
 }
+function numberToken(value) { return {id:`number-${value}`,name:String(value),text:String(value)}; }
+function numberPattern(age,index,random) {
+  const n=Math.max(0,Math.floor(index)),kind=n%3,start=4+n%7,step=3+n%5,values=[start];
+  let rule;
+  for(let i=0;i<6;i++) {
+    const previous=values.at(-1);
+    values.push(age===9 ? kind===0?previous+step:kind===1?previous*2:previous+(i%2===0?step:2)
+      : kind===0?previous+(i%2===0?step+2:-2):kind===1?previous+(i+2):i%2===0?previous*2:previous-3);
+  }
+  if(age===9)rule=kind===0?`Add ${step} each time.`:kind===1?'Double each number.':`Take turns: add ${step}, then add 2.`;
+  else rule=kind===0?`Take turns: add ${step+2}, then subtract 2.`:kind===1?'Add 2, then 3, then 4: the amount added grows by 1 each time.':'Take turns: double, then subtract 3.';
+  const missingIndex=[2,4,6][Math.floor(n/3)%3],target=numberToken(values[missingIndex]);
+  const alternatives=new Set([target.text, String(values[missingIndex-1]), String(values[missingIndex-1]+1), String(values[missingIndex]+step)]);
+  for(let delta=2;alternatives.size<4;delta++)alternatives.add(String(values[missingIndex]+delta));
+  const choices=shuffle([...alternatives].slice(0,4).map(Number).map(numberToken),random);
+  return {id:'patterns',tier:'maker',age,kind:'number-rule',values,missingIndex,rule,sequence:values.map(numberToken),target,choices,answer:target.id};
+}
+function relatedMemory(age,index,random) {
+  const n=Math.max(0,Math.floor(index));
+  const relations=age===9
+    ? [[3,4],[3,6],[4,6],[4,7],[5,7],[6,7],[6,8],[7,8]].map(([a,b],i)=>({id:`product-${a*b}`,faces:[`${a} × ${b}`,String(a*b)],meaning:`${a} × ${b} = ${a*b}`}))
+    : [[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5]].map(([a,b],i)=>{const scale=2+(n+i)%3;return{id:`fraction-${a}-${b}`,faces:[`${a}/${b}`,`${a*scale}/${b*scale}`],meaning:`${a}/${b} = ${a*scale}/${b*scale}`};});
+  const selected=shuffle(relations,random).slice(0,6);
+  return {id:'memory',tier:'maker',age,pairs:6,relation:age===9?'products':'fractions',cards:shuffle(selected.flatMap(pair=>pair.faces.map((text,i)=>({id:pair.id,key:`${pair.id}-${i}`,name:text,text,meaning:pair.meaning}))),random)};
+}
+export function mazeRoute(maze,start,goal) {
+  const queue=[[start]],seen=new Set([start]);
+  for(let i=0;i<queue.length;i++){const path=queue[i],cell=path.at(-1);if(cell===goal)return path;for(const next of maze.cells[cell]||[])if(!seen.has(next)){seen.add(next);queue.push([...path,next]);}}
+  return [];
+}
+export function mazeCheckpointProgress(maze,path) {
+  let collected=0;for(const cell of path)if(cell===maze.checkpoints?.[collected])collected++;
+  return collected;
+}
+function planningMaze(age,config,random) {
+  const maze=makeMaze(config.mazeSize,random),direct=mazeRoute(maze,maze.start,maze.goal),interior=maze.cells.map((_,i)=>i).filter(i=>i!==maze.start&&i!==maze.goal);
+  // An off-route checkpoint requires a detour. A corridor-only maze instead
+  // visits a far point before a near point, so the plan still needs backtracking.
+  const offRoute=interior.filter(i=>!direct.includes(i));
+  const first=offRoute.length?shuffle(offRoute,random)[0]:direct[Math.max(2,direct.length-3)];
+  const second=direct[1];
+  return {id:'maze',tier:'maker',age,...maze,checkpoints:age===9?[first]:[first,second]};
+}
 export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math.random) {
   const config = discoveryConfig(difficulty), {age,tier} = config;
   if (id === 'shape-match' || id === 'color-match') {
@@ -79,6 +122,7 @@ export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math
     return { id, tier, age, target, choices: choicesFor(target, pool, config.choices, random), answer: target.id };
   }
   if (id === 'patterns') {
+    if(age>=9)return numberPattern(age,index,random);
     const forms = age <= 3 ? [[0,1]] : age === 4 ? [[0,1],[0,0,1]] : age <= 6 ? [[0,1],[0,0,1],[0,1,2]] : age === 7 ? [[0,1,2],[0,0,1,1]] : age === 8 ? [[0,0,1,1],[0,1,1,2]] : age === 9 ? [[0,1,0,1,2],[0,0,1,1]] : [[0,0,1,0,2],[0,1,1,2,2]];
     const form = forms[index % forms.length], symbols = shuffle(TOKENS, random), repeat = form.map(i => symbols[i]);
     const length = repeat.length * 2 + (age === 4 ? index % 2 : 0);
@@ -107,10 +151,11 @@ export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math
     return { id, tier, age, property, same, different, choices: items, answer: '0' };
   }
   if (id === 'memory') {
+    if(age>=9)return relatedMemory(age,index,random);
     const pairs = shuffle(MEMORY, random).slice(0, config.memoryPairs);
     return { id, tier, age, pairs: config.memoryPairs, cards: shuffle(pairs.flatMap(item => [{ ...item, key: `${item.id}-a` }, { ...item, key: `${item.id}-b` }]), random) };
   }
-  if (id === 'maze') return { id, tier, age, ...makeMaze(config.mazeSize, random) };
+  if (id === 'maze') return age>=9?planningMaze(age,config,random):{ id, tier, age, ...makeMaze(config.mazeSize, random) };
   throw new Error(`Unknown discovery activity: ${id}`);
 }
 
@@ -122,6 +167,7 @@ function shapePicture(shape) {
   return wrap;
 }
 function tokenPicture(item) {
+  if (item.text!==undefined) { const number=element('span','discover-number',item.text);number.setAttribute('aria-hidden','true');return number; }
   if (item.svg) return shapePicture(item);
   if (item.color) { const swatch = element('span', 'discover-swatch'); swatch.style.background = item.color; swatch.setAttribute('aria-hidden', 'true'); return swatch; }
   if (item.dots) { const dots = element('span', 'discover-dot-group'); dots.setAttribute('aria-hidden', 'true'); for (let i = 0; i < item.dots; i++) dots.append(element('i')); return dots; }
@@ -156,11 +202,11 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     if (current.done) return;
     if (value !== current.round.answer) {
       node.classList.add('is-try'); node.setAttribute('aria-label', `${node.dataset.label || node.getAttribute('aria-label')}. Try another picture`);
-      message(currentId === 'patterns' ? 'Have another look at the part that repeats.' : currentId === 'odd-one-out' ? `Look for a different ${current.round.property}. You can try again.` : 'Take another look. You can try again.', 'retry');
+      message(currentId === 'patterns' ? current.round.kind==='number-rule'?'Check how the numbers change. Use Hint for the rule, then try again.':'Have another look at the part that repeats.' : currentId === 'odd-one-out' ? `Look for a different ${current.round.property}. You can try again.` : 'Take another look. You can try again.', 'retry');
       return;
     }
     node.classList.remove('is-try'); node.classList.add('is-correct');
-    const text = currentId === 'shape-match' ? `${current.round.target.name}! ${current.round.target.clue}` : currentId === 'color-match' ? `${current.round.target.name} matches! You found the same color.` : currentId === 'patterns' ? `${current.round.target.name} comes next. The pattern repeats!` : `You spotted the different ${current.round.property}!`;
+    const text = currentId === 'shape-match' ? `${current.round.target.name}! ${current.round.target.clue}` : currentId === 'color-match' ? `${current.round.target.name} matches! You found the same color.` : currentId === 'patterns' ? current.round.kind==='number-rule'?`${current.round.target.name} fits the missing space. ${current.round.rule}`:`${current.round.target.name} comes next. The pattern repeats!` : `You spotted the different ${current.round.property}!`;
     complete(text);
     play.querySelectorAll('[data-choice]').forEach(button => { button.disabled = true; });
   }
@@ -177,11 +223,17 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       }
       const words = element('div'); words.append(element('strong', '', currentId === 'shape-match' ? round.target.name : 'Match the swatch'), element('p', '', currentId === 'shape-match' ? round.target.clue : 'Look at the colors and their names.')); model.append(words); stage.append(model);
     } else if (currentId === 'patterns') {
-      objective.textContent = 'Which picture comes next?';
-      const line = element('div', 'discover-pattern-strip'); line.setAttribute('role', 'list'); line.setAttribute('aria-label', 'Pattern to complete');
-      round.sequence.forEach((item, index) => { const token = element('div', 'discover-pattern-token'); token.setAttribute('role', 'listitem'); token.setAttribute('aria-label', `${index + 1}: ${item.name}`); token.append(tokenPicture(item)); line.append(token); });
-      const blank = element('div', 'discover-pattern-token discover-pattern-blank', '?'); blank.setAttribute('aria-label', 'What comes next?'); line.append(blank); stage.append(line);
-      stage.append(element('p', 'discover-tip', profile.tier === 'little' ? 'Look, say the pictures, then keep it going.' : 'Find the repeating part. Then choose the next picture.'));
+      const numeric=round.kind==='number-rule';
+      objective.textContent = numeric?'Which number is missing?':'Which picture comes next?';
+      const line = element('div', 'discover-pattern-strip'); line.setAttribute('role', 'list'); line.setAttribute('aria-label', numeric?'Number pattern to complete':'Pattern to complete');
+      round.sequence.forEach((item, index) => {
+        const missing=numeric&&index===round.missingIndex,token=element('div',`discover-pattern-token${missing?' discover-pattern-blank':''}`);
+        token.setAttribute('role','listitem');token.setAttribute('aria-label',`${index+1}: ${missing?'missing number':item.name}`);
+        if(missing)token.textContent='?';else token.append(tokenPicture(item));line.append(token);
+      });
+      if(!numeric){const blank=element('div','discover-pattern-token discover-pattern-blank','?');blank.setAttribute('aria-label','What comes next?');line.append(blank);}
+      stage.append(line);
+      stage.append(element('p','discover-tip',numeric?'Look at every step. The same rule must fit before and after the missing number.':profile.tier==='little'?'Look, say the pictures, then keep it going.':'Find the repeating part. Then choose the next picture.'));
     } else {
       objective.textContent = `Find the different ${round.property}.`;
       stage.append(element('p', 'discover-tip', `All but one have the same ${round.property}. Which one stands out?`));
@@ -228,8 +280,8 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   }
   function renderMemory() {
     const round = current.round;
-    objective.textContent = `Find ${round.pairs} matching pairs.`;
-    play.append(element('p', 'discover-tip', 'Tap two cards. Remember where the pictures live.'));
+    objective.textContent = round.relation==='products'?'Match each multiplication to its answer.':round.relation==='fractions'?'Match fractions with the same value.':`Find ${round.pairs} matching pairs.`;
+    play.append(element('p','discover-tip',round.relation?'Find 6 pairs. Cards can look different and still have the same value. Remember both the value and its place.':'Tap two cards. Remember where the pictures live.'));
     const grid = element('div', `discover-memory-grid ${round.pairs === 2 ? 'discover-memory-small' : ''}`);
     round.cards.forEach((card, index) => {
       const faceUp = current.flipped.includes(index) || current.matched.has(card.id), matched = current.matched.has(card.id);
@@ -241,9 +293,9 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
           if (a.id === b.id) {
             current.matched.add(a.id); current.flipped = [];
             if (current.matched.size === round.pairs) complete('You found every pair. What a memory!');
-            else message(`A pair of ${a.name.toLowerCase()} pictures! Keep exploring.`, 'success');
-          } else message('Two different pictures. Look carefully, then turn them over.', 'retry');
-        } else message(`${card.name}. Can you find its matching picture?`);
+            else message(round.relation?`${a.meaning}. Different forms, the same value!`:`A pair of ${a.name.toLowerCase()} pictures! Keep exploring.`, 'success');
+          } else message(round.relation?'Those values are different. Work them out, then turn the cards over.':'Two different pictures. Look carefully, then turn them over.', 'retry');
+        } else message(`${card.name}. ${round.relation?'Find a card with the same value.':'Can you find its matching picture?'}`);
         render();
       });
       node.dataset.card = String(index); node.dataset.matched = String(matched); node.setAttribute('aria-label', `Card ${index + 1}, ${matched ? `matched ${card.name}` : faceUp ? card.name : 'face down'}`);
@@ -263,26 +315,32 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     const path = mazeStep(current.round, current.path, next);
     if (path === current.path) { message('Follow a glowing square next to Bunny. Watch for the walls.', 'retry'); return; }
     current.path = path;
-    if (next === current.round.goal) complete('Bunny found the carrot. You followed the whole trail!');
+    const checkpoints=current.round.checkpoints||[],collected=mazeCheckpointProgress(current.round,path);
+    if(next===current.round.goal&&collected===checkpoints.length)complete(checkpoints.length?'Bunny visited every checkpoint in order and found the carrot. Good planning!':'Bunny found the carrot. You followed the whole trail!');
+    else if(next===current.round.goal)message(`Visit checkpoint ${collected+1} before finishing at the carrot. Plan the return trip.`, 'retry');
+    else if(checkpoints.includes(next))message(collected===checkpoints.length?'All checkpoints visited. Now find the carrot.':`Next: checkpoint ${collected+1}. A later checkpoint only counts when it is its turn.`);
     else message('Keep going! Tap a glowing square or use the arrows.');
     render();
   }
   function renderMaze() {
     const round = current.round, position = current.path[current.path.length - 1];
-    objective.textContent = 'Guide Bunny to the carrot.';
-    play.append(element('p', 'discover-tip', 'Tap a glowing neighbor. You can also use the arrow buttons.'));
+    const checkpoints=round.checkpoints||[],collected=mazeCheckpointProgress(round,current.path);
+    objective.textContent=checkpoints.length?`Visit ${checkpoints.map((_,i)=>i+1).join(' then ')}, then the carrot.`:'Guide Bunny to the carrot.';
+    play.append(element('p','discover-tip',checkpoints.length?`${collected} of ${checkpoints.length} checkpoints visited in order. Plan your route; you may need to retrace a path.`:'Tap a glowing neighbor. You can also use the arrow buttons.'));
     const layout = element('div', 'discover-maze-layout'), board = element('div', 'discover-maze-grid'); board.style.setProperty('--maze-size', round.size); board.setAttribute('aria-label', 'Bunny maze');
     round.cells.forEach((neighbors, index) => {
       const x = index % round.size, y = Math.floor(index / round.size), possible = round.cells[position].includes(index);
       const node = button('', `discover-maze-cell ${possible && !current.done ? 'is-neighbor' : ''} ${current.path.includes(index) ? 'is-trail' : ''} ${index === position ? 'is-bunny' : ''}`, () => moveMaze(index));
+      const checkpoint=checkpoints.indexOf(index);node.dataset.checkpoint=checkpoint<0?'':String(checkpoint+1);
       node.dataset.cell = String(index); node.dataset.neighbors = neighbors.join(','); node.dataset.goal = String(index === round.goal); node.dataset.current = String(index === position);
-      node.setAttribute('aria-label', `Row ${y + 1}, column ${x + 1}${index === position ? ', Bunny' : index === round.goal ? ', carrot' : possible ? ', next step' : ''}`);
+      node.setAttribute('aria-label', `Row ${y + 1}, column ${x + 1}${index === position ? ', Bunny' : index === round.goal ? ', carrot' : possible ? ', next step' : ''}${checkpoint>=0?`, checkpoint ${checkpoint+1}${checkpoint<collected?', visited':''}`:''}`);
       node.tabIndex = index === position ? 0 : -1;
       node.style.borderTopColor = neighbors.includes(index - round.size) ? 'transparent' : '#657387';
       node.style.borderBottomColor = neighbors.includes(index + round.size) ? 'transparent' : '#657387';
       node.style.borderLeftColor = x > 0 && neighbors.includes(index - 1) ? 'transparent' : '#657387';
       node.style.borderRightColor = x < round.size - 1 && neighbors.includes(index + 1) ? 'transparent' : '#657387';
-      node.textContent = index === position ? '🐰' : index === round.goal ? '🥕' : possible && !current.done ? '·' : current.path.includes(index) ? '·' : '';
+      node.textContent = index === position ? '🐰' : index === round.goal ? '🥕' : checkpoint>=0 ? String(checkpoint+1) : possible && !current.done ? '·' : current.path.includes(index) ? '·' : '';
+      if(checkpoint>=0){node.classList.add('discover-checkpoint');node.classList.toggle('is-visited',checkpoint<collected);}
       board.append(node);
     });
     const controls = element('div', 'discover-maze-controls');
@@ -298,7 +356,8 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     hearButton.disabled = !getSettings().sound || !canSpeak(); hearButton.title = hearButton.disabled ? 'Turn on sound from the home screen to hear instructions' : 'Hear these instructions';
     play.replaceChildren(); nextButton.classList.toggle('is-ready', current.done); container.dataset.discovery = currentId;
     if (currentId === 'sorting') renderSorting(); else if (currentId === 'memory') renderMemory(); else if (currentId === 'maze') renderMaze(); else renderChoices();
-    message(current.message || meta[1], current.feedback); updateCounter();
+    const openingMessage = current.round.kind === 'number-rule' ? 'Find the number that fits the rule.' : current.round.checkpoints?.length ? 'Visit each checkpoint in order, then find the carrot.' : meta[1];
+    message(current.message || openingMessage, current.feedback); updateCounter();
   }
   function hint() {
     if(!active || current.done) return;
@@ -312,8 +371,13 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       if(!model.querySelector('.discover-shape')) model.prepend(shapePicture(round.target));
     } else if(currentId==='color-match') text=`Look for ${round.target.name.toLowerCase()}. Compare each picture with the big swatch.`;
     else if(currentId==='patterns') {
-      text=`The repeating part is ${round.repeat.map(item=>item.name.toLowerCase()).join(', ')}. Start that part again.`;
-      [...play.querySelectorAll('.discover-pattern-token')].slice(0,round.repeat.length).forEach(node=>node.classList.add('is-hint'));
+      if(round.kind==='number-rule'){
+        text=`Rule: ${round.rule} The missing number is ${round.target.name}. Try the rule on both sides to check it.`;
+        play.querySelector('.discover-pattern-blank').classList.add('is-hint');
+      }else{
+        text=`The repeating part is ${round.repeat.map(item=>item.name.toLowerCase()).join(', ')}. Start that part again.`;
+        [...play.querySelectorAll('.discover-pattern-token')].slice(0,round.repeat.length).forEach(node=>node.classList.add('is-hint'));
+      }
     } else if(currentId==='sorting') {
       const item=round.items.find(item=>item.id===current.selected)||round.items.find(item=>!current.sorted.has(item.id));
       const category=round.categories.find(category=>category.id===item.category);
@@ -330,10 +394,10 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
         text=`This is ${round.cards[first].name.toLowerCase()}. Try the outlined card for its partner.`;
       }
     } else {
-      const start=current.path.at(-1),queue=[[start]],seen=new Set([start]); let route;
-      while(queue.length) { const path=queue.shift(),cell=path.at(-1); if(cell===round.goal){route=path;break;} for(const next of round.cells[cell]) if(!seen.has(next)){seen.add(next);queue.push([...path,next]);} }
-      play.querySelector(`[data-cell="${route[1]}"]`).classList.add('is-hint');
-      text='The outlined square is one step toward the carrot. Follow its open path.';
+      const collected=mazeCheckpointProgress(round,current.path),target=round.checkpoints?.[collected]??round.goal;
+      const route=mazeRoute(round,current.path.at(-1),target);
+      play.querySelector(`[data-cell="${route[1]}"]`)?.classList.add('is-hint');
+      text=`The outlined square is one step toward ${target===round.goal?'the carrot':`checkpoint ${collected+1}`}. Follow its open path.`;
     }
     message(text,'hint'); speak(text);
   }

@@ -81,7 +81,7 @@ test('zero has an empty group and count/addition questions give recoverable feed
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('counting retains tap order between panels and equal-group totals match visible dots',async({page})=>{
-  await page.setViewportSize({width:390,height:844});await start(page,9,'numbers');
+  await page.setViewportSize({width:390,height:844});await start(page,8,'numbers');
   await page.getByRole('button',{name:'Count dots',exact:true}).click();
   await page.locator('.learn-count-dot').nth(2).click();await page.locator('.learn-count-dot').nth(0).click();
   await page.getByRole('button',{name:'Trace numbers',exact:true}).click();
@@ -89,9 +89,11 @@ test('counting retains tap order between panels and equal-group totals match vis
   await expect(page.locator('.learn-count-dot').nth(2)).toHaveText('1');
   await expect(page.locator('.learn-count-dot').nth(0)).toHaveText('2');
   await page.getByRole('button',{name:'Equal groups',exact:true}).click();
-  await expect(page.locator('.learn-equal-group')).toHaveCount(3);
-  await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
-  const count=Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity'));
+  const [,groups,each]=(await page.locator('.learn-count-prompt').innerText()).match(/(\d+) groups of (\d+)\. How many\?/).map(Number);
+  await expect(page.locator('.learn-equal-group')).toHaveCount(groups);
+  for(const group of await page.locator('.learn-equal-group').all())await expect(group.locator('.learn-count-dot')).toHaveCount(each);
+  const count=groups*each;
+  await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity',String(count));
   await expect(page.locator('.learn-count-dot')).toHaveCount(count);
   await page.getByRole('button',{name:`Answer ${count}`,exact:true}).click();
   await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
@@ -119,8 +121,9 @@ test('older children can complete a word and explore the entire 0–20 count ran
   await page.locator('#card-sharing').click();
   await page.locator('[data-activity-mode="equal-groups"]').click();
   await expect(page.locator('[data-activity-mode="equal-groups"]')).toHaveAttribute('aria-pressed','true');
-  await expect(page.locator('.learn-count-prompt')).toHaveText('3 groups of 3. How many?');
-  await expect(page.locator('.learn-count-dot')).toHaveCount(9);
+  await expect(page.locator('.learn-count-prompt')).toHaveText('5 groups of 4. How many?');
+  await expect(page.locator('.learn-count-dot')).toHaveCount(0);
+  await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-representation','place-value');
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
   await page.locator('#card-counting').click();
   await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity','8');
@@ -161,12 +164,13 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
     await page.setViewportSize(age%2?{width:844,height:390}:{width:375,height:812});await start(page,age,'numbers');
     for(const label of ['Count dots','Add together','Equal groups']) {
       await page.getByRole('button',{name:label,exact:true}).click();
-      if(age===10&&label==='Add together')await expect(page.locator('.learn-help')).toContainText('third group');
+      if(age>=9&&label==='Add together')await expect(page.locator('.learn-help')).toContainText('exchange');
       const answer=Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity'));
       const wrong=await page.locator('.learn-answer').evaluateAll((buttons,answer)=>buttons.find(button=>Number(button.textContent)!==answer).textContent,answer);
       await page.getByRole('button',{name:`Answer ${wrong}`,exact:true}).click();await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
       await page.getByRole('button',{name:'Show counting steps',exact:true}).click();
-      await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(answer);
+      if(age>=9&&label!=='Count dots'){await expect(page.locator('.learn-place-strategy')).toBeVisible();await expect(page.locator('.learn-count-dot')).toHaveCount(0);}
+      else await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(answer);
       await page.getByRole('button',{name:`Answer ${answer}`,exact:true}).click();await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     }

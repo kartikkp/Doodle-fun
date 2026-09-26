@@ -32,10 +32,57 @@ function numberChoices(answer,max,profile,seed) {
   for(let difference=1;values.size<count;difference++)for(const value of [answer-difference,answer+difference])if(value>=0&&value<=max&&values.size<count)values.add(value);
   return shuffled([...values],seed);
 }
+function placeValueChoices(answer,max,profile,seed) {
+  const count=profile.choiceCount??4,values=new Set([answer]);
+  // Reserve a same-ones error before nearby answers can fill every slot. A
+  // child must check the tens/hundreds instead of solving by the last digit.
+  const placeError=shuffled([10,-10,100,-100,20,-20],seed).map(difference=>answer+difference).find(value=>value>=0&&value<=max);
+  if(count>1&&placeError!==undefined)values.add(placeError);
+  for(const difference of shuffled([10,1,100,20,2],seed))for(const value of [answer+difference,answer-difference])if(value>=0&&value<=max&&values.size<count)values.add(value);
+  return shuffled([...values],seed+1);
+}
+function expandedNumber(number) {
+  const hundreds=Math.floor(number/100)*100,tens=Math.floor(number%100/10)*10,ones=number%10;
+  return [hundreds,tens,ones].filter(Boolean).join(' + ')||'0';
+}
+function olderMath(id,profile,age,n,seed) {
+  const maxValue=age===8?99:age===9?499:999,common={id,tier:profile.tier,age,model:'place-value',maxValue};
+  if(id==='compare') {
+    const left=age===8?24+n*13%60:age===9?124+n*37%290:224+n*71%680;
+    const gap=(age===8?[1,10,21]:[1,10,100,21])[n%(age===8?3:4)];
+    const right=n%3===2?left:Math.max(0,Math.min(maxValue,left+(Math.floor(n/2)%2?-gap:gap))),direction=n%2?'fewer':'more';
+    const answer=left===right?'same':(direction==='more'?left>right:left<right)?'left':'right',difference=Math.abs(left-right);
+    return {...common,left,right,direction,answer,followup:age>=9?{answer:difference,choices:placeValueChoices(difference,maxValue,profile,seed+2)}:null,prompt:`Which number is ${direction==='more'?'greater':'smaller'}?`,intro:age>=9?'Compare the place values. Then work out the difference.':'Use tens and ones to compare the two numbers.',help:'Compare from the largest place: hundreds, then tens, then ones. Stop at the first different digit. Equal digits in every place mean equal numbers.',strategy:`A: ${expandedNumber(left)}. B: ${expandedNumber(right)}. Compare the largest place first. For the difference, subtract the smaller number from the larger number.`};
+  }
+  if(id==='number-order') {
+    const length=profile.sequenceLength??6,step=(age===8?[2,5,10]:age===9?[5,10,25]:[7,12,25,50])[n%(age===10?4:3)];
+    const spread=(length-1)*step,minimum=age===8?12:age===9?105:210,start=minimum+(n*17)%(maxValue-minimum-spread+1);
+    const sequence=Array.from({length},(_,i)=>start+i*step),direction=age>=9&&n%2===0?'down':'up';if(direction==='down')sequence.reverse();
+    return {...common,sequence,tiles:shuffled(sequence,seed),direction,step,prompt:direction==='down'?'Biggest to smallest':'Smallest to biggest',intro:`Put all the numbers in order. This path crosses ${age===8?'tens':'tens and hundreds'}.`,help:'Compare the largest place first. When those digits match, compare the next place. Look for the size of the gap between neighbors.'};
+  }
+  if(id==='subtraction') {
+    const start=age===8?42+n*7%50:age===9?132+n*31%350:412+n*43%570;
+    const removed=age===8?17+n*3%20:age===9?57+n*17%70:157+n*19%160,remaining=start-removed;
+    const ask=age===10?['removed','remaining','start'][n%3]:age===9&&n%2===1?'removed':'remaining',answer={start,removed,remaining}[ask];
+    const prompt=`${ask==='start'?'?':start} − ${ask==='removed'?'?':removed} = ${ask==='remaining'?'?':remaining}`;
+    const help=ask==='start'?'The starting amount includes what was taken away and what remains. Which operation puts those parts back together?':ask==='removed'?'Find the gap between the starting amount and the amount left. You can count up or subtract.':'Work in hundreds, tens and ones. You may need to exchange one ten for ten ones, or one hundred for ten tens. Check with addition.';
+    const strategy=ask==='start'?`Combine ${removed} (${expandedNumber(removed)}) and ${remaining} (${expandedNumber(remaining)}). Regroup when a place reaches ten.`:ask==='removed'?`Start at ${remaining} and count up to ${start}. Try a jump to the next ten, then use tens or hundreds. Add the jumps.`:`Start with ${expandedNumber(start)}. Take away ${expandedNumber(removed)}. If a place is too small, exchange from the place to its left.`;
+    return {...common,start,removed,remaining,ask,answer,choices:placeValueChoices(answer,maxValue,profile,seed),prompt,intro:ask==='start'?'Find the starting amount before some were taken away.':ask==='removed'?'Find how many were taken away.':'Use place value to find what remains.',help,strategy};
+  }
+  if(id==='number-bonds') {
+    const total=age===8?42+n*7%50:age===9?143+n*29%340:413+n*41%570;
+    const firstPart=age===8?17+n*3%20:age===9?58+n*13%70:168+n*17%160,secondPart=total-firstPart;
+    const ask=age>=9?['second','first','total'][n%3]:'second',part=ask==='first'?secondPart:firstPart,answer={first:firstPart,second:secondPart,total}[ask];
+    const prompt=`${ask==='first'?'?':firstPart} + ${ask==='second'?'?':secondPart} = ${ask==='total'?'?':total}`;
+    return {...common,total,part,firstPart,secondPart,ask,answer,choices:placeValueChoices(answer,maxValue,profile,seed),prompt,intro:ask==='total'?'Combine the parts. Regroup to find the whole.':'Find the missing part. Use the whole to check your answer.',help:ask==='total'?'Add the ones, then the tens, then the hundreds. Ten ones make a ten; ten tens make a hundred.':'A whole is made of both parts. Find the gap from the known part to the whole, then check by adding the parts.',strategy:ask==='total'?`Break the parts into place values: ${firstPart} = ${expandedNumber(firstPart)}; ${secondPart} = ${expandedNumber(secondPart)}. Combine the matching places.`:`Count up from ${part} to ${total}, using convenient tens and hundreds. Add your jumps. Or subtract ${part} from ${total}.`};
+  }
+  return null;
+}
 export function generateChallenge(id,profile,round=0) {
   const age=profile.challengeAge??profile.age??({little:3,explorer:6,maker:9}[profile.tier]||6);
   const tier=profile.tier||'explorer',max=profile.numberMax??[3,4,5,8,10,12,15,20,20][age-2],n=Math.max(0,Math.floor(round)||0),seed=n*17+age;
   const common={id,tier,age};
+  if(age>=8){const question=olderMath(id,profile,age,n,seed);if(question)return question;}
   if(id==='compare') {
     const left=(n+Math.max(1,Math.floor(max*.6)))%(max+1);
     const right=n%3===2?left:(left+1+n%Math.max(1,max-1))%(max+1),direction=age<=3||n%2===0?'more':'fewer';
@@ -134,10 +181,13 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     for(const value of question.choices||numberChoices(answer,max,profile,round+7)) {
       const choice=button(String(value),'challenge-answer',()=>{
         if(done)return;
-        if(value===answer){choice.classList.add('is-correct');complete(`${answer} — you found it! ${id==='subtraction'?`${question.start} − ${question.removed} = ${question.remaining}.`:id==='number-bonds'?`${question.part} + ${answer} = ${question.total}.`:''}`);}
+        if(value===answer){choice.classList.add('is-correct');complete(`${answer} — you found it! ${id==='subtraction'?`${question.start} − ${question.removed} = ${question.remaining}.`:id==='number-bonds'?`${question.firstPart??question.part} + ${question.secondPart??answer} = ${question.total}.`:''}`);}
         else{
           choice.classList.add('is-retry');
-          if(id==='subtraction') {
+          if(question.model==='place-value') {
+            const check=id==='subtraction'?question.ask==='start'?`${value} − ${question.removed} = ${value-question.removed}; we need ${question.remaining}.`:question.ask==='removed'?`${question.start} − ${value} = ${question.start-value}; we need ${question.remaining}.`:`${value} + ${question.removed} = ${value+question.removed}; we need ${question.start}.`:question.ask==='total'?`${value} − ${question.firstPart} = ${value-question.firstPart}; the other part is ${question.secondPart}.`:`${question.part} + ${value} = ${question.part+value}; the whole is ${question.total}.`;
+            message(`You chose ${value}. Check: ${check} Try a place-value strategy if you need a hand.`);
+          } else if(id==='subtraction') {
             const dots=[...container.querySelectorAll('.challenge-berries .challenge-dot')].filter(dot=>dot.classList.contains('is-crossed')===(question.ask==='removed'));
             dots.forEach((dot,i)=>{dot.textContent=String(i+1);dot.classList.add('is-numbered');});
             message(`You chose ${value}. ${question.ask==='removed'?'Count the crossed-out berries; those are the ones taken away.':'Skip the crossed-out berries. Count only the berries still at the picnic.'} I numbered them to help you check.`);
@@ -151,35 +201,42 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     }
     play.append(choices);
   }
+  function renderStrategy(play) {
+    const support=el('div','challenge-place-support',question.strategy);support.hidden=true;support.dataset.testid='place-value-strategy';
+    const toggle=button('Show a place-value strategy','button challenge-hint-button',()=>{support.hidden=!support.hidden;toggle.textContent=support.hidden?'Show a place-value strategy':'Hide the strategy';toggle.setAttribute('aria-expanded',String(!support.hidden));});toggle.setAttribute('aria-expanded','false');
+    play.append(toggle,support);
+  }
   function renderCompare(play) {
+    const older=question.model==='place-value';
     const groups=el('div','challenge-compare-groups');
     for(const [label,value,tone]of [['A',question.left,'purple'],['B',question.right,'green']]) {
-      const group=el('div',`challenge-quantity is-${tone}`);group.append(el('span','challenge-group-name',`Group ${label}`),visualDots(value),el('strong','challenge-quantity-number',String(value)));groups.append(group);
+      const group=el('div',`challenge-quantity is-${tone}`);group.append(el('span','challenge-group-name',`${older?'Number':'Group'} ${label}`));if(!older)group.append(visualDots(value));group.append(el('strong','challenge-quantity-number',String(value)));groups.append(group);
     }
     play.append(groups);
     const model=el('div','challenge-comparison-model');model.hidden=true;
     const paired=Math.min(question.left,question.right),difference=Math.abs(question.left-question.right);
-    for(let i=0;i<Math.max(question.left,question.right);i++) {
+    for(let i=0;!older&&i<Math.max(question.left,question.right);i++) {
       const row=el('div','challenge-pair-row');row.append(el('span','',i<question.left?'●':''),el('span','',i<question.right?'●':''));model.append(row);
     }
-    model.append(el('p','challenge-picture-caption',difference?`${paired} pairs. Group ${question.left>question.right?'A':'B'} has ${difference} extra ${difference===1?'dot':'dots'}.`:'Every dot has a partner. Both groups have the same amount.'));play.append(model);
-    const reveal=()=>{model.hidden=false;message(difference?`Pair the dots. Group ${question.left>question.right?'A':'B'} has ${difference} left over, so it has more. The other group has fewer.`:'Each dot in A has a partner in B. Nothing is left over, so choose Same amount.');};
-    play.append(button('Line up the dots','button challenge-hint-button',reveal));
+    model.append(el('p','challenge-picture-caption',older?question.strategy:difference?`${paired} pairs. Group ${question.left>question.right?'A':'B'} has ${difference} extra ${difference===1?'dot':'dots'}.`:'Every dot has a partner. Both groups have the same amount.'));play.append(model);
+    const reveal=()=>{model.hidden=false;message(older?question.help:difference?`Pair the dots. Group ${question.left>question.right?'A':'B'} has ${difference} left over, so it has more. The other group has fewer.`:'Each dot in A has a partner in B. Nothing is left over, so choose Same amount.');};
+    play.append(button(older?'Compare place values':'Line up the dots','button challenge-hint-button',reveal));
     const answers=el('div','challenge-compare-answers');
     const comparisonComplete=value=>{
-      const explanation=question.answer==='same'?`${question.left} and ${question.right} are the same amount!`:`Group ${value==='left'?'A':'B'} has ${question.direction}.`;
+      const explanation=question.answer==='same'?`${question.left} and ${question.right} are the same amount!`:older?`Number ${value==='left'?'A':'B'} is ${question.direction==='more'?'greater':'smaller'}.`:`Group ${value==='left'?'A':'B'} has ${question.direction}.`;
       if(!question.followup){complete(explanation);return;}
       answers.querySelectorAll('button').forEach(button=>button.disabled=true);
-      const followup=el('div','challenge-difference');followup.append(el('h3','','How many extra dots are left over?'));
-      const choices=el('div','challenge-answers');for(const amount of question.followup.choices){const choice=button(String(amount),'challenge-answer',()=>{if(done)return;if(amount===question.followup.answer){choice.classList.add('is-correct');complete(`${explanation} The difference is ${amount}: ${Math.max(question.left,question.right)} − ${Math.min(question.left,question.right)} = ${amount}.`);}else{reveal();message(`Pair each dot first. Then count only the dots without a partner to find the difference.`);}});choice.dataset.followAnswer=String(amount);choice.setAttribute('aria-label',`Difference ${amount}`);choices.append(choice);}followup.append(choices);play.append(followup);message(explanation+' One more step: find how many extra dots there are.');
+      const followup=el('div','challenge-difference');followup.append(el('h3','',older?'What is the difference?':'How many extra dots are left over?'));
+      const choices=el('div','challenge-answers');for(const amount of question.followup.choices){const choice=button(String(amount),'challenge-answer',()=>{if(done)return;if(amount===question.followup.answer){choice.classList.add('is-correct');complete(`${explanation} The difference is ${amount}: ${Math.max(question.left,question.right)} − ${Math.min(question.left,question.right)} = ${amount}.`);}else{reveal();message(older?'Subtract the smaller number from the larger. Try counting up in tens and ones to check the gap.':'Pair each dot first. Then count only the dots without a partner to find the difference.');}});choice.dataset.followAnswer=String(amount);choice.setAttribute('aria-label',`Difference ${amount}`);choices.append(choice);}followup.append(choices);play.append(followup);message(explanation+(older?' One more step: find the difference.':' One more step: find how many extra dots there are.'));
     };
-    for(const [value,label]of [['left','← Group A'],['same','= Same amount'],['right','Group B →']]) {
+    for(const [value,label]of [['left',older?'← Number A':'← Group A'],['same','= Same amount'],['right',older?'Number B →':'Group B →']]) {
       const choice=button(label,'button challenge-compare-choice',()=>{if(done)return;if(value===question.answer){choice.classList.add('is-correct');comparisonComplete(value);}else reveal();});choice.dataset.answer=value;answers.append(choice);
     }
     play.append(answers);
   }
   function renderSequence(play) {
     const slots=el('div','challenge-slots');slots.setAttribute('aria-label','Your number path');
+    if(question.model==='place-value')slots.classList.add('challenge-number-slots');
     question.sequence.forEach((number,i)=>{const slot=el('span','challenge-slot',profile.tier==='little'?String(number):'·');slot.dataset.slot=String(i);slots.append(slot);});play.append(slots);
     const direction=question.direction==='down'?'biggest':'smallest';
     const hint=el('p','challenge-action-hint',profile.tier==='little'?`First find ${question.sequence[0]}.`:`Choose the ${direction} number first.`);play.append(hint);
@@ -193,9 +250,19 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     });tile.dataset.tile=String(value);tile.setAttribute('aria-label',`Number ${value}`);tiles.append(tile);}play.append(tiles);
   }
   function renderSubtraction(play) {
+    if(question.model==='place-value') {
+      const parts=el('div','challenge-calculation-parts');
+      for(const [key,label]of [['start','START'],['removed','TAKE AWAY'],['remaining','LEFT']]){const part=el('div',`challenge-calculation-part${question.ask===key?' is-missing':''}`);part.append(el('span','',label),el('strong','',question.ask===key?'?':String(question[key])));parts.append(part);}
+      play.append(parts);renderStrategy(play);numericAnswers(play,question.answer,question.maxValue);return;
+    }
     const picture=el('div','challenge-picnic');picture.append(visualDots(question.start,{crossed:question.removed,berries:true}),el('p','challenge-picture-caption',question.ask==='removed'?`We started with ${question.start}. ${question.remaining} are left. Find how many went away.`:`${question.removed} ${question.removed===1?'berry':'berries'} taken away`));play.append(picture,button('Show what to count','button challenge-hint-button',hint));numericAnswers(play,question.answer);
   }
   function renderBonds(play) {
+    if(question.model==='place-value') {
+      const whole=el('div','challenge-whole');whole.append(el('span','','WHOLE'),el('strong','',question.ask==='total'?'?':String(question.total)));play.append(whole);
+      const parts=el('div','challenge-bond-parts');for(const [index,key]of ['first','second'].entries()){if(index)parts.append(el('span','challenge-plus','+'));const part=el('div',`challenge-bond-part${question.ask===key?' is-missing':''}`);part.append(el('span','','PART'),el('strong','',question.ask===key?'?':String(question[`${key}Part`])));parts.append(part);}play.append(parts);
+      renderStrategy(play);numericAnswers(play,question.answer,question.maxValue);return;
+    }
     const whole=el('div','challenge-whole');whole.append(el('span','','ALTOGETHER'),el('strong','',String(question.total)));play.append(whole);
     const parts=el('div','challenge-bond-parts'),known=el('div','challenge-bond-part'),missing=el('div','challenge-bond-part is-missing');
     known.append(el('strong','',String(question.part)),visualDots(question.part));missing.append(el('strong','','?'),el('span','','Find this part'));parts.append(known,el('span','challenge-plus','+'),missing);play.append(parts);
@@ -253,7 +320,9 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
   function close(){opened=false;stopSpeech();}
   function hint() {
     if(!opened||done)return;
-    if(id==='subtraction') {
+    if(question.model==='place-value'&&['subtraction','number-bonds'].includes(id)) {
+      const support=container.querySelector('.challenge-place-support');if(support.hidden)container.querySelector('.challenge-hint-button').click();message(question.help);
+    }else if(id==='subtraction') {
       const dots=[...container.querySelectorAll('.challenge-berries .challenge-dot')].filter(dot=>dot.classList.contains('is-crossed')===(question.ask==='removed'));
       dots.forEach((dot,i)=>{dot.textContent=String(i+1);dot.classList.add('is-numbered');});message(question.help+' The dots to count now have number labels.');
     }else if(id==='ten-frame') {
@@ -263,7 +332,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     }else if(id==='number-bonds') {
       const support=container.querySelector('.challenge-bond-support');support.hidden=false;showHelp=true;const button=container.querySelector('.challenge-hint-button');button.textContent='Hide the picture hint';button.setAttribute('aria-expanded','true');message(question.help+' The empty dots show the missing part.');
     }else {
-      const label={compare:'Line up the dots','number-order':'Show my next step','letter-match':'Show partners','word-build':'Show next letter'}[id];
+      const label={compare:question.model==='place-value'?'Compare place values':'Line up the dots','number-order':'Show my next step','letter-match':'Show partners','word-build':'Show next letter'}[id];
       [...container.querySelectorAll('button')].find(button=>button.textContent===label)?.click();
     }
   }
