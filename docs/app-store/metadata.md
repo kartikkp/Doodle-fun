@@ -1,6 +1,6 @@
 # Doodle Fun — App Store Connect and TestFlight worksheet
 
-Updated September 26, 2026. **The current target is TestFlight, not App Review or public release.** Individual membership is active, App Store Connect access is confirmed, and its Terms of Service were accepted with the owner's explicit approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) has been created. A signed Release archive for 2.1.0 (1) was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Exported signing and provisioning passed verification. Upload succeeded on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. Recipient confirmation, tester access and physical testing remain pending; no invitations have been sent. The store copy below is prepared for a later public listing; unentered fields remain marked as such.
+Updated September 26, 2026. **The current target is TestFlight, not a public App Store submission or release.** Individual membership is active, App Store Connect access is confirmed, and its Terms of Service were accepted with the owner's explicit approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) has been created. A signed Release archive for 2.1.0 (1) was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Exported signing and provisioning passed verification. Upload succeeded on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. The authorized internal tester is Invited. The external group's beta-review submission succeeded and is Waiting for Review; automatic notification is enabled. External approval and physical testing remain pending. The store copy below is prepared for a later public listing; unentered fields remain marked as such.
 
 ## Listing settings
 
@@ -11,10 +11,11 @@ Updated September 26, 2026. **The current target is TestFlight, not App Review o
 | App name | Doodle Fun: Draw & Discover | Created in App Store Connect; 27 characters |
 | Apple ID / SKU | `6816519633` / `doodlefun-ios` | Created in the active account |
 | Bundle identifier | `com.minoli.DoodleFun` | Matches the app record and current archive |
-| Immediate target | TestFlight | Upload and processing complete; build assigned internally; recipient and physical checks pending |
-| TestFlight build | 2.1.0 (1), `d1297f42-0e32-43a6-87cc-a3e7c358629f` | Build Uploads: Complete; build status: Ready to Submit before tester access, not an App Review submission |
+| Immediate target | TestFlight | Upload/processing and group assignments complete; internal tester invited; external beta review and physical checks pending |
+| TestFlight build | 2.1.0 (1), `d1297f42-0e32-43a6-87cc-a3e7c358629f` | Build Uploads: Complete; external TestFlight beta-review status: Waiting for Review |
 | TestFlight information | Description, feedback contact, marketing/privacy URLs, private review contact and notes; no sign-in | Saved and verified in App Store Connect |
-| Internal testing group | Doodle Fun Internal | Build 2.1.0 (1) assigned; automatic distribution off; group verifies 0 testers and 1 build; recipient confirmation pending, no invitations sent |
+| Internal testing group | Doodle Fun Internal | 1 tester / 1 build; authorized tester Invited; build 2.1.0 (1) assigned; automatic distribution off |
+| External testing group | Doodle Fun Beta | 1 tester / 1 build; authorized tester added, no public link; build 2.1.0 (1) submitted for beta review and Waiting for Review; automatic notification on approval enabled |
 | What to Test | Four sound games; ages, modes and coaching; drawing; offline behavior and layout | Saved on the processed build |
 | Subtitle | Create, explore & listen | 24 characters |
 | Primary category | Education | Selected; not entered in App Store Connect |
@@ -173,7 +174,7 @@ The app is designed for touch in portrait and landscape on iPhone and iPad. Savi
 
 ## Owner and account handoff
 
-The app record and account access below are verified; unknown legal and questionnaire values must not be guessed. TestFlight upload and Apple processing are complete; internal build assignment is verified, with recipient confirmation pending. PR #6 and audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) are merged; PR #7 merged as `97cd87f`. Source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`.
+The app record and account access below are verified; unknown legal and questionnaire values must not be guessed. TestFlight upload and Apple processing are complete. Both groups have the build assigned; the internal tester is Invited and the external beta submission is Waiting for Review. Tester emails remain outside repository documentation. PR #6 and audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) are merged; PR #7 merged as `97cd87f`. Source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`.
 
 | Field / action | Required owner input or verification |
 | --- | --- |
@@ -184,14 +185,14 @@ The app record and account access below are verified; unknown legal and question
 | Review contact | Supplied and stored separately from the repository; TestFlight review contact saved and verified. Keep private values out of public documentation and recheck them for any later App Review submission. |
 | App record / Apple ID / SKU | Created: [Doodle Fun: Draw & Discover](https://appstoreconnect.apple.com/apps/6816519633/distribution), Apple ID `6816519633`, SKU `doodlefun-ios`, English (U.S.), iOS. |
 | Bundle ID and signing | Record/export identifier is `com.minoli.DoodleFun`. Export re-signed with its App Store distribution profile: `LocalProvision=false`, no provisioned devices and `get-task-allow=false`. Code-signature verification passed; the cached archive profile is no longer a blocker. |
-| Version/build and selected archive | Release 2.1.0 (1) built and payload audited with Xcode 27 (27A266a), runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`. App Store distribution export and signature verification passed. Upload succeeded at September 26 21:15:20 UTC with exit code 0; Apple processing is Complete; build UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f` is assigned to Doodle Fun Internal. Tester access remains pending. |
+| Version/build and selected archive | Release 2.1.0 (1) built and payload audited with Xcode 27 (27A266a), runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`. App Store distribution export and signature verification passed. Upload succeeded at September 26 21:15:20 UTC with exit code 0; Apple processing is Complete; build UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f` is assigned to Doodle Fun Internal and Doodle Fun Beta. The internal tester is Invited; external access awaits beta-review approval. |
 | App name availability | Name accepted when creating the current app record; no public listing or release is established. |
 | Kids category and age band | Enter the selected Made for Kids, ages 6–8 positioning; verify the final parental gates and Kids-category requirements before submission. |
 | Privacy and content rights | Confirm the questionnaire against the final build and actual collection practices; confirm rights to all app content and store assets. |
 | Price and territory | Enter the selected free price, no IAP, and U.S.-only availability. Broader distribution requires a separate owner review of regional account/compliance fields. |
 | Live policy/support pages | Both returned HTTP 200 on September 26 and exactly matched local source. The earlier stale-page preflight is historical; keep the published policy and offline release policy synchronized. |
 | Screenshots / preview | Ten native PNGs remain usable for the unchanged pictured UI: five 1320×2868 iPhone and five 2064×2752 iPad images, hashes matching their manifests. Their actual capture runtime remains `0f22199625622369`; do not rewrite provenance. Store screenshots and an optional preview concern the later public listing. |
-| Current testing / later release | Confirm the intended internal tester, enable access to the assigned build, then complete physical checks. App Review and public release are outside the current target; retain the selected manual-release setting for a later store submission. |
+| Current testing / later release | Internal tester accepts the invitation; external tester notification is automatic after beta-review approval. Complete physical checks when installed. Public App Store submission/release remains outside the current target; retain the selected manual-release setting for a later store submission. |
 
 The public support page offers the owner's supplied email address. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements. The separate private review contact has been saved and verified in TestFlight information; later App Review fields remain a separate check. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
 

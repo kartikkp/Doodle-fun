@@ -1,6 +1,6 @@
 # Doodle Fun — release checklist
 
-September 26, 2026. **Current target: TestFlight.** Individual membership and App Store Connect access are active; Terms of Service were accepted with explicit owner approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) exists. A signed Release archive was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Upload succeeded September 26 at 21:15:20 UTC; Apple processing is Complete and build 2.1.0 (1) is assigned to Doodle Fun Internal. Recipient confirmation, tester access and physical checks are pending; no invitations have been sent. The owner has not checked the latest audio build. See the [audio follow-up](../iphone-audio-fix.md), [metadata worksheet](metadata.md), and [QA report](../consolidated-listening-qa.md).
+September 26, 2026. **Current target: TestFlight.** Individual membership and App Store Connect access are active; Terms of Service were accepted with explicit owner approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) exists. A signed Release archive was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Upload succeeded September 26 at 21:15:20 UTC; Apple processing is Complete and build 2.1.0 (1) is assigned to Doodle Fun Internal. The authorized internal tester is Invited. Doodle Fun Beta has the authorized external tester and build assigned; its beta submission is Waiting for Review with automatic notification enabled. External approval and physical checks remain pending. The owner has not checked the latest audio build. See the [audio follow-up](../iphone-audio-fix.md), [metadata worksheet](metadata.md), and [QA report](../consolidated-listening-qa.md).
 
 ## Selected launch settings
 
@@ -50,11 +50,13 @@ Record device, OS version, app version/build, result, and any defect. Use the in
 - [x] Export Release 2.1.0 (1) for App Store distribution. Verify the re-signed export: profile for `com.minoli.DoodleFun`, `LocalProvision=false`, no provisioned devices, `get-task-allow=false`, and valid code signature. The cached archive profile no longer blocks distribution.
 - [x] Upload the verified export: exit code 0, “Upload succeeded” and “Uploaded DoodleFun” at September 26 21:15:20 UTC. Apple has subsequently completed processing.
 - [x] Save and verify TestFlight description, feedback contact, marketing/privacy URLs, private review contact and notes; no sign-in is required.
-- [x] Confirm processing: Build Uploads shows **Complete** for 2.1.0 (1), UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f`. Its TestFlight status is Ready to Submit before tester access; this is not an App Review submission.
+- [x] Confirm processing: Build Uploads shows **Complete** for 2.1.0 (1), UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f`. The external TestFlight submission is now Waiting for Review; this beta review is separate from public App Store review.
 - [x] Save What to Test: all four sound games, ages/modes/coaching, drawing, offline behavior and layout.
-- [x] Create **Doodle Fun Internal** with automatic distribution off and assign build 2.1.0 (1). Group detail verifies **0 testers and 1 build**.
-- [ ] Confirm the intended recipient and add the appropriate internal tester. No invitations have been sent.
-- [ ] Make the processed build available to the intended testers and install through TestFlight on physical iPhone/iPad. Complete the checks above, especially audible sound and interruption recovery.
+- [x] Create **Doodle Fun Internal** with automatic distribution off and assign build 2.1.0 (1). Group detail verifies **1 tester and 1 build**; the explicitly authorized internal tester is **Invited**.
+- [x] Create **Doodle Fun Beta**, add the explicitly authorized external tester and assign build 2.1.0 (1). Group detail verifies **1 tester and 1 build**; no public link was created.
+- [x] Submit the external build for TestFlight beta review with sign-in required unchecked and Automatically notify testers checked. Submission succeeded; status is **Waiting for Review**.
+- [ ] Await beta-review approval and automatic external notification; confirm tester installation. Keep personal tester email addresses out of repository documents.
+- [ ] Install through TestFlight on physical iPhone/iPad and complete the checks above, especially audible sound and interruption recovery. No fresh physical QA is established by sending an invitation.
 
 ## Later App Store submission — outside the current target
 - [ ] Enter the selected price, territory, Education/Kids settings, and manual release option. Review the lasting Kids-category commitment in the metadata worksheet.
@@ -64,4 +66,4 @@ Record device, OS version, app version/build, result, and any defect. Use the in
 - [ ] Select the verified build and submit the completed listing to App Review. Address any review questions or required fixes.
 - [ ] After approval, release manually when the owner is ready to launch.
 
-The app record exists and distribution export is verified. Upload, processing and internal build assignment are complete. Recipient confirmation, tester access and physical TestFlight checks remain pending. Nothing has been submitted to App Review or released publicly.
+The app record exists and distribution export is verified. Upload, processing, both group assignments, the internal invitation and external TestFlight beta-review submission are complete. External approval and physical checks remain pending. No public App Store submission or release has occurred.
