@@ -91,26 +91,21 @@ function safeProgress() {
 }
 export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}={}) {
   let id=null,profile=null,question=null,round=0,epoch=0,heard=false,busy=false,previewBusy=false,complete=false,model=false,sequence=[],taps=[],activePulse=-1;
-  const savedAudio=readStore('listening-audio-v1',{});
-  const audioPreferences=savedAudio&&typeof savedAudio==='object'&&!Array.isArray(savedAudio)?savedAudio:{};
-  let feedback='Tap Listen when you are ready.',helpText='',soundOn=audioPreferences.enabled!==false;
-  let volume=Math.max(.15,Math.min(.8,Number(audioPreferences.volume)||.55));
+  let feedback='Tap Listen when you are ready.',helpText='';
   const progress=safeProgress();
-  const engine=createSoundEngine({onInterrupt:()=>{if(id)suspendAudio();}});engine.setVolume(volume);
-  function settingsAudio(){writeStore('listening-audio-v1',{enabled:soundOn,volume});}
+  const engine=createSoundEngine({onInterrupt:()=>{if(id)suspendAudio();}});
   function cancel(){epoch++;engine.stop();busy=false;previewBusy=false;activePulse=-1;}
   function reset(message='Tap Listen when you are ready.') {cancel();heard=false;complete=false;sequence=[];taps=[];feedback=message;}
   function suspendAudio(){if(!id)return;cancel();engine.suspend();if(!complete){heard=false;sequence=[];taps=[];feedback='Sound paused. Tap Listen when you are ready to continue.';}render();}
   function failAudio(reason){heard=false;busy=false;previewBusy=false;sequence=[];taps=[];feedback=reason||'Sound paused. Tap Listen to try again.';render();}
   function win() {
-    if(complete||!heard||!soundOn)return;
+    if(complete||!heard)return;
     complete=true;feedback=id==='beat-studio'?(profile.countOnly?'You matched every drum tap!':'You copied the short and long spaces!'):id==='melody-echo'?'You played the whole melody in order!':'You listened and found the sound!';
     const key=`${id}:${profile.age}:${round}`;
     if(!progress.stars[key]){progress.stars[key]=true;writeStore('listening-progress-v1',progress);onProgress({source:'listening',completedCount:Object.keys(progress.stars).length});}
     render();
   }
   function listen() {
-    if(!soundOn){feedback='Turn game sound on, then tap Listen.';render();return;}
     stopSpeaking();
     reset();const token=epoch;busy=true;feedback='Listening…';render();
     engine.play(question.events,{onEvent:index=>{if(token!==epoch)return;activePulse=index;paintPulse();}}).then(result=>{
@@ -121,7 +116,6 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   }
   function paintPulse(){container.querySelectorAll('[data-listening-pulse]').forEach((node,i)=>node.classList.toggle('is-active',busy&&i===activePulse));}
   function preview(event,after=()=>{}) {
-    if(!soundOn){feedback='Turn game sound on to explore the sounds.';render();return;}
     if(busy||complete)return;
     stopSpeaking();
     const token=epoch;previewBusy=true;render();
@@ -132,7 +126,7 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     });
   }
   function choose(value) {
-    if(!heard||busy||previewBusy||complete||!soundOn)return;
+    if(!heard||busy||previewBusy||complete)return;
     if(value===question.answer){win();return;}
     feedback=id==='pitch-path'?'Try listening again. Follow each sound up or down with your hand.':'Try comparing the sounds again. Use Hear on a choice before choosing it.';render();
   }
@@ -146,13 +140,13 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     });
   }
   function drumTap() {
-    if(!heard||busy||complete||!soundOn)return;
+    if(!heard||busy||complete)return;
     const time=performance.now();if(taps.length&&time-taps.at(-1)<95)return;
     if(taps.length>=question.times.length+2){feedback='Try again to start a fresh beat.';render();return;}
     taps.push(time);feedback=`${taps.length} drum ${taps.length===1?'tap':'taps'}. Check when you are finished.`;
-    preview({kind:'drum',duration:.13});render();
+    preview({kind:'drum',duration:.16});render();
   }
-  function checkBeat(){if(!heard||busy||previewBusy||complete||!soundOn)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
+  function checkBeat(){if(!heard||busy||previewBusy||complete)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
   function hint(){if(!id)return;cancel();model=true;helpText=question.help;feedback=heard?'The hint is here. Replay whenever you want.':'The hint is here. Tap Listen to hear it before your turn.';render();}
   function next(){round=(round+1)%10000;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();}
 
@@ -174,25 +168,25 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
       const choices=el('div','listening-sound-choices');
       question.choices.forEach(kind=>{
         const card=el('div','listening-sound-card');card.append(el('span','listening-instrument',TIMBRES[kind].symbol),el('strong','',TIMBRES[kind].name));
-        const hear=btn(`Hear ${TIMBRES[kind].name}`,()=>preview({kind,duration:.30}));hear.dataset.listeningPreview=kind;hear.disabled=busy||previewBusy||complete||!soundOn;
-        const chooseButton=btn(`Choose ${TIMBRES[kind].name}`,()=>choose(kind),'listening-choice');chooseButton.dataset.listeningAnswer=kind;chooseButton.disabled=!heard||busy||previewBusy||complete||!soundOn;
+        const hear=btn(`Hear ${TIMBRES[kind].name}`,()=>preview({kind,duration:.30}));hear.dataset.listeningPreview=kind;hear.disabled=busy||previewBusy||complete;
+        const chooseButton=btn(`Choose ${TIMBRES[kind].name}`,()=>choose(kind),'listening-choice');chooseButton.dataset.listeningAnswer=kind;chooseButton.disabled=!heard||busy||previewBusy||complete;
         card.append(hear,chooseButton);choices.append(card);
       });parent.append(choices);
     } else if(id==='pitch-path') {
       const choices=el('div','listening-path-choices');question.choices.forEach(value=>{
-        const choice=btn('',()=>choose(value),'listening-path');choice.append(el('span','listening-path-icon',CONTOURS[value].symbol),el('span','',CONTOURS[value].label));choice.dataset.listeningAnswer=value;choice.disabled=!heard||busy||complete||!soundOn;choices.append(choice);
+        const choice=btn('',()=>choose(value),'listening-path');choice.append(el('span','listening-path-icon',CONTOURS[value].symbol),el('span','',CONTOURS[value].label));choice.dataset.listeningAnswer=value;choice.disabled=!heard||busy||complete;choices.append(choice);
       });parent.append(choices);
     } else if(id==='melody-echo') {
       const slots=el('div','listening-echo-slots');slots.setAttribute('aria-label',`${sequence.length} of ${question.sequence.length} tones played`);
       question.sequence.forEach((_,i)=>slots.append(el('span',`listening-echo-slot ${i<sequence.length?'is-filled':''}`,i<sequence.length?PAD_SYMBOLS[sequence[i]]:'·')));parent.append(slots);
       const pads=el('div','listening-pads');question.frequencies.forEach((_,pad)=>{
-        const button=btn('',()=>melodyPad(pad),'listening-pad');button.setAttribute('aria-label',`Tone ${pad+1}`);button.dataset.listeningPad=pad;button.style.setProperty('--pad-color',PAD_COLORS[pad]);button.append(el('span','',PAD_SYMBOLS[pad]),el('small','',`Tone ${pad+1}`));button.disabled=busy||previewBusy||complete||!soundOn;pads.append(button);
+        const button=btn('',()=>melodyPad(pad),'listening-pad');button.setAttribute('aria-label',`Tone ${pad+1}`);button.dataset.listeningPad=pad;button.style.setProperty('--pad-color',PAD_COLORS[pad]);button.append(el('span','',PAD_SYMBOLS[pad]),el('small','',`Tone ${pad+1}`));button.disabled=busy||previewBusy||complete;pads.append(button);
       });parent.append(pads);
     } else {
-      const drum=btn('',event=>{if(event.detail===0)drumTap();},'listening-drum');drum.setAttribute('aria-label','Tap drum');drum.dataset.listeningDrum='';drum.append(el('span','','●'),el('strong','','Tap drum'));drum.disabled=!heard||busy||complete||!soundOn;
+      const drum=btn('',event=>{if(event.detail===0)drumTap();},'listening-drum');drum.setAttribute('aria-label','Tap drum');drum.dataset.listeningDrum='';drum.append(el('span','','●'),el('strong','','Tap drum'));drum.disabled=!heard||busy||complete;
       drum.addEventListener('pointerdown',event=>{if(event.isPrimary!==false&&event.button===0){event.preventDefault();drumTap();}});
       const beats=el('div','listening-taps',`${taps.length} ${taps.length===1?'tap':'taps'}`);beats.dataset.listeningTapCount='';
-      const check=btn('Check my beat',checkBeat,'listening-primary');check.dataset.listeningCheck='';check.disabled=!heard||busy||previewBusy||complete||!soundOn;parent.append(drum,beats,check);
+      const check=btn('Check my beat',checkBeat,'listening-primary');check.dataset.listeningCheck='';check.disabled=!heard||busy||previewBusy||complete;parent.append(drum,beats,check);
     }
   }
   function render() {
@@ -201,23 +195,20 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     const header=el('header','activity-header listening-header'),back=btn('←',onBack);back.setAttribute('aria-label','Back to activities');
     const heading=el('div','listening-heading');heading.append(el('p','listening-eyebrow',LISTENING_INFO[id].skill),el('h1','',LISTENING_INFO[id].title));header.append(back,heading);screen.append(header);
     const body=el('div','listening-body'),main=el('div','listening-main'),side=el('aside','listening-side');
-    const audioControls=el('div','listening-audio-controls');
-    const toggle=btn(`Game sound ${soundOn?'on':'off'}`,()=>{soundOn=!soundOn;settingsAudio();suspendAudio();feedback=soundOn?'Game sound is on. Tap Listen.':'Game sound is off. Turn it on when you want to listen.';render();});toggle.dataset.listeningSound='';toggle.setAttribute('aria-pressed',String(soundOn));audioControls.append(toggle);
-    const volumeLabel=el('label','listening-volume','Game volume'),slider=el('input');slider.type='range';slider.min='.15';slider.max='.8';slider.step='.05';slider.value=String(volume);slider.setAttribute('aria-label','Game volume');slider.addEventListener('input',()=>{volume=Number(slider.value);engine.setVolume(volume);settingsAudio();});volumeLabel.append(slider);audioControls.append(volumeLabel);main.append(audioControls);
     main.append(el('p','listening-age',`Age ${profile.age} · Your pace`),el('h2','listening-prompt',question.prompt),el('p','listening-intro',question.intro));
-    const listenButton=btn(busy?'Listening…':previewBusy?'Hearing a sound…':'Listen',listen,'listening-listen listening-primary');listenButton.dataset.listeningListen='';listenButton.disabled=busy||previewBusy||!soundOn;main.append(listenButton);
+    const listenButton=btn(busy?'Listening…':previewBusy?'Hearing a sound…':'Listen',listen,'listening-listen listening-primary');listenButton.dataset.listeningListen='';listenButton.disabled=busy||previewBusy;main.append(listenButton);
     const pulses=el('div','listening-pulses');pulses.setAttribute('aria-hidden','true');question.events.forEach((_,i)=>{const pulse=el('span',`listening-pulse ${i===activePulse?'is-active':''}`);pulse.dataset.listeningPulse='';pulses.append(pulse);});main.append(pulses);
     const status=el('p',`listening-feedback ${complete?'is-complete':''}`,feedback);status.dataset.testid='listening-feedback';status.setAttribute('role','status');status.setAttribute('aria-live','polite');main.append(status);renderModel(main);renderPlay(main);
     const actions=el('div','listening-actions');actions.append(btn('Try again',()=>{reset();render();}),btn('New round',next));main.append(actions);
     side.append(el('div','listening-side-icon',LISTENING_INFO[id].symbol),el('h2','','A little listening help'),el('p','',helpText||'Listen as often as you like. Explore each sound, then have a go. There is no timer.'));
-    const hintButton=btn('Show a hint',hint);hintButton.dataset.listeningHint='';side.append(hintButton,el('p','listening-small',profile.age<=3?'Explore together with a grown-up. Picture help is welcome; reading alone is not needed.':'Need a different challenge? Your Coach can make this activity easier or harder.'),el('p','listening-small','Game sound is separate from Read aloud. Nothing records your voice.'));
+    const hintButton=btn('Show a hint',hint);hintButton.dataset.listeningHint='';side.append(hintButton,el('p','listening-small',profile.age<=3?'Explore together with a grown-up. Picture help is welcome; reading alone is not needed.':'Need a different challenge? Your Coach can make this activity easier or harder.'),el('p','listening-small','Use your device’s volume buttons for game sounds. Read aloud only controls spoken help. Nothing records your voice.'));
     body.append(main,side);screen.append(body);container.replaceChildren(screen);
   }
   const onVisibility=()=>{if(document.hidden)suspendAudio();};document.addEventListener('visibilitychange',onVisibility);globalThis.addEventListener?.('pagehide',suspendAudio);
   // A rapid native app transition may leave WKWebView's document visible.
   // The shell also delivers this pause on return if background JS was deferred.
   globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
-  return {open(nextId='sound-match') {cancel();const saved=readStore('listening-audio-v1',{});soundOn=saved?.enabled!==false;volume=Math.max(.15,Math.min(.8,Number(saved?.volume)||.55));engine.setVolume(volume);id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
+  return {open(nextId='sound-match') {cancel();id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
     close(){cancel();engine.suspend();id=null;container.replaceChildren();},
     settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age){profile=nextProfile;round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,suspendAudio};
 }

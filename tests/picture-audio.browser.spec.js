@@ -39,10 +39,12 @@ test.afterEach(async({page},info)=>{
   if(rows.length)await info.attach('picture-audio-signal.json',{body:JSON.stringify(rows,null,2),contentType:'application/json'});
 });
 
-async function start(page,{soundOn=true,age=8}={}) {
-  await page.addInitScript(({soundOn,age})=>{
+async function start(page,{legacyAudio={enabled:true,volume:.55},age=8}={}) {
+  await page.addInitScript(({legacyAudio,age})=>{
     localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age,level:'auto',sound:false}));
-    localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify({enabled:soundOn,volume:.55}));
+    localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify(legacyAudio));
+    const getItem=Storage.prototype.getItem;window.__legacyAudioReads=0;
+    Storage.prototype.getItem=function(key){if(key==='doodle-fun:v2:listening-audio-v1')window.__legacyAudioReads++;return getItem.call(this,key);};
     localStorage.removeItem('doodle-fun:v2:adventures-progress-v1');
     window.__pictureAudio=[];
     const Native=window.AudioContext||window.webkitAudioContext;if(!Native)return;
@@ -63,7 +65,7 @@ async function start(page,{soundOn=true,age=8}={}) {
     }
     ObservedAudio.prototype=Native.prototype;Object.setPrototypeOf(ObservedAudio,Native);
     window.AudioContext=ObservedAudio;if(window.webkitAudioContext)window.webkitAudioContext=ObservedAudio;
-  },{soundOn,age});
+  },{legacyAudio,age});
   // A new document runs instrumentation even after the output capability probe.
   await page.goto(`/?picture-audio-qa=${age}#rhythm`);
   await expect(page.locator('.adventure-listen')).toBeVisible();
@@ -108,11 +110,10 @@ test('live Listen to pattern plays sound without answering or earning visual pro
   expect(JSON.parse(await progress(page)).rhythm).toBe(1);
 });
 
-for(const action of ['stop','mute','coach','route','native inactivity'])test(`live pattern cancellation through ${action} cannot play late or award stale progress`,async({page})=>{
+for(const action of ['stop','coach','route','native inactivity'])test(`live pattern cancellation through ${action} cannot play late or award stale progress`,async({page})=>{
   const sequence=await start(page);await page.locator('.adventure-listen').tap();await heard(page);
   const count=await page.evaluate(()=>window.__pictureAudio.length);
   if(action==='stop')await page.locator('.adventure-listen').tap();
-  if(action==='mute')await page.locator('.adventure-sound').tap();
   if(action==='coach'){await page.locator('#coach-open').tap();await page.getByRole('button',{name:'Close coach',exact:true}).tap();}
   if(action==='route'){await page.locator('[data-activity-mode="melody-echo"]').tap();await page.locator('[data-activity-mode="rhythm"]').tap();}
   if(action==='native inactivity')await page.evaluate(()=>{if(document.hidden)throw new Error('Test requires visible document');window.dispatchEvent(new Event('doodle-native-inactive'));window.dispatchEvent(new Event('doodle-native-inactive'));});
@@ -121,27 +122,41 @@ for(const action of ['stop','mute','coach','route','native inactivity'])test(`li
   await page.waitForTimeout(sequence.length*550+300);
   expect(await page.evaluate(()=>window.__pictureAudio.length)).toBe(count);
   await expect(page.locator('.adventure-beat-token.is-done')).toHaveCount(0);expect(await progress(page)).toBeNull();
-  if(action==='mute'){await expect(page.locator('.adventure-listen')).toBeDisabled();await page.locator('.adventure-sound').tap();}
   await page.locator('[data-beat="clap"]').tap();await heard(page);
   expect(await page.evaluate(()=>window.__pictureAudio.length)).toBe(count+1);
 });
 
-test('muted picture practice remains playable and shares mute and volume with listening mode',async({page})=>{
-  const sequence=await start(page,{soundOn:false});
-  await expect(page.locator('.adventure-listen')).toBeDisabled();
-  const slider=page.locator('.adventure-volume input');await slider.focus();await slider.press('Home');await slider.press('ArrowRight');await slider.press('ArrowRight');
-  await expect(slider).toHaveValue('0.25');
-  for(const value of sequence)await page.locator(`[data-beat="${value}"]`).tap();
-  await expect(page.locator('.adventure-next')).toHaveClass(/is-ready/);
+test('live picture practice and listening ignore legacy muted low volume without autoplay on mode changes',async({page})=>{
+  const sequence=await start(page,{legacyAudio:{enabled:false,volume:.15}});
+  await expect(page.locator('.adventure-sound,.adventure-volume,input[type="range"]')).toHaveCount(0);
+  await expect(page.locator('.adventure-listen')).toBeEnabled();
+  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  for(const value of sequence){await page.locator(`[data-beat="${value}"]`).tap();await page.waitForTimeout(300);}
+  await heard(page);await expect(page.locator('.adventure-next')).toHaveClass(/is-ready/);
   expect(JSON.parse(await progress(page)).rhythm).toBe(1);
-  expect(await page.evaluate(()=>window.__pictureAudio.length),'muted completion schedules no context').toBe(0);
+  const count=await page.evaluate(()=>window.__pictureAudio.length);
   await page.locator('[data-activity-mode="melody-echo"]').tap();
-  await expect(page.locator('[data-listening-sound]')).toHaveAttribute('aria-pressed','false');
-  await expect(page.locator('.listening-volume input')).toHaveValue('0.25');
-  await page.locator('[data-listening-sound]').tap();
-  const listeningVolume=page.locator('.listening-volume input');await listeningVolume.focus();await listeningVolume.press('End');
+  await expect(page.locator('[data-listening-sound],.listening-volume,input[type="range"]')).toHaveCount(0);
+  await expect(page.locator('[data-listening-listen]')).toBeEnabled();
+  expect(await page.evaluate(()=>window.__pictureAudio.length),'mode changes never autoplay').toBe(count);
+  await page.locator('[data-listening-listen]').tap();await heard(page);
   await page.locator('[data-activity-mode="rhythm"]').tap();
-  await expect(page.locator('.adventure-sound')).toHaveAttribute('aria-pressed','true');
-  await expect(page.locator('.adventure-volume input')).toHaveValue('0.8');
-  expect(await page.evaluate(()=>window.__pictureAudio.length),'changing shared preferences does not autoplay').toBe(0);
+  await expect(page.locator('.adventure-listen')).toBeEnabled();
+  await expect.poll(()=>page.evaluate(()=>window.__pictureAudio.every(row=>row.context.state==='closed'))).toBe(true);
+  expect(await page.evaluate(()=>window.__pictureAudio.length),'returning to picture practice never autoplays').toBe(count+1);
+  expect(await page.evaluate(()=>window.__legacyAudioReads),'neither controller reads retired mute/volume preferences').toBe(0);
+  expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-audio-v1'))).toBe(JSON.stringify({enabled:false,volume:.15}));
+});
+
+for(const [name,legacyAudio] of [['muted',{enabled:false,volume:.15}],['low-volume',{enabled:true,volume:.001}]])test(`legacy ${name} preferences cannot restore picture controls or autoplay`,async({page})=>{
+  await start(page,{legacyAudio});
+  await expect(page.locator('.adventure-sound,.adventure-volume,input[type="range"]')).toHaveCount(0);
+  await expect(page.locator('.adventure-listen')).toBeEnabled();
+  expect(await page.evaluate(()=>window.__pictureAudio.length)).toBe(0);
+  expect(await page.evaluate(()=>window.__legacyAudioReads)).toBe(0);
+  await page.locator('[data-activity-mode="melody-echo"]').tap();
+  await expect(page.locator('[data-listening-sound],.listening-volume,input[type="range"]')).toHaveCount(0);
+  await expect(page.locator('[data-listening-listen]')).toBeEnabled();
+  expect(await page.evaluate(()=>window.__pictureAudio.length)).toBe(0);
+  expect(await page.evaluate(()=>window.__legacyAudioReads)).toBe(0);
 });

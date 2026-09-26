@@ -76,16 +76,13 @@ function flower(size) { const node=el('span','adventure-flower','✿');node.styl
 function progressStore() { const stored=readStore('adventures-progress-v1',{});return Object.fromEntries(ADVENTURE_IDS.map(id=>[id,Number.isSafeInteger(stored?.[id])?Math.max(0,Math.min(100000,stored[id])):0])); }
 export function createAdventures(container,{getSettings,getTitle=()=>null,onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}) {
   let active=false,id='size-order',profile=getProfile(getSettings()),state,progress=progressStore();const sessions=new Map();
-  let audioEpoch=0,patternPlaying=false,soundOn=true,volume=.55;
+  let audioEpoch=0,patternPlaying=false;
   const engine=createSoundEngine({onInterrupt:()=>suspendAudio()});
-  function loadAudio(){const saved=readStore('listening-audio-v1',{});soundOn=saved?.enabled!==false;volume=Math.max(.15,Math.min(.8,Number(saved?.volume)||.55));engine.setVolume(volume);}
-  function saveAudio(){writeStore('listening-audio-v1',{enabled:soundOn,volume});}
   function suspendAudio(){audioEpoch++;engine.suspend();patternPlaying=false;if(active&&id==='rhythm')render();}
   function playSounds(events){
-    if(!soundOn)return Promise.resolve({status:'muted'});
     stopSpeaking();const token=++audioEpoch;
     return engine.play(events).then(result=>{
-      if(token===audioEpoch&&active&&id==='rhythm'&&result.status==='failed')tell('Sound could not play. Check Game volume and try Listen again. You can still follow the pictures.','retry');
+      if(token===audioEpoch&&active&&id==='rhythm'&&result.status==='failed')tell('Sound could not play. Check your device volume and try Listen again. You can still follow the pictures.','retry');
       return {status:token===audioEpoch?result.status:'cancelled'};
     });
   }
@@ -137,13 +134,11 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
   function renderRhythm(){
     const round=state.round;setObjective('Play the picture pattern.',state.ready?'Tap the picture buttons in order. Each action has its own sound; Rest is quiet. There is no timing score.':'Look at or listen to the pattern. Tap Ready when you want to try remembering it.');
     const controls=el('div','adventure-audio-controls');
-    const toggle=btn(`Game sound ${soundOn?'on':'off'}`,'button adventure-sound',()=>{soundOn=!soundOn;saveAudio();suspendAudio();});toggle.setAttribute('aria-pressed',String(soundOn));controls.append(toggle);
-    const label=el('label','adventure-volume','Game volume'),slider=el('input');slider.type='range';slider.min='.15';slider.max='.8';slider.step='.05';slider.value=String(volume);slider.setAttribute('aria-label','Game volume');slider.addEventListener('input',()=>{volume=Number(slider.value);engine.setVolume(volume);saveAudio();});label.append(slider);controls.append(label);
     const listen=btn(patternPlaying?'Stop pattern':'Listen to pattern','button adventure-listen',()=>{
       if(patternPlaying){suspendAudio();return;}
       const played=playSounds(round.sequence.map((kind,i)=>({kind,time:i*.55,duration:.24}))),token=audioEpoch;
       patternPlaying=true;render();played.then(result=>{if(token!==audioEpoch||!active||id!=='rhythm')return;patternPlaying=false;render();if(result.status==='played')tell('Your turn. Follow the pictures or try remembering the pattern.');});
-    });listen.disabled=!soundOn;controls.append(listen);play.append(controls);
+    });controls.append(listen);play.append(controls,el('p','adventure-note','Use your device’s volume buttons for sound.'));
     const sequence=el('div','adventure-beat-sequence');round.sequence.forEach((value,index)=>{const pad=round.pads.find(pad=>pad.id===value),visible=round.age<=6||!state.ready||state.showModel||index<state.placed.length;const node=el('span',`adventure-beat-token ${index<state.placed.length?'is-done':''} ${index===state.placed.length?'is-current':''}`,visible?pad.emoji:'·');node.dataset.step=String(index);node.setAttribute('aria-label',visible?`${index+1}: ${pad.name}`:`Step ${index+1}, hidden`);sequence.append(node);});play.append(sequence);
     if(!state.ready)play.append(btn('Ready · try the pattern','button button-primary adventure-ready',()=>{state.ready=true;state.showModel=false;tell('Play what you remember. Hint can show the pattern again.');render();}));
     const pads=el('div','adventure-beat-pads');round.pads.forEach(pad=>{const node=btn('','adventure-beat-pad',()=>beat(pad.id));node.dataset.beat=pad.id;node.setAttribute('aria-label',pad.name);node.disabled=!state.ready||state.done||patternPlaying;node.append(emoji(pad.emoji),el('strong','',pad.name));pads.append(node);});play.append(pads);
@@ -178,5 +173,5 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
   report();
   document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendAudio();});
   globalThis.addEventListener?.('pagehide',suspendAudio);globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
-  return {open(next){if(!ADVENTURE_IDS.includes(next))throw new Error(`Unknown adventure: ${next}`);active=true;id=next;loadAudio();profile=getProfile(getSettings());session();render();},close(){active=false;suspendAudio();stopSpeaking();},settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!getSettings().sound)stopSpeaking();if(active){if(changed){suspendAudio();session();render();}else $('.adventure-hear').disabled=!getSettings().sound||!canSpeak();}},hint,suspendAudio};
+  return {open(next){if(!ADVENTURE_IDS.includes(next))throw new Error(`Unknown adventure: ${next}`);active=true;id=next;profile=getProfile(getSettings());session();render();},close(){active=false;suspendAudio();stopSpeaking();},settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!getSettings().sound)stopSpeaking();if(active){if(changed){suspendAudio();session();render();}else $('.adventure-hear').disabled=!getSettings().sound||!canSpeak();}},hint,suspendAudio};
 }

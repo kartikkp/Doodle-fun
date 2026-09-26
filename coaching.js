@@ -33,7 +33,7 @@ export const COACHING = {
   'picture-sequence':['Look at the pictures and talk about what is happening.','Find what must happen first. Use the story clue to work out the next step.','What tells you that one step must happen before another?','Act out a familiar routine and tell it in order.'],
   directions:['Find your character. Read the first arrow and move that way.','Follow one arrow at a time. Keep your place in the sequence.','How would you describe the way back?','Guide a toy with one-step directions: up, down, left, or right.'],
   'make-a-shape':['Look at the outline. Join the next corner to build the shape.','Follow the edges in order. Count each side as you make it.','How many corners and sides does your shape have?','Build a shape with sticks, then count its sides.'],
-  rhythm:['Look at or listen to the pattern. Tap Clap, Tap, Stomp, or Rest in order.','Each action makes a different sound; Rest is quiet. Game sound is separate from Read aloud. Replay freely; there is no timer.','Could you turn that pattern into claps and knee taps?','Take turns making a short clapping pattern for someone to copy.'],
+  rhythm:['Look at or listen to the pattern. Tap Clap, Tap, Stomp, or Rest in order.','Each action makes a different sound; Rest is quiet. Use your device’s volume buttons for sounds. Read aloud only controls spoken help. Replay freely; there is no timer.','Could you turn that pattern into claps and knee taps?','Take turns making a short clapping pattern for someone to copy.'],
   sharing:['Give one object to each friend in turn.','Keep going around the group so each friend receives the same amount. Older puzzles may have leftovers.','How can you check that the shares are fair?','Share a few blocks equally between toy friends.'],
 };
 

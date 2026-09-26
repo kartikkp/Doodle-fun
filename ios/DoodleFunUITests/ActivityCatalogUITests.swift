@@ -299,7 +299,15 @@ final class ActivityCatalogUITests: XCTestCase {
         XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
         // Compact phones intentionally hide the redundant age caption. The
         // selected native age control and each game's age-two round verify it.
-        XCTAssertTrue(control(["Game sound on"]).exists)
+        XCTAssertTrue(control(["Listen"]).waitForExistence(timeout: 10))
+        assertSystemVolumeControls()
+    }
+
+    private func assertSystemVolumeControls() {
+        XCTAssertFalse(control(["Game sound on", "Game sound off"]).exists,
+                       "There is no separate game mute; the device controls sound level.")
+        XCTAssertFalse(web.sliders.matching(NSPredicate(format: "label == %@", "Game volume")).firstMatch.exists,
+                       "There is no additional in-app attenuation slider.")
     }
 
     private func listeningStatus(begins prefix: String) -> XCUIElement {
@@ -321,16 +329,12 @@ final class ActivityCatalogUITests: XCTestCase {
         XCTAssertFalse(control(["Turn off read aloud"]).exists)
     }
 
-    func testTrustedSoundDetectiveRequiresAudioAndRespectsItsOwnMute() {
+    func testTrustedSoundDetectiveRequiresAudioWithSystemVolume() {
         openListening("sound-match")
         let chooseBell = control(["Choose Bell"])
         XCTAssertFalse(chooseBell.isEnabled, "The visible model alone cannot bypass listening.")
-        reveal(control(["Game sound on"]), toward: .down).tap()
-        XCTAssertTrue(control(["Game sound off"]).exists)
-        XCTAssertFalse(control(["Listen"]).isEnabled)
-        XCTAssertFalse(chooseBell.isEnabled)
-        reveal(control(["Game sound off"]), toward: .down).tap()
-        XCTAssertTrue(text("Game sound is on. Tap Listen.").exists, "Enabling sound does not start playback.")
+        assertSystemVolumeControls()
+        XCTAssertTrue(control(["Listen"]).isEnabled, "Playback is available without an in-app sound switch.")
         listenUntilReady()
         XCTAssertTrue(text("Listen for Bell: A clear, ringing sound.").exists)
         reveal(control(["Hear Bell"])).tap()
@@ -378,7 +382,7 @@ final class ActivityCatalogUITests: XCTestCase {
         leaveListening()
     }
 
-    func testTrustedPicturePracticePlaysModelThenCompletesWithSoundAndMuted() {
+    func testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes() {
         openListening("melody-echo")
         reveal(control(["Picture practice"]), toward: .down).tap()
         XCTAssertTrue(text("Play the picture pattern.").waitForExistence(timeout: 10))
@@ -414,15 +418,17 @@ final class ActivityCatalogUITests: XCTestCase {
 
         reveal(control(["↶ Try again", "Try again"])).tap()
         XCTAssertFalse(success.exists)
-        reveal(control(["Game sound on"]), toward: .down).tap()
-        XCTAssertTrue(control(["Game sound off"]).exists)
-        XCTAssertFalse(control(["Listen to pattern"]).isEnabled)
+        assertSystemVolumeControls()
+        XCTAssertTrue(control(["Listen to pattern"]).isEnabled)
         for label in sequence { reveal(control([label])).tap() }
-        XCTAssertTrue(success.waitForExistence(timeout: 10), "Muting effects preserves playable picture practice.")
+        XCTAssertTrue(success.waitForExistence(timeout: 10), "Retry preserves playable picture practice and feedback.")
 
         reveal(control(["Listen & echo"]), toward: .down).tap()
-        XCTAssertTrue(control(["Game sound off"]).waitForExistence(timeout: 10), "Game mute is shared across practice modes.")
-        XCTAssertFalse(control(["Listen"]).isEnabled)
+        XCTAssertTrue(control(["Listen"]).waitForExistence(timeout: 10))
+        assertSystemVolumeControls()
+        XCTAssertTrue(control(["Listen"]).isEnabled)
+        XCTAssertFalse(text("You played the whole melody in order!").exists)
+        listenUntilReady()
         leaveListening()
     }
 

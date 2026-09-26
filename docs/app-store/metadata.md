@@ -77,7 +77,7 @@ NOTICE, PLAN, AND PLAY
 Match shapes and colors, finish patterns, sort objects, find memory pairs, and guide Bunny through a maze. Arrange sizes, numbers, and story steps; follow arrows and build shape outlines.
 
 LISTEN AND MAKE MUSIC
-Find sound partners, follow notes higher or lower, play back a melody, and copy drum taps. Replay whenever you want and use picture hints for support. Beat studio begins with tap counting for the youngest starting ages, then adds short and long spaces at your own pace. The sounds are generated on the device without a microphone or downloaded recordings. Game sound and volume are separate from Read aloud.
+Find sound partners, follow notes higher or lower, play back a melody, and copy drum taps. Replay whenever you want and use picture hints for support. Beat studio begins with tap counting for the youngest starting ages, then adds short and long spaces at your own pace. The sounds are generated on the device without a microphone or downloaded recordings. Device media volume controls game sounds. Read aloud controls optional spoken help.
 
 FIND THE RIGHT STARTING POINT
 The chosen age sets a starting difficulty; it never locks away activities. Open Coach for a first step, a strategy, or something to talk about together. Make each game's practice step easier or harder when it helps. Younger children can explore alongside a grown-up, especially with words and number puzzles.
@@ -100,7 +100,7 @@ For a first App Store version, this field is not available. If an existing listi
 
 ## App privacy questionnaire recommendations
 
-**Expected label: Data Not Collected. Owner confirmation required.** The native app packages the activities and policy locally. It has no app account, developer backend, advertising SDK, analytics SDK, or cloud-sync integration. Local preferences, including game-sound and volume choices, chosen difficulty age, progress, and the current PNG draft are not sent to the developer. Game sounds are generated locally without microphone input or audio downloads. Speech uses system voices; PNG export uses the user's chosen system-sharing destination.
+**Expected label: Data Not Collected. Owner confirmation required.** The native app packages the activities and policy locally. It has no app account, developer backend, advertising SDK, analytics SDK, or cloud-sync integration. Local preferences, including the read-aloud setting and chosen difficulty age, progress, and the current PNG draft are not sent to the developer. Game sounds are generated locally without microphone input or audio downloads. Speech uses system voices; PNG export uses the user's chosen system-sharing destination.
 
 Apple's collection test concerns off-device transmission accessible to the developer or integrated partners beyond servicing a real-time request. Its guidance distinguishes local handling and data collected by Apple itself. These recommendations concern this native build, not all processing by a separately opened website. [Apple: App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/)
 
@@ -164,10 +164,10 @@ PRIVACY AND SUPPORT
 The home footer's Privacy button and Grown-ups > Privacy policy open the same policy, included in the app and readable offline without a gate. Grown-ups > Help & support opens help. Visit support website, and external links in the policy, require the same grown-up check before opening the system browser. Native external destinations are restricted to the project's public privacy/support pages, GitHub issues, and GitHub's privacy statement. The support website offers email contact for grown-ups; sending a message is voluntary and attaches no app data automatically. The email address is also readable as plain text in offline help and the policy. GitHub is an optional public bug tracker. Both channels ask grown-ups to avoid children's identifying information.
 
 LISTENING GAMES
-Choose Listen, then a game. Game sound and Game volume are separate from Read aloud. Tap Listen for a clue. Sound detective provides separate Hear and Choose buttons; Melody echo has tone pads. Generated tones and percussion work offline with no microphone, recordings, or audio downloads. Check media volume, Silent mode, and connected audio devices if needed. Opening Coach or leaving the activity pauses the turn; return and tap Listen again. Picture practice inside Melody echo preserves the earlier visual sequence game.
+Choose Listen, then a game. Use device media volume for game sounds; Read aloud controls only spoken help. Tap Listen for a clue. Sound detective provides separate Hear and Choose buttons; Melody echo has tone pads. Generated tones and percussion work offline with no microphone, recordings, or audio downloads. Check media volume and connected audio devices if needed. Opening Coach or leaving the activity pauses the turn; return and tap Listen again. Picture practice inside Melody echo preserves the earlier visual sequence game.
 
 DATA AND SPEECH
-The native app does not collect personal data or use ads, analytics, tracking SDKs, or a developer backend. Settings, including game sound and volume, the chosen difficulty age, practice progress, and the current drawing draft are stored locally. The app has no account-based sync; operating-system backup settings may include local app data. PNG sharing is user-directed. Optional read-aloud uses Apple's system speech voices and does not use the microphone.
+The native app does not collect personal data or use ads, analytics, tracking SDKs, or a developer backend. Settings, including Read aloud and the chosen difficulty age, practice progress, and the current drawing draft are stored locally. The app has no account-based sync; operating-system backup settings may include local app data. PNG sharing is user-directed. Optional read-aloud uses Apple's system speech voices and does not use the microphone.
 
 The app is designed for touch in portrait and landscape on iPhone and iPad. Saving a PNG can use Photos, Files, or another destination available in the system share sheet. The app does not import photos or use the camera.
 ```

@@ -16,7 +16,7 @@ All 30 earlier routes remain available as modes, with four new listening modes. 
 
 Each age from 2 through 10 has a starting configuration. **Coach** offers a starting step, current-mode hints, strategy, conversation and real-object activities. **A little easier / harder** remembers a separate adjustment for each practice mode. Changing a challenge may begin a fresh round; drawing edits remain recoverable. Young children can explore words and arithmetic with a grown-up. The [consolidation and listening review](docs/consolidated-listening-review.md) records current source-based behavior and listening settings. The [earlier coached play review](docs/coached-play-review.md) remains a dated assessment of the previous catalog.
 
-Game sound is separate from **Read aloud**. Inside a listening game, use **Game sound**, **Game volume**, and **Listen**; Sound detective also offers separate Hear and Choose buttons. Tones and percussion are generated locally without downloaded audio, a microphone, or voice recording. Playback starts through a listening control and pauses when the turn is interrupted. Check device volume, Silent mode, or connected headphones if nothing is audible. Picture hints are available; completed practice is not a hearing or learning assessment.
+Game sound is separate from **Read aloud**. Use your device’s media-volume buttons to adjust game sounds and tap **Listen** to start; Sound detective also offers separate Hear and Choose buttons. Tones and percussion are generated locally without downloaded audio, a microphone, or voice recording. Playback starts through a listening control and pauses when the turn is interrupted. Check device media volume or connected headphones if nothing is audible. Picture hints are available; completed practice is not a hearing or learning assessment.
 
 ## iPhone and iPad app
 
@@ -56,6 +56,6 @@ Verify all 21 cards and 34 modes, including legacy links, at phone/tablet sizes 
 
 ## Local data
 
-Settings (including separate read-aloud, game-sound and volume choices), per-mode support, the current drawing, and practice stars are saved only on this installation under the `doodle-fun:v2:` prefix. They are not synced across devices. Blocked/full storage falls back to the current session; PNG export is the way to keep important artwork. The offline cache stores the app itself; personal drawings and practice progress stay in local storage.
+Settings (including Read aloud and starting age), per-mode support, the current drawing, and practice stars are saved only on this installation under the `doodle-fun:v2:` prefix. They are not synced across devices. Blocked/full storage falls back to the current session; PNG export is the way to keep important artwork. The offline cache stores the app itself; personal drawings and practice progress stay in local storage.
 
 The previous app did not persist artwork or progress, so there is no legacy saved-data migration. The nine original template drawings and letter paths were retained and revised where necessary.
