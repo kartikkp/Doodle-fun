@@ -1,5 +1,7 @@
 # Doodle Fun — release checklist
 
+**Build 2 update — September 26:** 2.1.0 (2), runtime `cf73382cbd44d40f`, passed 95 unit, 702 browser and 289 native cases and distribution-signature checks. Upload succeeded; Apple processing/group assignment verification is pending safe Safari access. See the [current release status](README.md) and [audio/difficulty QA](../audio-difficulty-qa.md). The build-1 preparation history below remains version-specific.
+
 September 26, 2026. **Current target: TestFlight.** Individual membership and App Store Connect access are active; Terms of Service were accepted with explicit owner approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) exists. A signed Release archive was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Upload succeeded September 26 at 21:15:20 UTC; Apple processing is Complete and build 2.1.0 (1) is assigned to Doodle Fun Internal. The authorized internal tester is Invited. Doodle Fun Beta has the authorized external tester and build assigned; its beta submission is Waiting for Review with automatic notification enabled. External approval and physical checks remain pending. The owner has not checked the latest audio build. See the [audio follow-up](../iphone-audio-fix.md), [metadata worksheet](metadata.md), and [QA report](../consolidated-listening-qa.md).
 
 ## Selected launch settings

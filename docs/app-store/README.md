@@ -1,6 +1,6 @@
 # Doodle Fun — TestFlight and App Store kit
 
-**September 26, 2026: the current target is TestFlight.** Individual membership is active, App Store Connect access is confirmed, and Terms of Service were accepted with the owner's explicit approval. The app record is created; upload and Apple processing are complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. The authorized internal tester is Invited; the external group is Waiting for Review. Public App Store submission and release remain later steps.
+**September 26, 2026: TestFlight build 2 is the current candidate.** The owner reported faint effects and insufficient older-child difficulty in build 1. Build 2 addresses those reports; public App Store submission remains a later step.
 
 | App record | Verified value |
 | --- | --- |
@@ -8,34 +8,24 @@
 | Apple ID | `6816519633` |
 | Bundle identifier | `com.minoli.DoodleFun` |
 | SKU | `doodlefun-ios` |
-| Primary language / platform | English (U.S.) / iOS |
-| App Store Connect | [Open app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) |
+| Language / platform | English (U.S.) / iOS |
+| Current candidate | **2.1.0 (2)** |
+| App Store Connect | [Open TestFlight](https://appstoreconnect.apple.com/apps/6816519633/testflight/ios) |
 
-A signed Release **2.1.0 (1)** archive was built and its contents audited with Xcode 27 (27A266a). It contains runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`. App Store distribution export succeeded and re-signed the app with `iOS Team Store Provisioning Profile: com.minoli.DoodleFun`, expiring September 26, 2027. The exported profile has `LocalProvision=false`, no provisioned devices and `get-task-allow=false`; code-signature verification passed. The cached archive profile is no longer a blocker. Upload succeeded with exit code 0 on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is now Complete. The processed build UUID is `d1297f42-0e32-43a6-87cc-a3e7c358629f`; the external TestFlight submission is now Waiting for Review. This beta review is separate from a public App Store submission.
+Build 2 contains runtime `cf73382cbd44d40f`, HTML SHA-256 `6ac96b9c96bc20af831ce5508f3adea191e575de7cd1b9c530946934f53d5895`. The Xcode 27 / iOS 27 signed archive and App Store distribution IPA passed signature/content audits. The IPA has the correct team/bundle entitlement, no development devices or debugging entitlement, and no test bundles or DEBUG web diagnostics. Exported profile expiry is September 26, 2027. Archive used `CURRENT_PROJECT_VERSION=2`, preserving the owner's local project/signing file. Increment the build number for any later upload.
 
-Audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) merged as `97cd87f`; PR #6 is also merged. Source [CI 35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`. The owner has not checked the latest physical audio build; audibility remains pending despite passing automated tests. See the [audio report](../iphone-audio-fix.md).
+**Distribution: build 2 uploaded successfully at 22:17:51 UTC on September 26.** Xcode reported Apple processing. Processing and tester-group assignment still need verification; another workflow was concurrently changing Safari, so assignment is paused pending safe access. Existing groups are Doodle Fun Internal and Doodle Fun Beta; use those authorized testers. Do not create a public link or grant external testers account roles. Keep private contact details outside Git. Build 1 was uploaded and processed successfully; its earlier status and provenance remain in `.planning/STATE.md`.
 
-The app groups 34 practice modes into 21 activities for starting ages 2–10, including four listening games generated offline. Game sound and volume are separate from optional Read aloud; no microphone or voice recording is used. Privacy is readable offline, and a fresh grown-up check precedes sharing or external websites.
+The candidate passed **95 unit checks, 702 browser scenarios and 289 native cases**, including all five trusted audio UI flows. See the [audio/difficulty QA report](../audio-difficulty-qa.md) for the final browser result, measured digital output and limitations. Stronger effect generation does not establish physical speaker audibility; test build 2 on iPhone/iPad before claiming that problem resolved. No automated test establishes child enjoyment or learning outcomes.
 
-## Prepared materials
+The app retains 21 activity families / 34 modes. Game audio is generated offline and remains independent of Read aloud. Picture practice now includes audible Clap/Tap/Stomp; Rest is intentionally silent. Older numerical reasoning, fraction-memory and maze challenges retain optional hints and large touch targets. Foundation exercises remain available.
 
-- [Release checklist](release-checklist.md): TestFlight signing/upload, processing and physical checks, followed by later store steps.
-- [Metadata worksheet](metadata.md): verified account facts, prepared listing copy and questionnaire guidance.
-- [Native screenshots](screenshots/README.md): five scenes per device family with original manifests.
-- [Catalog and listening QA](../consolidated-listening-qa.md): versioned automated evidence and physical-device limits.
+## Materials for later public submission
 
-[Privacy](https://kartikkp.github.io/Doodle-fun/privacy.html), [support](https://kartikkp.github.io/Doodle-fun/support.html) and the [homepage](https://kartikkp.github.io/Doodle-fun/) returned HTTP 200 on September 26 and exactly matched local source. The current policy includes the September 20 revision, local sound behavior and voluntary email support. The support page describes the consolidated catalog and publishes **pishahrodi+support@gmail.com** with a working email link. The earlier September 8 stale-page check is historical.
+- [Release checklist](release-checklist.md), [metadata worksheet](metadata.md), and [native screenshots](screenshots/README.md).
+- [Current QA](../audio-difficulty-qa.md), [historical catalog/listening QA](../consolidated-listening-qa.md), and [earlier audio activation work](../iphone-audio-fix.md).
+- [Privacy](https://kartikkp.github.io/Doodle-fun/privacy.html) and [support](https://kartikkp.github.io/Doodle-fun/support.html), with public support **pishahrodi+support@gmail.com**.
 
-All ten checked-in screenshots still match their manifests: five 1320×2868 iPhone images and five 2064×2752 iPad images. The audio and bundle-identifier changes do not alter the pictured UI, so recapture is unnecessary for those changes. Keep their actual `0f22199625622369` capture provenance; they are not evidence that the new physical build is audible.
+The public pages were verified against build 1 on September 26. Privacy/support source is unchanged in build 2; the newer home/game runtime has not been published to GitHub Pages. Checked-in store screenshots retain their original `0f22199625622369` provenance; review their UI/copy against the eventual public release, including the renamed Game volume control. They are not evidence of build-2 physical behavior.
 
-TestFlight information is saved and verified: description, feedback contact, marketing/privacy URLs, private review contact and notes, with no sign-in required. The **Doodle Fun Internal** group has build 2.1.0 (1) assigned, with automatic distribution off; it verifies **1 tester and 1 build**, and the authorized tester is **Invited**. The **Doodle Fun Beta** external group also verifies **1 tester and 1 build**. Its authorized tester was added without a public link; submission for TestFlight beta review succeeded and status is **Waiting for Review**. Automatically notify testers is enabled, so external notification and build availability await Apple's approval. The saved What to Test checklist covers all four sound games, ages/modes/coaching, drawing, offline behavior and layout.
-
-## Next TestFlight steps
-
-1. The invited internal tester can accept the invitation and install build 2.1.0 (1) through TestFlight.
-2. Await Apple's TestFlight beta review for Doodle Fun Beta; external notification is automatic on approval.
-3. Complete the physical iPhone/iPad [device checks](release-checklist.md), including all four sound games, headphones and background recovery. These results are still pending.
-
-For the later public listing, selected settings remain free/no ads or purchases, Education, Made for Kids ages 6–8, United States and manual release. These store settings and questionnaires have not been entered or verified. Exact legal seller/copyright information still needs verification; private review-contact details are supplied and stored outside Git. The app's adjustable practice ages remain 2–10.
-
-Upload, processing, both group assignments, the internal invitation and external beta-review submission are complete. External approval and physical checks remain pending. No public App Store submission or release has occurred.
+Paid membership and App Store Connect access are verified. TestFlight review information, contact and no-login instructions were saved earlier. Public listing questionnaires, legal seller/copyright verification, screenshots and explicit public-release authorization remain separate from this beta update.

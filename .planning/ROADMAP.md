@@ -32,3 +32,9 @@ Success: every visible card launches and plays, the downloaded HTML works indepe
 1. Group duplicated entry points into 21 distinct families, preserving all 30 original modes, links, drawings and progress. Keep Coach and actual practice difficulty aligned with the selected mode, including older bookmarked pages.
 2. Add Sound detective, Higher or lower, Melody echo and Beat studio with offline generated audio, starting steps for ages 2–10, replay, hints and interruption recovery. Clearly label the retained visual sequence mode as Picture practice.
 3. Verify routes, modes, age-adjusted gameplay, generated sound signals, native touch controls and offline bundles; update the store copy and native screenshots. Record unavailable audio backends and physical/child-testing limits explicitly.
+
+## Phase 6 — TestFlight audio feedback and older-child challenge
+
+1. Improve effect audibility, add Clap/Tap/Stomp feedback and silent Rest, and verify shared volume and interruption behavior.
+2. Add age 9–10 arithmetic, numeric rules, equivalent-value memory and ordered maze checkpoints; retain younger practice and show effective support.
+3. Verify the bundled app in both browser engines and native iPhone tests, then distribute TestFlight build 2 to the existing test groups. Keep physical audibility and child playtesting distinct from automated results.

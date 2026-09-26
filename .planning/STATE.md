@@ -1,5 +1,19 @@
 # Current state
 
+Updated September 26, 2026. Current work: fix physical TestFlight feedback about faint/missing effects and insufficient age-10 challenge. Branch **`codex/audible-effects-older-challenges`**; implementation commits `8219ae0`, `6223d15`, CI coverage `4f95f36`.
+
+Candidate **2.1.0 (2)** is archived, exported and distribution-signature verified. Runtime **`cf73382cbd44d40f`**, HTML SHA-256 **`6ac96b9c96bc20af831ce5508f3adea191e575de7cd1b9c530946934f53d5895`**. Archive used `CURRENT_PROJECT_VERSION=2`; the owner's project file remains byte-for-byte unchanged with protected hash `2e791a5bd2c9db4081f91afc6115669507c014b30fee9161ca0fcbd6e7c2acbd`. A subsequent TestFlight upload must increment beyond build 2. No public App Store submission is authorized.
+
+Stronger, longer effect bodies and midrange drum content address the reported signal weakness. Picture practice now sounds Clap/Tap/Stomp, keeps Rest silent, shares game mute/volume, and cancels on navigation, dialogs and inactivity. Ages 9–10 have larger arithmetic, varied unknown positions, numerical rules, equivalent-value memory and ordered maze checkpoints; same-ones distractors require place-value reasoning. Younger foundations and creative play remain available. A nondefault effective support step is visible in the Coach bar.
+
+**95/95 unit checks and 289/289 native cases passed**, zero failures/skips in the final native result (284 integration/bridge cases plus five trusted audio UI tests). Final phone/iPad discovery captures passed visual review. Final Chromium/WebKit verification passed **702/702**, with zero failures, skips or flaky results. The preliminary native run's successful assertions followed by interrupted Xcode teardown remain separately recorded; they are not the final result.
+
+**Distribution status: build 2 upload succeeded September 26 at 22:17:51 UTC.** Xcode reported Apple processing. Build processing and group assignment are not yet verified: concurrent changes in Safari/App Store Connect made UI writes unsafe, so an asynchronous request asks the user to pause that workflow. After Safari is free, verify processing and assign the existing authorized TestFlight groups; save `work/testflight-build2-2026-09-26/what-to-test.txt` as its testing notes. Do not re-upload this build or recreate groups. Build 1 remains the prior distributed/internal and externally pending beta; do not expire it automatically. The user's physical feedback supersedes earlier statements that audio had not been checked: speech works, but build 1's effects were too faint. Physical listening in build 2 and child enjoyment/challenge remain unverified.
+
+See [audio and difficulty QA](../docs/audio-difficulty-qa.md). Evidence is outside Git in `work/audio-output-2026-09-26`, `work/audio-difficulty-native-2026-09-26`, `work/older-discovery-qa`, and `work/testflight-build2-2026-09-26`. Keep private tester and review-contact details out of Git. Retain archives, IPA, raw results, logs and audits; remove only completed task-created build caches. Never touch personal simulator `139E0398-D2DC-4BC2-86D3-C543BADC3C56`.
+
+## Previous build 1 release record
+
 Updated September 26, 2026. Immediate target: **TestFlight**, as explicitly requested. The owner completed Xcode sign-in. Active paid membership and App Store Connect access are verified; the displayed App Store Connect Terms of Service were accepted with explicit at-action approval. App **Doodle Fun: Draw & Discover**, Apple ID **6816519633**, SKU **doodlefun-ios**, primary language **English (U.S.)**, iOS bundle **com.minoli.DoodleFun**, is created. PR #7 merged as **97cd87f**; source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. Work continues on `codex/testflight-release`.
 
 Release **2.1.0 (1)** was archived with Xcode **27 (27A266a)** / iOS 27 SDK, exported with App Store distribution signing, verified, and **uploaded successfully on September 26 at 21:15:20 UTC**. Xcode reported the uploaded package was processing. The export replaces the archive's cached Personal Team profile with **iOS Team Store Provisioning Profile: com.minoli.DoodleFun** (team `L4B78NW74S`, `LocalProvision=false`, no provisioned devices, `get-task-allow=false`, expiration September 26, 2027). Both archive and exported app pass code-signature verification. Runtime **1668feee4dc43ee0** and bundled HTML SHA-256 **bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d** are retained. No test bundles or DEBUG web diagnostic strings occur in Release.
@@ -8,7 +22,7 @@ TestFlight beta information was saved, including description, feedback email, we
 
 Public home, privacy and support pages returned HTTP 200 on September 26 and exactly match current source. The ten store screenshots still match their manifests and remain suitable for the unchanged pictured UI; their original capture runtime is retained. Fresh archive, IPA, signing audits and upload logs are in workspace `work/testflight-release-2026-09-26`, outside the Git repository.
 
-## Current remaining work
+## Build 1 remaining work at the time
 
 1. Await Apple’s external TestFlight beta review. The internal invitation is sent; the external tester is added with notification on approval. Confirm invitation acceptance and actual installation when the testers respond.
 2. Install through TestFlight and confirm the four listening games are audible on physical iPhone; check interruption recovery, saved work and native sharing. Physical iPad and accessibility checks remain distinct from simulator evidence.
