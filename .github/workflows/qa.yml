@@ -44,7 +44,9 @@ jobs:
   iphone-build:
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: macos-latest
-    timeout-minutes: 30
+    # The complete age matrix plus a separate trusted-audio build exceeds 30m
+    # on hosted runners; individual test/step timeouts still bound failures.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
