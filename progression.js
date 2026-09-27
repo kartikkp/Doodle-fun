@@ -44,7 +44,7 @@ export function getModeProgress(mode,age=6,step=age){return view(entry(mode,age,
 export function getRoundCursor(mode,age=6,step=age){return entry(mode,age,step)?.cursor??0;}
 export function subscribeProgress(callback){listeners.add(callback);return()=>listeners.delete(callback);}
 function freshSet(value){value.attempt++;value.rounds=Object.create(null);value.skips=0;}
-export function beginRound({mode,age=6,step=age,roundKey,scored=true}={}) {
+export function beginRound({mode,age=6,step=age,roundKey,scored=true,automaticSets=true}={}) {
   if(!validMode(mode)){current=null;return null;}
   const previous=current;
   current={mode,age:clamp(age),step:clamp(step),roundKey:String(roundKey??'0').slice(0,180),scored:scored===true&&!EXCLUDED.has(mode)};
@@ -53,7 +53,10 @@ export function beginRound({mode,age=6,step=age,roundKey,scored=true}={}) {
   const value=entry(mode,age,step,true),id=current.roundKey;
   const seed=Number(id);if(Number.isSafeInteger(seed)&&seed>=0)value.cursor=Math.max(value.cursor,seed);
   if(!value.rounds[id]&&!value.seen.includes(id)) {
-    if(Object.values(value.rounds).filter(round=>round.done).length>=value.required)freshSet(value);
+    if(Object.values(value.rounds).filter(round=>round.done).length>=value.required){
+      if(!automaticSets){if(changed)publish();return getCurrentRound();}
+      freshSet(value);
+    }
     // Skipping an unfinished question cannot improve the set's perfect score.
     // Leaving and returning to the same round is harmless.
     if(previous?.scored&&previous.mode===mode&&previous.age===current.age&&previous.step===current.step&&previous.roundKey!==id&&value.rounds[previous.roundKey]&&!value.rounds[previous.roundKey].done)value.skips=Math.min(value.required,value.skips+1);
@@ -80,6 +83,9 @@ export function completeRound(){
   publish();return getModeProgress(value.mode,value.age,value.step);
 }
 export function beginNewAttempt({mode=current?.mode,age=current?.age,step=current?.step}={}) {
-  const value=entry(mode,age,step,true);if(!value)return null;
-  freshSet(value);value.cursor++;current=null;publish();return getModeProgress(mode,age,step);
+  const value=entry(mode,age,step);if(!value||Object.values(value.rounds).filter(round=>round.done).length<value.required)return null;
+  // Finite banks (letters/words) may be practiced again through an explicit
+  // fresh-set action. Retries and reloads never take this path. The controller
+  // must also clear its local answers before starting the first new round.
+  freshSet(value);value.seen=[];value.cursor++;current=null;publish();return getModeProgress(mode,age,step);
 }

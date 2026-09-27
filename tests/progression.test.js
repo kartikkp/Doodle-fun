@@ -49,6 +49,32 @@ test('fresh content can improve a medal and a later result never removes the bes
   assert.equal(p.getModeProgress('maze',6,6).completed,3,'old completions cannot start or fill a new set');
 });
 
+test('an explicit fresh set lets a finite word bank improve without counting replay or reload twice',async()=>{
+  let p=await fresh();const words=['words:cat','words:dog','words:sun'];
+  for(const word of words)round(p,'word-tracing',word,{age:10,hint:true});
+  assert.equal(p.getModeProgress('word-tracing',10,10).bestMedal,'bronze');
+  p.beginRound({mode:'word-tracing',age:10,step:10,roundKey:'words:fourth',automaticSets:false});p.completeRound();
+  assert.equal(p.getModeProgress('word-tracing',10,10).completed,3,'finite banks wait for the explicit fresh-set action');
+  assert.equal(p.getModeProgress('word-tracing',10,10).rounds['words:fourth'],undefined);
+  assert.equal(p.beginNewAttempt({mode:'word-tracing',age:10,step:10}).completed,0);
+  assert.equal(p.getModeProgress('word-tracing',10,10).sessionId,2);
+  round(p,'word-tracing',words[0],{age:10});
+  p=await import(`../progression.js?finite=${++instance}`);
+  round(p,'word-tracing',words[0],{age:10});
+  assert.equal(p.getModeProgress('word-tracing',10,10).completed,1);
+  for(const word of words.slice(1))round(p,'word-tracing',word,{age:10});
+  assert.equal(p.getModeProgress('word-tracing',10,10).bestMedal,'gold');
+  assert.equal(p.getModeProgress('word-tracing',10,10).result.clean,3);
+});
+
+test('a fresh-set request cannot clear mistakes from an unfinished set',async()=>{
+  const p=await fresh();p.beginRound({mode:'word-tracing',age:10,step:10,roundKey:'words:cat'});p.recordMistake();
+  const before=p.getModeProgress('word-tracing',10,10);
+  assert.equal(p.beginNewAttempt({mode:'word-tracing',age:10,step:10}),null);
+  assert.deepEqual(p.getModeProgress('word-tracing',10,10),before);
+  assert.equal(p.getCurrentRound().roundKey,'words:cat');
+});
+
 test('age and skill step preserve distinct histories and step fixes the scoring denominator',async()=>{
   const p=await fresh();
   for(let i=0;i<3;i++)round(p,'counting',i,{age:2,step:2});
