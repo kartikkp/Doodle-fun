@@ -1,8 +1,8 @@
 # Doodle Fun — TestFlight and App Store kit
 
-**New activity/voice revision in preparation:** PR #8 now also includes requested hints, harder age-specific games, illustrated interfaces and 116 offline coaching clips. This revision is not on TestFlight. The build 3 archive described below predates it. Refresh store screenshots before a public submission. See [revision QA](../challenge-design-voice-qa.md).
+**Latest merged revision — TestFlight build 4 prepared:** PR #8 merged as `6a7b13a`. Fresh signed Release **2.1.0 (4)** contains requested hints, harder age-specific games, illustrated interfaces and 116 offline coaching clips (runtime `4df4c6c112b64140`). Its archive passes signature/content/identity/privacy checks. App Store export is blocked by **No Accounts / no available distribution signing certificate** while the Mac is locked; unlock and inspect Xcode Accounts before retrying. It is **not uploaded**. Confirm the build number against live App Store Connect, audit the successful distribution export, then upload and verify processing/groups. See [revision QA](../challenge-design-voice-qa.md). The older build 3 archive below predates this revision; store screenshots need refreshing only before a public submission.
 
-**September 26, 2026: build 3 is prepared but not uploaded.** It removes game mute/volume controls, ignores old muted/low settings, and strengthens Beat Studio percussion. Device media volume controls game sound; Read aloud controls optional spoken help. The archive passed signature/content checks, but distribution export reports no available account/distribution certificate while the Mac is locked. Native runtime verification and successful export/upload remain pending. See [current audio QA](../system-volume-audio-qa.md). Build 2 remains the last verified internal TestFlight distribution; its record below is retained.
+**Historical build 3 — September 26, 2026:** It removes game mute/volume controls, ignores old muted/low settings, and strengthens Beat Studio percussion. Device media volume controls game sound; Read aloud controls optional spoken help. The archive passed signature/content checks, but distribution export reports no available account/distribution certificate while the Mac is locked. Native runtime verification and successful export/upload remain pending. See [current audio QA](../system-volume-audio-qa.md). Build 2 remains the last verified internal TestFlight distribution; its record below is retained.
 
 | App record | Verified value |
 | --- | --- |
@@ -11,7 +11,7 @@
 | Bundle identifier | `com.minoli.DoodleFun` |
 | SKU | `doodlefun-ios` |
 | Language / platform | English (U.S.) / iOS |
-| Current candidate / last internal build | **2.1.0 (3), not uploaded** / **2.1.0 (2), Testing** |
+| Current candidate / last internal build | **2.1.0 (4), archived; export blocked** / **2.1.0 (2), last verified Testing** |
 | App Store Connect | [Open TestFlight](https://appstoreconnect.apple.com/apps/6816519633/testflight/ios) |
 
 Build 2 contains runtime `cf73382cbd44d40f`, HTML SHA-256 `6ac96b9c96bc20af831ce5508f3adea191e575de7cd1b9c530946934f53d5895`. The Xcode 27 / iOS 27 signed archive and App Store distribution IPA passed signature/content audits. The IPA has the correct team/bundle entitlement, no development devices or debugging entitlement, and no test bundles or DEBUG web diagnostics. Exported profile expiry is September 26, 2027. Archive used `CURRENT_PROJECT_VERSION=2`, preserving the owner's local project/signing file. Increment the build number for any later upload.

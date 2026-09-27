@@ -1,4 +1,18 @@
-# Current state — activity challenge, design and requested coaching
+# Current state — merged revision prepared for TestFlight
+
+Updated September 26–27, 2026. The owner merged PR #8 and explicitly requested uploading the latest revision to TestFlight. Merge **`6a7b13a03e862a9d5e875119a3e336e0f4cdc95a`** has the exact tree of tested source `4469242`. Release preparation is on **`codex/testflight-coaching-release`**; preserve the owner's only pre-existing dirty file, `ios/DoodleFun.xcodeproj/project.pbxproj`, SHA256 `2e791a5bd2c9db4081f91afc6115669507c014b30fee9161ca0fcbd6e7c2acbd`.
+
+Fresh signed Release **2.1.0 (4)** is archived. Runtime **`4df4c6c112b64140`**, standalone/native/archive HTML SHA256 **`b78e9432bc909113cc9a2e05b2772fccb0ff2507cdaa36a2ade59dad6373860e`**. Archive audit passes code-signature verification, correct team/application identifier, version/build, source/resource equality, packaged privacy manifest, no test bundles and no DEBUG web diagnostics. Build number uses a command-line override; its availability still needs confirmation against live App Store Connect. Do not reuse the stale build3 archive for this revision.
+
+**Blocked before upload:** App Store distribution export exits70 with **No Accounts** and **no iOS Distribution certificate with private key** for team `L4B78NW74S`. The UI tool reports the Mac is locked and automatic unlock failed. An asynchronous request to unlock is pending. No IPA was exported, no upload attempted, and no tester group changed. The archive's development signature alone is not a distribution export. Do not disable locking/security or request passwords/codes in chat.
+
+Evidence and prepared testing notes: workspace `work/testflight-build4-2026-09-26/{DoodleFun.xcarchive,archive.log,archive-audit.json,export.log,ExportOptions.plist,UploadOptions.plist,What-to-Test.txt}`. On unlock, inspect Xcode's Accounts/signing access; obtain user sign-in/verification if needed, then retry export, audit the distribution profile/signature/payload, upload and verify Apple processing and the existing tester-group assignments. Inspect live external beta review status; do not cancel an existing review or create new groups/testers/public links. The other chat “Deploy to TestFlight” was idle during preparation; coordinate shared browser use if it becomes active (already user-authorized).
+
+Exact final source CI [36287813484](https://github.com/kartikkp/Doodle-fun/actions/runs/36287813484) was still running at last inspection, with unit/check/bundle verification/native build successful and no reported failure. Prior [CI 36286328165](https://github.com/kartikkp/Doodle-fun/actions/runs/36286328165) completed successfully (133 unit,750 browser,284 native integration,six trusted audio); final 20 additional sorting cases and nine native sorting ages passed locally. Read the exact final CI outcome before distribution; do not infer completion from the older run. Physical audibility and child playtesting remain acceptance work for this beta, and public App Store submission is outside this upload request.
+
+---
+
+# Previous implementation state — activity challenge, design and requested coaching
 
 Updated September 26–27, 2026. The owner requested individual game/age review, less obvious answers, simpler attractive interfaces, natural coaching clips and no unsolicited audio feedback. Phase 7 is implemented on **`codex/audible-effects-older-challenges`**, attached draft [PR #8](https://github.com/kartikkp/Doodle-fun/pull/8). The educator-role and design-role agents completed separate reviews; no supervised child testing or credentialed educator validation is claimed.
 
