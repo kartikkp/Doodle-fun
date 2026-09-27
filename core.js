@@ -32,7 +32,8 @@ export function normalizeSettings(input) {
 export function getProfile(settings = DEFAULT_SETTINGS) {
   const {age, level, challengeOffset} = normalizeSettings(settings);
   const baseAge=level==='auto'?age:{little:3,explorer:6,maker:9}[level];
-  const challengeAge=Math.max(2,Math.min(10,baseAge+challengeOffset));
+  const requestedStep=settings?.practiceStep;
+  const challengeAge=typeof requestedStep==='number'&&Number.isInteger(requestedStep)&&requestedStep>=2&&requestedStep<=10?requestedStep:Math.max(2,Math.min(10,baseAge+challengeOffset));
   const tier=challengeAge<=4?'little':challengeAge<=7?'explorer':'maker';
   const profiles = {
     little:{name:'Little learner',sizes:[14,28,44],brush:28,colorCount:8,traceTolerance:.065,traceCoverage:.72,tracePrecision:.5,numberMax:5,defaultSet:'shapes'},

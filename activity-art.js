@@ -91,7 +91,7 @@ export function activityArt(id,{age=6}={}){
     case 'counting':content=rect(22,81,125,53,cream,10)+Array.from({length:5},(_,i)=>circle(37+i*24,107,8,i<3?coral:'#e9e6df')).join('')+item('apple',35,20,57,age)+item('apple',98,19,57,age)+tile(167,83,mature?'20':'3',gold);break;
     case 'number-stories':content=rect(38,19,164,47,cream,10)+text(120,52,mature?'145':'7',29)+path('m120 66-49 23m49-23 49 23')+tile(43,88,mature?'87':'3',teal,65)+tile(132,88,'?',gold,65);break;
     case 'sharing':content=Array.from({length:3},(_,i)=>rect(23+i*69,50,58,78,cream,9)+Array.from({length:4},(_,j)=>circle(39+i*69+j%2*25,71+Math.floor(j/2)*33,7,coral)).join('')).join('')+path('M33 30h174m-174-5v10m174-10v10');break;
-    case 'compare':content=path('M120 30v106M55 54h131M51 55l-24 51h52Zm135 0-24 51h52Z',cream)+circle(120,28,9,gold)+path('M88 139h64','none','stroke-width="7"')+text(52,89,mature?'245':'5',mature?19:25)+text(185,89,mature?'254':'8',mature?19:25);break;
+    case 'compare':content=path('M120 30v106M53 54h135',cream)+path('M53 54 15 116H91Z',cream,'data-scale-pan="left"')+path('M188 54 150 116h76Z',cream,'data-scale-pan="right"')+circle(120,28,9,gold)+path('M88 139h64','none','stroke-width="7"')+text(53,104,mature?'245':'5',mature?18:25)+text(188,104,mature?'254':'8',mature?18:25);break;
     case 'ordering':content=rect(27,99,37,32,teal)+rect(80,77,37,54,blue)+rect(133,51,37,80,violet)+rect(186,28,28,103,coral)+path('M25 140h194');break;
     case 'shape-match':content=circle(66,63,30,coral)+rect(113,30,64,59,teal,6)+path('m109 133 33-58 33 58Z',gold)+item('wood',18,100,42,age);break;
     case 'patterns':content=path('M24 106h191')+(mature?tile(21,47,'4',cream)+tile(75,47,'9',teal)+tile(129,47,'?',gold)+tile(183,47,'12',cream):item('leaf',18,35,65,age)+item('flower',79,35,65,age)+item('leaf',140,35,65,age));break;
@@ -104,6 +104,9 @@ export function activityArt(id,{age=6}={}){
     case 'sound-match':content=item('drum',18,55,92,age)+item('bell',109,18,84,age)+item('shaker',172,67,65,age);break;
     case 'pitch-path':content=path('M31 25v107h187')+path('M48 108 89 78l40 8 38-51 33 11','none',`stroke="${teal}" stroke-width="6"`)+[[48,108],[89,78],[129,86],[167,35],[200,46]].map(([x,y])=>circle(x,y,9,gold)).join('');break;
     case 'melody-echo':content=[coral,gold,teal,blue,violet].map((c,i)=>rect(24+i*40,28+i*9,31,102-i*9,c,9)+circle(40+i*40,44+i*9,3,ink)).join('')+path('m37 14 144 119','none','stroke="#c69b6d" stroke-width="7"')+circle(184,135,9,cream);break;
+    case 'mirror-mosaic':content=rect(22,22,196,116,cream,10)+path('M120 22v116','none','stroke-dasharray="5 5"')+[[62,49],[89,78],[62,107],[178,49],[151,78],[178,107]].map(([x,y],i)=>rect(x-11,y-11,22,22,[teal,coral,gold][i%3],3)).join('');break;
+    case 'balance-lab':content=path('M120 40v94M48 64h144M87 138h66','none','stroke-width="5"')+path('M23 98h55l-6 18H29Z',teal)+path('M159 98h55l-6 18h-43Z',blue)+rect(32,72,35,25,gold)+rect(164,78,18,19,coral)+rect(187,78,18,19,coral);break;
+    case 'measure-pour':content=path('M36 25h59v110H36Z',cream)+path('M143 54h61v81h-61Z',cream)+path('M38 73h55v60H38Z',blue)+path('M145 102h57v31h-57Z',teal)+path('M40 48h15m-15 24h15m-15 24h15m93-17h15m-15 25h15');break;
     case 'beat-studio':content=item('drum',61,17,122,age)+circle(28,79,5,gold)+circle(210,48,5,teal)+path('M25 114h20m152-11h19');break;
     default:content=star(120,78,39);
   }

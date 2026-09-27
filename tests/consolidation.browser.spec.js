@@ -7,7 +7,7 @@ for(const age of [2,6,10])test(`age ${age}: every family mode opens from its car
   await page.setViewportSize({width:375,height:667});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');await page.locator(`[data-age="${age}"]`).click();
-  await expect(page.locator('.activity-card')).toHaveCount(21);
+  await expect(page.locator('.activity-card')).toHaveCount(24);
   for(const family of ACTIVITIES){
     await page.locator(`#card-${family.id}`).click();
     for(const mode of family.modes){

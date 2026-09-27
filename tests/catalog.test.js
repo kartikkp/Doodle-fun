@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ACTIVITIES,ACTIVITY_MODES,CATEGORIES,getActivity,getFamily} from '../catalog.js';
-test('21 home families consolidate every practice mode exactly once',()=>{
-  assert.equal(ACTIVITIES.length,21);
+test('24 home families consolidate every practice mode exactly once',()=>{
+  assert.equal(ACTIVITIES.length,24);
   const modes=ACTIVITIES.flatMap(activity=>activity.modes.map(mode=>mode.id));
-  assert.equal(new Set(modes).size,34);
+  assert.equal(new Set(modes).size,38);
   assert.deepEqual([...modes].sort(),ACTIVITY_MODES.map(mode=>mode.id).sort());
   for(const family of ACTIVITIES){
     assert.ok(CATEGORIES.some(category=>category.id===family.category));
@@ -12,7 +12,7 @@ test('21 home families consolidate every practice mode exactly once',()=>{
     for(const {id} of family.modes){
       assert.equal(getFamily(id),family);
       assert.equal(getActivity(id).id,id);
-      assert.ok(['drawing','learning','discovery','challenges','adventures','listening'].includes(getActivity(id).engine));
+      assert.ok(['drawing','learning','discovery','challenges','adventures','listening','studio'].includes(getActivity(id).engine));
     }
   }
   assert.deepEqual(getFamily('coloring').modes.map(mode=>mode.id),['draw','coloring']);

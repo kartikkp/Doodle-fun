@@ -8,6 +8,7 @@ async function start(page,age=6,activity='letters') {
 }
 async function trace(page,set,ch,prepare=true) {
   if(prepare){await page.locator(`[data-learn-set="${set}"]`).click();await page.locator(`[data-learn-item="${ch}"]`).click();}
+  const whole=page.getByRole('button',{name:'Whole word',exact:true});if(await whole.isVisible())await whole.click();
   const board=page.getByTestId('trace-board');await board.scrollIntoViewIfNeeded();
   const rect=await board.boundingBox();
   const age=await page.evaluate(()=>JSON.parse(localStorage.getItem('doodle-fun:v2:settings')).age);

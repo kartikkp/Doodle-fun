@@ -33,6 +33,10 @@ export const ACTIVITY_MODES = [
   {id:'sound-match', title:'Sound detective', category:'listen', icon:'🔔', description:'Listen closely and find a sound.', skill:'Hearing sound differences', engine:'listening'},
   {id:'pitch-path', title:'Higher or lower', category:'listen', icon:'🎵', description:'Follow where the notes go.', skill:'Pitch & listening', engine:'listening'},
   {id:'melody-echo', title:'Melody echo', category:'listen', icon:'🎹', description:'Hear a tune. Play it back.', skill:'Listening & musical memory', engine:'listening'},
+  {id:'mirror-mosaic',title:'Mirror mosaic',category:'create',icon:'◈',description:'Build a picture that reflects.',skill:'Symmetry & construction',engine:'studio'},
+  {id:'balance-lab',title:'Balance workshop',category:'numbers',icon:'⚖',description:'Build two sides with equal weight.',skill:'Equality & experimentation',engine:'studio'},
+  {id:'measure-pour',title:'Measure & pour',category:'discover',icon:'◒',description:'Move water and discover capacity.',skill:'Measurement & fractions',engine:'studio'},
+  {id:'beat-maker',title:'Make a beat',category:'create',icon:'♫',description:'Compose, save and play your own rhythm.',skill:'Open-ended music making',engine:'studio'},
   {id:'beat-studio', title:'Beat studio', category:'listen', icon:'🥁', description:'Listen, then make your own beat.', skill:'Rhythm & coordination', engine:'listening'},
 ];
 
@@ -57,7 +61,8 @@ export const ACTIVITIES = [
   single('picture-sequence'), single('make-a-shape'),
   single('sound-match'), single('pitch-path'),
   family('melody-echo','Melody echo','listen','🎹','Hear a tune. Play it back.','Listening & sequence memory',[['melody-echo','Listen & echo'],['rhythm','Picture practice']]),
-  single('beat-studio'),
+  family('beat-studio','Beat studio','listen','🥁','Copy a rhythm or make your own.','Rhythm & music creation',[['beat-studio','Copy a rhythm'],['beat-maker','Make a beat']]),
+  single('mirror-mosaic'),single('balance-lab'),single('measure-pour'),
 ];
 export const CATEGORIES = [
   {id:'all',label:'All activities',icon:'✦'},

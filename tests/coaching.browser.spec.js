@@ -21,7 +21,7 @@ test('nine ages select exact starting steps; support applies only to the chosen 
   await page.locator('#coach-easier').click();
   await expect(page.locator('#coach-level')).toContainText('practice step 5');
   await page.locator('#coach-easier').click();
-  await expect(page.locator('#coach-easier')).toBeDisabled();
+  await expect(page.locator('#coach-easier')).toBeEnabled();
   await page.locator('#coach-done').click();
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
   await page.locator('#card-memory').click();

@@ -1,6 +1,10 @@
 import {getActivity} from './catalog.js';
 // Prompts support a conversation and a strategy, not an age-based assessment.
 export const COACHING = {
+  'mirror-mosaic':['Choose a color, then tap the empty side to make a mirror picture.','Match both the color and distance from the mirror line.','What stays the same when the picture is reflected?','Fold paper and compare marks on each side.'],
+  'balance-lab':['Choose a weight, then tap a pan. Check when it looks level.','Different combinations can have the same total weight.','Can you make another balanced combination?','Try a ruler balanced on a block with a grown-up.'],
+  'measure-pour':['Tap a source jug, then a destination. Pour to the marked amount.','Water moves between jugs; the total stays the same.','How could a different jug help measure the target?','Compare cups with water during supervised play.'],
+  'beat-maker':['Tap squares to place sounds, then tap Play.','Leave empty squares for pauses. Use Stop whenever you like.','How does moving one sound change your pattern?','Copy your pattern with gentle taps.'],
   'sound-match':['Tap Listen. Explore each sound with Hear before choosing its partner.','Compare the way each sound begins and fades. Replay the clue whenever you need it.','What helped you tell a ringing bell from a soft drum?','Make two gentle sounds with household objects. Close your eyes and find their partners.'],
   'pitch-path':['Tap Listen and follow the notes with your hand. Notice where they move.','Listen from beginning to end. Higher sounds move up; lower sounds move down. The volume is not the clue.','Can you hum the little tune and trace its path in the air?','Take turns humming a high note and a low note. Copy the direction together.'],
   'melody-echo':['Tap Listen, then play the tone pads in the order you heard.','Remember a small part at a time. Replay freely or use the picture hint; there is no timing score.','Which part of the melody was easiest to remember?','Make a short tune with your voice and take turns echoing it.'],

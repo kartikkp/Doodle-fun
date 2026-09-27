@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="challenges.css">
   <link rel="stylesheet" href="adventures.css">
   <link rel="stylesheet" href="listening.css">
+  <link rel="stylesheet" href="studio-play.css">
+  <link rel="stylesheet" href="family-controls.css">
   <script type="module" src="app.js"></script>
 </head>
 <body>
@@ -44,7 +46,7 @@
           <button class="age-option" data-age="10" type="button" aria-label="Age 10" aria-pressed="false"><strong>10</strong><small>years</small></button>
         </div>
       </section>
-      <div class="activities-heading"><h2>Your play space</h2><span id="activity-count" aria-live="polite">21 activities</span></div>
+      <div class="activities-heading"><h2>Your play space</h2><span id="activity-count" aria-live="polite">24 activities</span></div>
       <nav id="activity-filters" class="activity-filters" aria-label="Activity categories"></nav>
       <p class="activity-guidance" id="activity-guidance">Pick a favorite. Every activity grows with you.</p>
       <section id="activity-grid" class="activity-grid" aria-label="Activities"></section>
@@ -54,7 +56,7 @@
   <div id="activity-navigation" class="activity-navigation" hidden>
   <div id="activity-coach-bar" class="activity-coach-bar" hidden>
     <button id="coach-open" class="button coach-open" type="button"><span aria-hidden="true">✦</span> Coach</button>
-    <span id="coach-summary"></span>
+    <span id="coach-summary"></span><button id="journey-open" class="button journey-open" type="button" hidden>My progress</button>
   </div>
   <nav id="activity-mode-bar" class="activity-mode-bar" aria-label="Practice modes" hidden></nav>
   </div>
@@ -64,6 +66,7 @@
   <main id="discovery-view" hidden aria-label="Discovery activity"></main>
   <main id="challenges-view" hidden aria-label="Challenge activity"></main>
   <main id="listening-view" hidden aria-label="Listening activity"></main>
+  <main id="studio-view" hidden aria-label="Hands-on studio activity"></main>
   <dialog id="coach-dialog" class="settings-dialog coach-dialog" aria-labelledby="coach-title">
     <div class="dialog-heading"><div><span class="eyebrow">YOUR NEXT DISCOVERY</span><h2 id="coach-title">Your play coach</h2></div><button id="coach-close" class="icon-button" aria-label="Close coach" type="button">✕</button></div>
     <p id="coach-together" class="coach-together"></p>
@@ -82,8 +85,9 @@
     <p class="settings-intro">Age is a starting point. Adjust the support to fit your child. Every activity stays open.</p>
     <div class="settings-row"><label for="child-age">Child’s age<span>Each age has its own starting challenge</span></label><div class="age-stepper"><button class="icon-button" id="age-minus" aria-label="Decrease age" type="button">−</button><output id="child-age-output" for="child-age">6</output><button class="icon-button" id="age-plus" aria-label="Increase age" type="button">+</button></div><input id="child-age" type="hidden" value="6"></div>
     <label class="settings-field" for="support-level">How much help?<select id="support-level"><option value="auto">Suggested for their age</option><option value="little">More help · broad strokes & small counts</option><option value="explorer">A little challenge · letters & counting</option><option value="maker">Stretch me · words & number puzzles</option></select></label>
+    <section id="parent-controls-panel" class="parent-controls-panel" aria-label="Parent help controls"></section>
     <div class="parent-note"><strong>Sound when you ask</strong><p>Tap Hear for a spoken clue or Listen for a game sound. Use your device’s volume buttons. There is no microphone or recording.</p></div>
-    <div class="parent-note"><strong>Small moments of learning</strong><p id="parent-guidance"></p><p>Drawings and practice stars are saved locally. There are no accounts, ads, or leaderboards. A grown-up helps before sharing a picture. Try playing together, especially with little learners.</p></div>
+    <div class="parent-note"><strong>Small moments of learning</strong><p id="parent-guidance"></p><p>Drawings, practice and medals are saved locally. There are no accounts, ads, or leaderboards. A grown-up helps before sharing a picture. Try playing together, especially with little learners.</p></div>
     <nav class="policy-links settings-policy-links" aria-label="Privacy and support"><button type="button" data-open-info="privacy">Privacy policy</button><button type="button" data-open-info="support">Help & support</button></nav>
     <button class="button button-primary settings-done" id="settings-done" type="button">Let’s play <span aria-hidden="true">→</span></button>
   </dialog>
@@ -99,7 +103,7 @@
       <h3>Keep a picture</h3><p>In Doodle studio, draw freely or choose Coloring pages, then tap Save. A grown-up answers a question before choosing where the picture goes. Cancel at any point to keep drawing. Undo brings back the previous step.</p>
       <h3>Listening games</h3><p>Choose Listen on the home screen for sound matching, pitch, melody, and rhythm games. Tap Listen inside the game to begin. Use your device’s media-volume buttons for game sounds and spoken instructions. Check device media volume and connected speakers or headphones if sounds are quiet.</p>
       <h3>Hear the clues</h3><p>Tap “Hear it” inside an activity or “Hear these tips” in Coach. Spoken help starts only when you ask. Check your device volume if you cannot hear the voice.</p>
-      <h3>Saved on this device</h3><p>Settings, practice progress and the latest drawing are saved locally. Browser and app copies are separate. Device backups may include this data. Save a picture you want to keep before removing the app or clearing browser data.</p>
+      <h3>Hints and parent PIN</h3><p>In Grown-ups, leave hints available, turn them off, or ask for a parent PIN each round. You can also lock age and difficulty changes. Keep your recovery code: it resets controls without deleting artwork or medals. Instructions and question audio remain available.</p><h3>Practice medals</h3><p>Finish a short set to earn Bronze. Silver means all but one round independently correct; Gold means every round, without hints or a failed check. Memory exploration and creative play are not graded as mistakes. Medals are kept separately for each starting age and practice step.</p><h3>Saved on this device</h3><p>Settings, practice, medals, beat patterns and the latest drawing are saved locally. Browser and app copies are separate. Device backups may include this data. Save a picture you want to keep before removing the app or clearing browser data.</p>
       <h3>Need more help?</h3><p>A grown-up can email pishahrodi+support@gmail.com. Our support website has troubleshooting steps and a link to open your email app. Nothing is sent automatically. Please do not include a child’s name, photo or other personal details in your message.</p>
       <button type="button" class="button" data-external-url="https://kartikkp.github.io/Doodle-fun/support.html">Visit support website ↗</button>
       <p class="information-small">A grown-up check appears before opening a website.</p>
@@ -115,6 +119,13 @@
       <p id="parent-error" role="alert"></p>
       <div class="parent-actions"><button id="parent-cancel" class="button" type="button">Cancel</button><button class="button button-primary" type="submit">Continue</button></div>
     </form>
+  </dialog>
+  <dialog id="journey-dialog" class="settings-dialog journey-dialog" aria-labelledby="journey-title">
+    <div class="dialog-heading"><div><span class="eyebrow">YOUR LEARNING JOURNEY</span><h2 id="journey-title">Practice makes discoveries</h2></div><button id="journey-close" class="icon-button" type="button" aria-label="Close progress">×</button></div>
+    <p id="journey-level" class="settings-intro"></p><div id="journey-medal" class="journey-medal" aria-hidden="true">◇</div><p id="journey-result" role="status"></p><p id="journey-count"></p>
+    <p class="coach-small">Gold: every round independently correct on your first check, without hints. Silver: all but one. Bronze: finish the set with any support you need. No timer. Your best medal stays yours.</p>
+    <p class="coach-small">Exploring, editing, ordinary tracing strokes, instructions and sound replay are always welcome. Creative play has no medals.</p>
+    <div class="journey-actions"><button id="journey-fresh" class="button" type="button" hidden>Try a fresh set</button><button id="journey-next" class="button button-primary" type="button" hidden>Try the next practice step</button><button id="journey-done" class="button" type="button">Keep playing</button></div>
   </dialog>
   <div id="app-notice" class="toast" role="status" aria-live="polite" hidden></div>
   <noscript><div class="noscript-message">Doodle Fun needs JavaScript to draw and play. Enable it in your browser, then reload.</div></noscript>
