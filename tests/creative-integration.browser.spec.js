@@ -62,3 +62,22 @@ test('a completed tracing set offers a real fresh attempt through My progress',a
   await page.locator('#journey-open').tap();await expect(page.locator('#journey-count')).toContainText('0 of 3');await expect(page.locator('#journey-fresh')).toBeHidden();await expect(page.locator('#journey-result')).toHaveText('Best medal: Bronze');await page.locator('#journey-done').tap();
   await expect(page.locator('.learn-ink-layer')).toBeEmpty();expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:activity-progress-sources'))).toBe('{"learning":7}');
 });
+
+for(const viewport of [{width:320,height:568},{width:375,height:667},{width:390,height:844},{width:667,height:375},{width:1024,height:768}])test(`practice modes remain reachable beside progress at ${viewport.width}×${viewport.height}`,async({page})=>{
+  await page.setViewportSize(viewport);await page.addInitScript(()=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:10,level:'auto'})));await page.goto('/#word-tracing');
+  const rail=page.locator('#activity-mode-bar'),coach=page.locator('#activity-coach-bar'),first=rail.getByRole('button',{name:'First lines',exact:true});
+  await expect(first).toBeAttached();const r=await rail.boundingBox(),c=await coach.boundingBox();
+  if(viewport.width<=650&&viewport.height>viewport.width){
+    expect(r.width).toBeGreaterThanOrEqual(viewport.width-24);expect(c.y).toBeGreaterThanOrEqual(r.y+r.height);
+  }else expect(Math.abs(c.y-r.y)).toBeLessThan(3);
+  await page.screenshot({path:test.info().outputPath('practice-navigation.png')});
+  await first.scrollIntoViewIfNeeded();const f=await first.boundingBox();expect(f.width).toBeGreaterThanOrEqual(48);expect(f.height).toBeGreaterThanOrEqual(48);expect(f.x).toBeGreaterThanOrEqual(r.x-.5);expect(f.x+f.width).toBeLessThanOrEqual(r.x+r.width+.5);
+  await first.tap();await expect(page).toHaveURL(/#prewriting$/);await expect(page.getByTestId('trace-board')).toBeVisible();
+  await page.locator('#journey-open').tap();await expect(page.locator('#journey-dialog')).toBeVisible();await page.locator('#journey-done').tap();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  if(viewport.width===320){
+    // Restore the original crowded row: this fails the reachability geometry.
+    await page.addStyleTag({content:'.activity-navigation{flex-wrap:nowrap!important}.activity-navigation .activity-mode-bar:not([hidden]){flex:1 1 0!important}.activity-navigation:has(.activity-mode-bar:not([hidden])) .activity-coach-bar{flex:0 0 auto!important}'});
+    expect((await rail.boundingBox()).width).toBeLessThan((await first.boundingBox()).width);
+  }
+});
