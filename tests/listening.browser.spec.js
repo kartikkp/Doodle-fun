@@ -115,9 +115,10 @@ for(const age of [2,3,4,5,6,7,8,9,10])for(const id of LISTENING_IDS) {
   test(`${id}: age ${age} hears real audio, retries, uses a hint and completes`,async({page})=>{
     await page.setViewportSize(age%3===0?{width:667,height:375}:{width:375,height:667});
     const q=await start(page,id,age);
-    if(age>2)await expect(page.locator('[data-listening-model]')).toBeHidden();
+    await expect(page.locator('[data-listening-model]')).toBeHidden();
     if(id==='sound-match'||id==='pitch-path')for(const choice of await page.locator('[data-listening-answer]').all())await expect(choice).toBeDisabled();
     await listen(page);
+    await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
     if(id==='sound-match') {
       const wrong=q.choices.find(value=>value!==q.answer);
       await page.locator(`[data-listening-preview="${q.answer}"]`).click();
@@ -128,10 +129,11 @@ for(const age of [2,3,4,5,6,7,8,9,10])for(const id of LISTENING_IDS) {
     else if(id==='melody-echo'){await page.locator(`[data-listening-pad="${(q.sequence[0]+1)%q.frequencies.length}"]`).click();await previewDone(page);await expect(page.locator('.listening-echo-slot.is-filled')).toHaveCount(0);}
     else {await page.locator('[data-listening-drum]').click();await previewDone(page);await page.locator('[data-listening-check]').click();}
     await expect(page.getByTestId('listening-feedback')).not.toHaveClass(/is-complete/);
+    await expect(page.locator('[data-listening-model]')).toBeHidden();
     await page.getByRole('button',{name:'Try again',exact:true}).click();
     await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
     await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
-    await listen(page);await playCorrect(page,id,q);
+    await listen(page);await expect(page.locator('[data-listening-model]')).toBeHidden();await playCorrect(page,id,q);
     const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('doodle-fun:v2:listening-progress-v1')));
     expect(stored.stars[`${id}:${age}:0`]).toBe(true);expect(Object.keys(stored.stars)).toHaveLength(1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -142,7 +144,7 @@ for(const age of [2,3,4,5,6,7,8,9,10])for(const id of LISTENING_IDS) {
 
 test('game sound is independent of narration; modal and route cancel unheard playback',async({page})=>{
   await start(page,'melody-echo',10);
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
   await page.locator('[data-listening-listen]').click();
   await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','playing');
   await page.locator('#coach-open').click();await expect(page.locator('#coach-dialog')).toBeVisible();
@@ -160,7 +162,7 @@ for(const id of LISTENING_IDS)test(`legacy disabled low-volume settings do not s
   await expect(page.locator('[data-listening-sound],.listening-volume,input[type="range"]')).toHaveCount(0);
   await expect(page.locator('[data-listening-listen]')).toBeEnabled();
   await expect(page.locator('.listening-side')).toContainText('device’s volume buttons');
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
   await listen(page);await playCorrect(page,id,q);
   expect(await page.evaluate(()=>window.__legacyAudioReads),'retired preferences are never read to set playback or gain').toBe(0);
   expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-audio-v1'))).toBe(JSON.stringify({enabled:false,volume:.15}));
@@ -198,7 +200,7 @@ test('native inactivity while the document stays visible cancels heard input and
   await expect.poll(()=>page.evaluate(()=>window.__listeningAudio.at(-1).peak),'replacement context produces real nonzero audio').toBeGreaterThan(.0001);
   await playCorrect(page,'beat-studio',q);
   expect(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('doodle-fun:v2:listening-progress-v1')).stars))).toEqual(['beat-studio:2:0']);
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
 });
 
 test('preview cannot earn progress, a melody pad before Listen only explores, completed retry is idempotent',async({page})=>{
@@ -264,11 +266,13 @@ for(const outcome of ['false','rejected','timeout'])test(`native audio preparati
     await page.goto(`/?native-audio-failure=${outcome}-${id}#${id}`);
     expect(await page.evaluate(()=>window.__nativePreparation)).toEqual([]);
     expect(await page.evaluate(()=>window.__failedAudioContexts.length)).toBe(0);
+    await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
     await page.locator('[data-listening-listen]').click();
     await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
     await expect(page.locator('[data-listening-listen]')).toBeEnabled();
     await expect(page.getByTestId('listening-feedback')).not.toHaveText('Tap Listen when you are ready.');
     await expect(page.getByTestId('listening-feedback')).not.toHaveClass(/is-complete/);
+    await expect(page.locator('[data-listening-model]')).toBeHidden();
     for(const answer of await page.locator('[data-listening-answer],[data-listening-drum],[data-listening-check]').all())await expect(answer).toBeDisabled();
     await expect(page.locator('.listening-echo-slot.is-filled')).toHaveCount(0);
     expect(await page.evaluate(()=>window.__nativePreparation)).toEqual([{type:'prepareGameAudio'}]);

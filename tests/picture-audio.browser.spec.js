@@ -72,7 +72,9 @@ async function start(page,{legacyAudio={enabled:true,volume:.55},age=8}={}) {
   expect(await page.evaluate(()=>window.__pictureAudio.length),'opening picture practice never starts audio').toBe(0);
   const sequence=await page.locator('.adventure-beat-token').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('aria-label').split(': ')[1].toLowerCase()));
   if(await page.locator('.adventure-ready').count())await page.locator('.adventure-ready').tap();
-  return sequence;
+  const swapped=sequence.map(value=>value==='clap'?'tap':value==='tap'?'clap':value);
+  if(age===8||age===10)await expect(page.locator('.adventure-objective')).toContainText('reverse');
+  return age===8?[...sequence].reverse():age===9?swapped:age===10?[...swapped].reverse():sequence;
 }
 const progress=page=>page.evaluate(()=>localStorage.getItem('doodle-fun:v2:adventures-progress-v1'));
 const heard=page=>expect.poll(()=>page.evaluate(()=>window.__pictureAudio.at(-1)?.peak||0)).toBeGreaterThan(.005);
@@ -85,7 +87,7 @@ async function silencePrevious(page) {
 // creation alone would miss the user's quiet/inaudible effects regression.
 test('live picture pads produce real clap, tap and stomp audio; rest remains silent',async({page})=>{
   await start(page);
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
   for(const kind of ['clap','tap','stomp']) {
     await silencePrevious(page);await page.locator(`[data-beat="${kind}"]`).tap();await heard(page);
   }
@@ -130,7 +132,7 @@ test('live picture practice and listening ignore legacy muted low volume without
   const sequence=await start(page,{legacyAudio:{enabled:false,volume:.15}});
   await expect(page.locator('.adventure-sound,.adventure-volume,input[type="range"]')).toHaveCount(0);
   await expect(page.locator('.adventure-listen')).toBeEnabled();
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
   for(const value of sequence){await page.locator(`[data-beat="${value}"]`).tap();await page.waitForTimeout(300);}
   await heard(page);await expect(page.locator('.adventure-next')).toHaveClass(/is-ready/);
   expect(JSON.parse(await progress(page)).rhythm).toBe(1);
