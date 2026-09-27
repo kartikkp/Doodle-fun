@@ -1,1 +1,9 @@
-{"mode":"autonomous","workflow":{"research":true,"verification":true},"project":"Doodle Fun","phase":"05"}
+{
+  "mode": "autonomous",
+  "workflow": {
+    "research": true,
+    "verification": true
+  },
+  "project": "Doodle Fun",
+  "phase": "07"
+}

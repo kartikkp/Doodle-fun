@@ -40,3 +40,11 @@ Success: every visible card launches and plays, the downloaded HTML works indepe
 3. Verify the bundled app in both browser engines and native iPhone tests, then distribute TestFlight build 2 to the existing test groups. Keep physical audibility and child playtesting distinct from automated results.
 
 4. Follow-up: remove separate game mute/volume and ignore legacy attenuation; strengthen short Beat Studio feedback with a bounded fixed output. Verify actual short-duration signals and publish build 3 after native/signing prerequisites pass.
+
+## Phase 7 — Requested coaching, meaningful difficulty and activity design
+
+1. Review every mode at each starting age, replace answer giveaways with requested hints, and strengthen reasoning, literacy, numeric, spatial and musical progression.
+2. Simplify navigation and create original illustrated activity surfaces with mature age-based presentation and generous phone/tablet controls.
+3. Bundle offline synthetic coaching clips, retain explicit device-voice questions, and verify all mode/age playthroughs, audio output, cancellation, visual layouts and native iPhone behavior.
+
+Success: all 34 modes remain available; quiet entry/retry/completion; explicit Hear and Hint; meaningful older-child tasks; synchronized offline bundles; versioned QA that separates digital/simulator evidence from physical audibility and child testing.
