@@ -40,3 +40,4 @@ body[data-appearance-band="studio"] .learn-trace-card{background:#fffefa}body[da
 .learn-picker{grid-template-columns:repeat(auto-fit,minmax(48px,1fr))}.learn-choice{min-width:48px}
 .learn-choice-word{grid-column:span 2;font-size:14px!important;padding:10px 7px;min-width:90px;line-height:1.35;overflow-wrap:anywhere}
 @media(max-width:620px){.learn-choice.learn-choice-word{width:auto;min-width:90px;max-width:140px;padding:10px 12px;white-space:normal}}
+.learn-example-art{display:inline-flex;vertical-align:middle;margin-right:4px;flex-shrink:0}.learn-example-art .object-art{width:24px;height:24px}
