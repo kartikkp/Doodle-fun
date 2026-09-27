@@ -170,7 +170,7 @@ jobs:
           DOODLE_SIMULATOR_UDID: ${{ steps.simulator.outputs.udid }}
         run: |
           caffeinate -di npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID" \
-            --output "$RUNNER_TEMP/DoodleFun-native-audio-qa" --without-gameplay \
+            --output "$RUNNER_TEMP/DoodleFun-native-audio-qa" --without-gameplay --audio-diagnostics \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedSoundDetectiveRequiresAudioWithSystemVolume \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPitchPathCanRetryAndChooseTheHeardContour \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedMelodyEchoPlaysPadsInOrderAfterRetry \
@@ -179,6 +179,10 @@ jobs:
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground \
             2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-audio-qa.log"
+      - name: Collect bounded audio diagnostics after success or failure
+        if: always()
+        timeout-minutes: 1
+        run: node scripts/native-audio-diagnostics.mjs --collect "$RUNNER_TEMP/DoodleFun-native-audio-qa"
       - name: Keep native listening evidence
         uses: actions/upload-artifact@v7
         if: always()
@@ -190,6 +194,8 @@ jobs:
             ${{ runner.temp }}/DoodleFun-native-audio-qa/qa-build.json
             ${{ runner.temp }}/DoodleFun-native-audio-qa/run-*.json
             ${{ runner.temp }}/DoodleFun-native-audio-qa/last-command.json
+            ${{ runner.temp }}/DoodleFun-native-audio-qa/audio-diagnostics.json
+            ${{ runner.temp }}/DoodleFun-native-audio-qa/audio-diagnostics/**
             ${{ runner.temp }}/DoodleFun-native-audio-qa.log
           if-no-files-found: ignore
           retention-days: 7

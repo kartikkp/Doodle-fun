@@ -2,9 +2,11 @@ import {cp, mkdir, readFile, writeFile, appendFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
-import {createHash} from 'node:crypto';
+import {createHash, randomUUID} from 'node:crypto';
+import {homedir} from 'node:os';
 import {build} from 'esbuild';
 import {nativeTestSourcePaths, indexNativeTests, nativeTestSelections} from './native-test-selection.mjs';
+import {instrumentNativeAudioController, collectNativeAudioDiagnostics} from './native-audio-diagnostics.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -24,6 +26,7 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const originalProjectHash = sha(await readFile(sourceProject));
 const withoutGameplay = args.includes('--without-gameplay');
 const studioOnly = args.includes('--studio-only');
+const audioDiagnostics = args.includes('--audio-diagnostics');
 if(studioOnly&&withoutGameplay)throw new Error('--studio-only requires the native gameplay fixture; remove --without-gameplay.');
 const studioSelections=studioOnly?Array.from({length:9},(_,i)=>i+2).flatMap(age=>
   ['testMirrorMosaic','testBalanceLab','testMeasurePour','testBeatMaker'].flatMap(method=>
@@ -58,12 +61,21 @@ if (!withoutGameplay) {
 for (const name of ['ActivityCatalogUITests.swift','DrawingRecoveryUITests.swift','TracingGestureUITests.swift']) {
   await appendFile(uiFile, '\n' + await readFile(path.join(root, 'ios/DoodleFunUITests', name), 'utf8'));
 }
+let audioDiagnosticMetadata;
+if (audioDiagnostics) {
+  const controller = path.join(project, 'ios/DoodleFun/DoodleViewController.swift');
+  const observer = await readFile(path.join(root, 'ios/DoodleFunTests/Fixtures/native-audio-diagnostics.js'), 'utf8');
+  const instrumented = instrumentNativeAudioController(await readFile(controller, 'utf8'), observer,
+    `doodle-audio-qa-${randomUUID().replaceAll('-', '')}`);
+  await writeFile(controller, instrumented.source);
+  audioDiagnosticMetadata = instrumented.metadata;
+}
 const manifest = JSON.parse(await readFile(path.join(root, 'ios/DoodleFun/Resources/BundleManifest.json'), 'utf8'));
 const preparedAt = new Date().toISOString();
 const stamp = preparedAt.replaceAll(':','-').replaceAll('.','-');
 const metadata = {
   device, manifest, originalProjectHash, testSourceSHA256, fixtureSHA256:sha(script), testSelections:selections,
-  preparedAt, project,
+  preparedAt, project, ...(audioDiagnosticMetadata ? {audioDiagnostics:audioDiagnosticMetadata} : {}),
 };
 await writeFile(path.join(output,'qa-build.json'), JSON.stringify(metadata, null, 2) + '\n');
 await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify(metadata, null, 2) + '\n');
@@ -88,6 +100,22 @@ for (const {flag, selection} of selections) {
 }
 await writeFile(path.join(output,'last-command.json'), JSON.stringify(['xcodebuild',...command],null,2)+'\n');
 await writeFile(path.join(output,`run-${stamp}.json`), JSON.stringify({...metadata, command:['xcodebuild',...command]},null,2)+'\n');
-const child = spawn('caffeinate',['-i','xcodebuild',...command],{cwd:root,stdio:'inherit'});
-child.on('error',error => { console.error(error); process.exitCode=1; });
-child.on('exit',code => { process.exitCode=code ?? 1; });
+const code = await new Promise(resolve => {
+  const child = spawn('caffeinate',['-i','xcodebuild',...command],{cwd:root,stdio:'inherit'});
+  child.on('error',error => { console.error(error); resolve(1); });
+  child.on('close',code => resolve(code ?? 1));
+});
+process.exitCode = code;
+if (audioDiagnosticMetadata && action === 'test') {
+  try {
+    const captured = await collectNativeAudioDiagnostics({
+      applicationsDirectory:path.join(homedir(), 'Library/Developer/CoreSimulator/Devices', device, 'data/Containers/Data/Application'),
+      traceDirectory:audioDiagnosticMetadata.traceDirectory, output,
+    });
+    console.log(`Retained ${captured.files.length} bounded audio diagnostic launch trace(s).`);
+    if (!captured.files.length) throw new Error('No audio diagnostic traces were captured.');
+  } catch (error) {
+    console.error('Audio diagnostic collection failed:', error);
+    process.exitCode = code || 1;
+  }
+}
