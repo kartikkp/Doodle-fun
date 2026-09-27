@@ -343,7 +343,7 @@ for (const viewport of [{ width: 667, height: 375 }, { width: 844, height: 390 }
     }
     // The supplies can scroll inside their panel; each actual control must
     // remain a full-sized, unobstructed target when brought into view.
-    for (const [selector, minimum] of [['.draw-tool', 48], ['.draw-save', 48], ['.draw-shuffle', 48], ['.draw-size', 48], ['.draw-actions .button', 48]]) {
+    for (const [selector, minimum] of [['.draw-tools > .draw-tool', 48], ['.draw-save', 48], ['.draw-shuffle', 48], ['.draw-size', 48], ['.draw-actions .button', 48]]) {
       for (const control of await page.locator(selector).all()) {
         await control.scrollIntoViewIfNeeded();
         const box = await control.boundingBox();
