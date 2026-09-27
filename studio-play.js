@@ -6,8 +6,23 @@ export const STUDIO_IDS=['mirror-mosaic','balance-lab','measure-pour','beat-make
 const TITLES={'mirror-mosaic':'Mirror mosaic','balance-lab':'Balance workshop','measure-pour':'Measure & pour','beat-maker':'Beat maker'};
 const COLORS=['Empty','Coral','Ocean','Gold','Leaf'];
 const MARKS=['','●','◆','★','▲'];
+const DIAGONAL_MARKS=['','●','◆','■','✚'];
+const tileMark=(round,color)=>(round.axis?.startsWith('diagonal')?DIAGONAL_MARKS:MARKS)[color];
 const clampAge=value=>Math.max(2,Math.min(10,Math.round(Number(value)||6)));
 const clone=value=>JSON.parse(JSON.stringify(value));
+// Each entry is [jug capacities in integer units, target in jug B]. Fractions
+// change the unit label, never the conserved arithmetic or legal pour rule.
+const POUR_BANKS=[
+  [[[2,1],1],[[3,1],1],[[3,2],2]],
+  [[[3,2],2],[[4,2],2],[[4,3],3]],
+  [[[4,3,1],2],[[5,3,2],1],[[5,4,1],3],[[6,4,2],2]],
+  [[[5,3,2],1],[[6,4,2],2],[[6,5,1],4],[[7,4,3],1]],
+  [[[6,4,3],2],[[8,6,3],2],[[9,6,4],1],[[9,6,4],3],[[9,7,3],2]],
+  [[[7,4,3],2],[[8,5,4],2],[[9,7,3],5],[[8,5,3],1],[[8,5,3],4]],
+  [[[8,5,3],1],[[8,5,3],4],[[9,5,4],2],[[9,5,4],3],[[11,7,4],1],[[11,7,4],6]],
+  [[[10,7,3],2],[[10,7,3],5],[[11,7,4],2],[[11,7,4],5],[[11,8,3],1],[[11,8,3],7]],
+  [[[12,7,5],1],[[12,7,5],6],[[13,8,5],4],[[13,7,6],3],[[13,7,6],4]],
+];
 
 export function studioConfig(value=6) {
   const age=clampAge(value);
@@ -16,14 +31,16 @@ export function studioConfig(value=6) {
 }
 
 export function mirrorSource(size,axis,index) {
-  const row=Math.floor(index/size),col=index%size,half=size/2;
+  const row=Math.floor(index/size),col=index%size;
+  if(axis==='diagonal')return Math.min(index,col*size+row);
+  if(axis==='diagonal-both')return Math.min(index,col*size+row,(size-1-col)*size+size-1-row,(size-1-row)*size+size-1-col);
   return (axis==='vertical'?row:Math.min(row,size-1-row))*size+(axis==='horizontal'?col:Math.min(col,size-1-col));
 }
 
 export function buildStudioRound(id,value=6,index=0) {
   const config=studioConfig(value),age=config.age;
   if(id==='mirror-mosaic') {
-    const size=config.gridSize,axis=age>=8?'both':age>=5&&index%2?'horizontal':'vertical';
+    const size=config.gridSize,axis=age===10?'diagonal-both':age===9?'diagonal':age===8?'both':age>=5&&index%2?'horizontal':'vertical';
     const solution=Array(size*size).fill(0),sources=[];
     for(let cell=0;cell<solution.length;cell++)if(mirrorSource(size,axis,cell)===cell)sources.push(cell);
     sources.forEach((cell,i)=>{solution[cell]=i===0||((i+index)%3!==2)?1+(i+index)%config.colors:0;});
@@ -31,14 +48,15 @@ export function buildStudioRound(id,value=6,index=0) {
     return {id,age,index,...config,size,axis,sources,solution};
   }
   if(id==='balance-lab') {
-    const unknown=age>=8,target=age<=3?age-1:age<=5?3+index%3:age<=7?5+index%4:6+index%6;
-    const mystery=unknown?2+index%4:0;
-    const fixed=unknown?[{value:mystery,mystery:true},{value:target-mystery}]:age<=4?Array.from({length:target},()=>({value:1})):[{value:target}];
-    return {id,age,index,target,fixed,mystery,weights:age<=2?[1]:age<=4?[1,2]:age<=6?[1,2,3]:[1,2,5],maxPieces:12};
+    const unknown=age>=8,target=age<=3?age-1:age<=5?3+index%3:age<=7?5+index%4:age===8?6+index%6:age===9?[8,9,11,12,7][index%5]:[12,14,8,11,16,17][index%6];
+    const mystery=unknown?2+index%(age===10?2:4):0,mysteryCopies=age===10?2:1;
+    const fixed=unknown?[...Array.from({length:mysteryCopies},()=>({value:mystery,mystery:true})),{value:target-mystery*mysteryCopies}]:age<=4?Array.from({length:target},()=>({value:1})):[{value:target}];
+    const clueCopies=age===10?3:age===9?2:1,clueExtra=1+index%3;
+    return {id,age,index,target,fixed,mystery,clue:unknown?{copies:clueCopies,extra:clueExtra,total:mystery*clueCopies+clueExtra}:null,
+      weights:age<=2?[1]:age<=4?[1,2]:age<=6?[1,2,3]:[1,2,5],maxPieces:12,pieceCount:age>=9?age-6:null,weightKinds:age===10?2:null};
   }
   if(id==='measure-pour') {
-    const sets=[[2,1],[3,2],[4,3,1],[5,3,2],[6,4,3],[7,4,3],[6,4,3],[8,5,3],[9,5,4]];
-    const capacities=sets[age-2],target=[1,2,2,1,1,2,index%2?3:1,index%2?4:2,index%2?3:2][age-2];
+    const bank=POUR_BANKS[age-2],[sizes,target]=bank[index%bank.length],capacities=[...sizes];
     return {id,age,index,capacities,initial:capacities.map((capacity,i)=>i===0?capacity:0),targetJug:1,target,denominator:age<=7?1:age===8?2:4};
   }
   if(id==='beat-maker')return {id,age,index,...config,instruments:Object.keys(TIMBRES).slice(0,config.tracks)};
@@ -54,10 +72,19 @@ export function setMirrorTile(round,tiles,cell,color,free=false) {
 }
 export const mirrorComplete=(round,tiles)=>tiles.length===round.solution.length&&tiles.every((value,i)=>value===round.solution[i]);
 export function balanceTotals(pans){return pans.map(pan=>pan.reduce((sum,piece)=>sum+piece.value,0));}
-export function balanceComplete(pans){const [left,right]=balanceTotals(pans);return left>0&&left===right;}
+export function balanceComplete(pans,round){const [left,right]=balanceTotals(pans);return left>0&&left===right&&(!round?.pieceCount||pans[1].length===round.pieceCount)&&(!round?.weightKinds||new Set(pans[1].map(piece=>piece.value)).size===round.weightKinds);}
 export function addBalanceWeight(round,pans,pan,value) {
-  if(![0,1].includes(pan)||!round.weights.includes(value)||pans[pan].length>=round.maxPieces)return pans;
+  if(![0,1].includes(pan)||!round.weights.includes(value)||pans[pan].length>=round.maxPieces||(round.pieceCount&&(pan===0||pans[pan].length>=round.pieceCount)))return pans;
   return pans.map((pieces,i)=>i===pan?[...pieces,{value}]:pieces);
+}
+export function solveBalance(round) {
+  function search(weights,total,start){
+    if(total===round.target&&(!round.pieceCount||weights.length===round.pieceCount)&&(!round.weightKinds||new Set(weights).size===round.weightKinds))return weights;
+    if(total>=round.target||weights.length>=(round.pieceCount||round.maxPieces))return null;
+    for(let i=start;i<round.weights.length;i++){const found=search([...weights,round.weights[i]],total+round.weights[i],i);if(found)return found;}
+    return null;
+  }
+  return search([],0,0);
 }
 export function pourTransfer(round,amounts,from,to) {
   if(!Number.isInteger(from)||!Number.isInteger(to)||from===to||from<0||to<0||from>=amounts.length||to>=amounts.length)return amounts;
@@ -127,28 +154,34 @@ export function createStudioPlay(container,{getSettings,getTitle=()=>null,onBack
   }}).then(result=>{if(!active||token!==audioEpoch||id!=='beat-maker')return;playing=false;tell(result.status==='failed'?'Sound could not start. Your pattern is saved; tap Play to try again.':'Your pattern is ready to change or play again.',result.status==='failed'?'retry':'');render();});}
   function objective(title,instructions){$('.studio-objective').textContent=title;$('.studio-instructions').textContent=instructions;}
   function palette(){const row=el('div','studio-palette');for(let color=0;color<=state.round.colors;color++){
-    const tile=button(`${MARKS[color]||'×'} ${color?COLORS[color]:'Erase'}`,'studio-color',()=>{state.selected=color;render();});tile.dataset.color=String(color);tile.setAttribute('aria-pressed',String(state.selected===color));row.append(tile);
+    const tile=button(`${tileMark(state.round,color)||'×'} ${color?COLORS[color]:'Erase'}`,'studio-color',()=>{state.selected=color;render();});tile.dataset.color=String(color);tile.setAttribute('aria-pressed',String(state.selected===color));row.append(tile);
   }return row;}
   function renderMirror(){const round=state.round;
-    objective(state.free?'Create a mirror picture.':round.axis==='both'?'Make all four parts reflect.':'Complete the mirror picture.',state.free?'Pick a color, then tap anywhere. Its reflections appear too. Every design is welcome.':'Choose a color, then tap the empty side. Keep matching tiles equally far from the mirror line. Erase removes a tile.');
+    const diagonal=round.axis.startsWith('diagonal');
+    objective(state.free?'Create a mirror picture.':round.axis==='diagonal-both'?'Reflect across both sloping lines.':diagonal?'Reflect across the sloping line.':round.axis==='both'?'Make all four parts reflect.':'Complete the mirror picture.',state.free?'Pick a color, then tap anywhere. Its reflections appear too. Every design is welcome.':`Choose a color, then tap the dotted squares. ${diagonal?'Match color and distance on opposite sides of each purple line.':'Keep matching tiles equally far from the mirror line.'} Erase removes a tile.`);
     const toggle=button(state.free?'Return to challenge':'Create freely','button studio-free',()=>{state=fresh(state.index,!state.free);sessions.set(key(),state);startScore();render();});play.append(toggle,palette());
     const grid=el('div',`studio-mirror-grid axis-${round.axis}`);grid.style.setProperty('--grid-size',round.size);grid.setAttribute('aria-label','Mirror picture');
     state.tiles.forEach((color,cell)=>{
       const source=!state.free&&round.sources.includes(cell),row=Math.floor(cell/round.size),col=cell%round.size;
       const node=source?el('div','studio-mirror-cell is-source'):button('','studio-mirror-cell',()=>{const next=setMirrorTile(round,state.tiles,cell,state.selected,state.free);if(next!==state.tiles){remember();state.tiles=next;changed(state.free?'Your picture reflects across the line.':'Your tile is in place. Check when you are ready.');}});
-      node.dataset.cell=String(cell);node.dataset.color=String(color);const mark=el('span','studio-tile-mark',MARKS[color]||'·');mark.style.transform=`scale(${round.axis!=='horizontal'&&col>=round.size/2?-1:1},${round.axis!=='vertical'&&row>=round.size/2?-1:1})`;node.append(mark);node.setAttribute('aria-label',`${source?'Model':'Your picture'}, row ${row+1}, column ${col+1}: ${COLORS[color]}`);
+      node.dataset.cell=String(cell);node.dataset.color=String(color);const mark=el('span','studio-tile-mark',tileMark(round,color)||'·');
+      if(!diagonal)mark.style.transform=`scale(${round.axis!=='horizontal'&&col>=round.size/2?-1:1},${round.axis!=='vertical'&&row>=round.size/2?-1:1})`;
+      else {const sourceCell=mirrorSource(round.size,round.axis,cell),r=Math.floor(sourceCell/round.size),c=sourceCell%round.size;mark.style.transform=cell===sourceCell?'none':row===c&&col===r?'matrix(0,1,1,0,0,0)':row===round.size-1-c&&col===round.size-1-r?'matrix(0,-1,-1,0,0,0)':'rotate(180deg)';}
+      node.append(mark);node.setAttribute('aria-label',`${source?'Model':'Your picture'}, row ${row+1}, column ${col+1}: ${COLORS[color]}`);
       if((round.axis==='vertical'||round.axis==='both')&&col===round.size/2-1)node.classList.add('mirror-edge-right');
       if((round.axis==='horizontal'||round.axis==='both')&&row===round.size/2-1)node.classList.add('mirror-edge-bottom');grid.append(node);
-    });play.append(grid,el('p','studio-caption',state.free?'Mirrors repeat your choices. Try turning the little shapes into a creature.':'The filled model squares stay still. Dotted squares are yours to change.'));
+    });
+    if(diagonal){const axes=document.createElementNS('http://www.w3.org/2000/svg','svg');axes.setAttribute('viewBox','0 0 100 100');axes.setAttribute('aria-hidden','true');axes.classList.add('studio-diagonal-axes');axes.innerHTML=`<path d="M0 0L100 100${round.axis==='diagonal-both'?'M100 0L0 100':''}"/>`;grid.append(axes);}
+    play.append(grid,el('p','studio-caption',state.free?'Mirrors repeat your choices. Try turning the little shapes into a creature.':'The solid-border model squares stay still. Dotted-border squares are yours to change.'));
   }
   function renderBalance(){const round=state.round,[left,right]=balanceTotals(state.pans),difference=Math.sign(left-right);
-    objective('Make the pans balance.','Choose a weight, then tap a pan to add it. Tap a weight you added to take it back. Different combinations can balance.');
-    if(round.mystery){const evidence=el('div','studio-evidence');evidence.append(el('strong','',`Mystery clue: one ? box balances ${round.mystery} unit blocks.`));const icons=el('div','studio-unit-clue','?  =  '+Array(round.mystery).fill('■').join(' '));icons.setAttribute('aria-hidden','true');evidence.append(icons);play.append(evidence);}
+    objective(round.pieceCount?`Balance with exactly ${round.pieceCount} weights.`:'Make the pans balance.',round.pieceCount?`Use the clue to work out each ? box. Choose a weight, then add it to the right pan.${round.weightKinds?' Use exactly two different weight values.':''} Tap an added weight to take it back.`:'Choose a weight, then tap a pan to add it. Tap a weight you added to take it back. Different combinations can balance.');
+    if(round.mystery){const evidence=el('div','studio-evidence');evidence.append(el('strong','','Mystery clue · every ? box has the same weight'));const equation=`${Array(round.clue.copies).fill('?').join(' + ')} + ${round.clue.extra} = ${round.clue.total}`;evidence.append(el('div','studio-unit-clue',equation));play.append(evidence);}
     const palette=el('div','studio-palette');round.weights.forEach(value=>{const node=button(`${value} ${value===1?'unit':'units'}`,'studio-weight',()=>{state.selected=value;render();});node.dataset.weight=String(value);node.setAttribute('aria-pressed',String(state.selected===value));palette.append(node);});play.append(palette);
     const beam=el('div','studio-balance-beam');beam.style.setProperty('--tilt',`${difference*-6}deg`);beam.setAttribute('aria-hidden','true');beam.append(el('span','studio-beam-bar'),el('span','studio-fulcrum','▲'));play.append(beam);
-    const pans=el('div','studio-pans');state.pans.forEach((pieces,pan)=>{const holder=el('section','studio-pan');holder.dataset.side=String(pan);holder.style.transform=`translateY(${difference*(pan===0?6:-6)}px)`;const add=button(`+ ${pan===0?'Left':'Right'} pan`,'studio-pan-add',()=>{const next=addBalanceWeight(round,state.pans,pan,state.selected);if(next===state.pans){tell('This pan is full. Take a weight back or use Undo.');return;}remember();state.pans=next;changed('Watch the balance change. Keep trying, then Check.');});add.dataset.pan=String(pan);holder.append(add);const tray=el('div','studio-pan-pieces');
+    const pans=el('div','studio-pans');state.pans.forEach((pieces,pan)=>{const holder=el('section','studio-pan');holder.dataset.side=String(pan);holder.style.transform=`translateY(${difference*(pan===0?6:-6)}px)`;const add=round.pieceCount&&pan===0?el('p','studio-pan-fixed-label','Starting weights'):button(`+ ${pan===0?'Left':'Right'} pan`,'studio-pan-add',()=>{const next=addBalanceWeight(round,state.pans,pan,state.selected);if(next===state.pans){tell(round.pieceCount?`Use exactly ${round.pieceCount} weights. Take one back to change the combination.`:'This pan is full. Take a weight back or use Undo.');return;}remember();state.pans=next;changed('Watch the balance change. Keep trying, then Check.');});add.dataset.pan=String(pan);holder.append(add);const tray=el('div','studio-pan-pieces');
       pieces.forEach((piece,index)=>{const label=piece.mystery?'?':String(piece.value);const item=piece.fixed?el('span','studio-block is-fixed',label):button(label,'studio-block',()=>{remember();state.pans=state.pans.map((items,i)=>i===pan?items.filter((_,j)=>j!==index):items);changed('Weight taken back.');});item.setAttribute('aria-label',piece.fixed?`${piece.mystery?'Mystery':piece.value+' unit'} starting weight`:`Remove ${piece.value} units from ${pan===0?'left':'right'} pan`);tray.append(item);});holder.append(tray);pans.append(holder);});
-    play.append(pans,el('p','studio-balance-observation',left===right?'The pans are level.':left>right?'The left pan is heavier and hangs lower.':'The right pan is heavier and hangs lower.'),el('p','studio-caption','Starting weights stay on the left pan. Additions to either pan are reversible.'));
+    play.append(pans,el('p','studio-balance-observation',left===right?'The pans are level.':left>right?'The left pan is heavier and hangs lower.':'The right pan is heavier and hangs lower.'),el('p','studio-caption',round.pieceCount?`Right pan: ${state.pans[1].length} of ${round.pieceCount} weights.${round.weightKinds?` ${new Set(state.pans[1].map(piece=>piece.value)).size} of ${round.weightKinds} different values.`:''} Both the balance and the rule must match.`:'Starting weights stay on the left pan. Additions to either pan are reversible.'));
   }
   function renderPour(){const round=state.round,unit=round.denominator===1?'cup':`${measureLabel(1,round.denominator)} cup`;
     objective(`Measure ${measureLabel(round.target,round.denominator)} ${round.target===round.denominator?'cup':'cups'} in jug B.`,`Tap a source jug, then a different destination to pour. Pouring stops when the source is empty or the destination is full. Each mark is ${unit}.`);
@@ -181,8 +214,8 @@ export function createStudioPlay(container,{getSettings,getTitle=()=>null,onBack
     ({'mirror-mosaic':renderMirror,'balance-lab':renderBalance,'measure-pour':renderPour,'beat-maker':renderBeat})[id]();
     const free=state.free||id==='beat-maker';$('.studio-check').hidden=free;$('.studio-next').hidden=free;$('.studio-check').disabled=state.done;$('.studio-next').classList.toggle('is-ready',state.done);$('.studio-undo').disabled=!state.history.length;$('.studio-reset').textContent=id==='beat-maker'?'Clear pattern':'Start again';tell(state.message,state.kind);
   }
-  function check(){if(state.done||state.free||id==='beat-maker')return;const valid=id==='mirror-mosaic'?mirrorComplete(state.round,state.tiles):id==='balance-lab'?balanceComplete(state.pans):state.amounts[state.round.targetJug]===state.round.target;
-    if(!valid){recordMistake();tell(id==='mirror-mosaic'?'Some tiles do not yet match the reflection. Compare color and distance from the line.':id==='balance-lab'?'The pans are not balanced yet. Add or take back a weight, then try Check again.':'Jug B does not yet reach the target line. Try another pour or Undo.','retry');return;}
+  function check(){if(state.done||state.free||id==='beat-maker')return;const valid=id==='mirror-mosaic'?mirrorComplete(state.round,state.tiles):id==='balance-lab'?balanceComplete(state.pans,state.round):state.amounts[state.round.targetJug]===state.round.target;
+    if(!valid){recordMistake();tell(id==='mirror-mosaic'?'Some tiles do not yet match the reflection. Compare color and distance from the line.':id==='balance-lab'?(state.round.pieceCount?`Balance the pans using exactly ${state.round.pieceCount} weights${state.round.weightKinds?' and two different weight values':''}. Take a weight back to try another combination.`:'The pans are not balanced yet. Add or take back a weight, then try Check again.'):'Jug B does not yet reach the target line. Try another pour or Undo.','retry');return;}
     const priorCursor=getRoundCursor(id,profile.age,profile.challengeAge);completeRound();state.done=true;if(!state.recorded&&getRoundCursor(id,profile.age,profile.challengeAge)>priorCursor){state.recorded=true;counts[id]=(Number(counts[id])||0)+1;writeStore('studio-progress-v1',counts);onProgress({source:'studio-play',completedCount:Object.values(counts).reduce((sum,count)=>sum+(Number(count)||0),0)});}
     tell(id==='mirror-mosaic'?'✓ Your tiles make a reflection!':id==='balance-lab'?'✓ The different combinations have equal weight!':'✓ You measured the target without losing water!','success');render();
   }
@@ -197,5 +230,6 @@ export function createStudioPlay(container,{getSettings,getTitle=()=>null,onBack
   $('.studio-reset').addEventListener('click',()=>{suspendAudio();remember();const reset=fresh(state.index,state.free);state.tiles=reset.tiles;state.pans=reset.pans;state.amounts=reset.amounts;state.selected=reset.selected;if(id==='beat-maker')state.pattern=normalizeBeatPattern({tempo:state.pattern.tempo},state.round);saveBeat();tell('Ready to try again. Undo can restore your work.');render();});
   $('.studio-next').addEventListener('click',()=>{suspendAudio();state=fresh(state.index+1);sessions.set(key(),state);startScore();render();});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendAudio();});globalThis.addEventListener?.('pagehide',suspendAudio);
-  return {open,close,settingsChanged(){if(active)open(id);},hint,suspendAudio};
+  globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
+  return {open,close,settingsChanged(){if(active)open(id);},hint,clearHints(){if(active&&state?.kind==='hint'){tell('');render();}},suspendAudio};
 }

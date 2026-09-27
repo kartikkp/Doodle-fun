@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {readFile} from 'node:fs/promises';
-import {buildStudioRound,solvePour} from '../studio-play.js';
+import {buildStudioRound,solvePour,solveBalance} from '../studio-play.js';
 
 test.use({hasTouch:true,viewport:{width:375,height:812}});
 // Exercise the real controller and shared styles without rebuilding a bundle
@@ -22,9 +22,8 @@ async function solve(page,id,round){
       for(let cell=0;cell<round.solution.length;cell++)if(!round.sources.includes(cell)&&round.solution[cell]===color)await page.locator(`button[data-cell="${cell}"]`).tap();
     }
   }else if(id==='balance-lab'){
-    let remaining=round.target;for(const value of [...round.weights].reverse()){
-      await page.locator(`[data-weight="${value}"]`).tap();
-      while(remaining>=value){await page.locator('[data-pan="1"]').tap();remaining-=value;}
+    for(const value of solveBalance(round)){
+      await page.locator(`[data-weight="${value}"]`).tap();await page.locator('[data-pan="1"]').tap();
     }
   }else for(const [from,to]of solvePour(round)){await page.locator(`[data-jug="${from}"]`).tap();await page.locator(`[data-jug="${to}"]`).tap();}
   await page.locator('.studio-check').tap();await expect(page.locator('.studio-status')).toHaveClass(/is-success/);
@@ -45,12 +44,12 @@ for(let age=2;age<=10;age++)for(const id of ['mirror-mosaic','balance-lab','meas
   });
 }
 
-for(const viewport of [{width:375,height:812},{width:667,height:375},{width:1024,height:768}]){
+for(const viewport of [{width:320,height:568},{width:375,height:812},{width:667,height:375},{width:1024,height:768}]){
   test(`studio touch targets and overflow at ${viewport.width} by ${viewport.height}`,async({page})=>{
     await page.setViewportSize(viewport);
     for(const id of ['mirror-mosaic','balance-lab','measure-pour','beat-maker']){
       await start(page,id,10);
-      await expect.poll(()=>page.locator('.studio-screen').evaluate(root=>({overflow:document.documentElement.scrollWidth>innerWidth+1,small:[...root.querySelectorAll('button')].map(node=>({label:node.textContent,width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height})).filter(box=>box.width>0&&(box.width<47.5||box.height<47.5))}))).toEqual({overflow:false,small:[]});
+      await expect.poll(()=>page.locator('.studio-screen').evaluate(root=>({overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+1,small:[...root.querySelectorAll('button')].map(node=>({label:node.textContent,width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height})).filter(box=>box.width>0&&(box.width<47.5||box.height<47.5))}))).toEqual({overflow:false,small:[]});
     }
   });
 }
@@ -61,6 +60,31 @@ test('ungraded mirror creation makes reflections and never earns a medal',async(
   await page.locator('button[data-cell="0"]').tap();expect(await page.locator('.studio-mirror-cell[data-color="1"]').count()).toBe(4);
   await page.locator('.studio-hint').tap();await expect(page.locator('.studio-status')).toContainText('Place a tile near');expect((await page.evaluate(()=>score())).completed).toBe(0);
   await page.locator('.studio-undo').tap();expect(await page.locator('.studio-mirror-cell[data-color="1"]').count()).toBe(0);
+});
+
+test('older balance keeps its clue indirect and rejects a level pan that breaks the piece rule',async({page})=>{
+  await start(page,'balance-lab',10);
+  await expect(page.locator('.studio-unit-clue')).toHaveText('? + ? + ? + 1 = 7');
+  await expect(page.locator('.studio-objective')).toHaveText('Balance with exactly 4 weights.');
+  for(const weight of [5,5,2]){await page.locator(`[data-weight="${weight}"]`).tap();await page.locator('[data-pan="1"]').tap();}
+  await expect(page.locator('.studio-balance-observation')).toHaveText('The pans are level.');
+  await page.locator('.studio-check').tap();await expect(page.locator('.studio-status')).toHaveClass(/is-retry/);
+  expect((await page.evaluate(()=>score())).completed).toBe(0);
+  await page.getByRole('button',{name:'Remove 2 units from right pan',exact:true}).tap();
+  await page.locator('[data-weight="1"]').tap();await page.locator('[data-pan="1"]').tap();await page.locator('[data-pan="1"]').tap();
+  await page.locator('.studio-check').tap();await expect(page.locator('.studio-status')).toHaveClass(/is-success/);
+});
+
+test('fractional pouring keeps a common visual unit and changes to a distinct planning task',async({page})=>{
+  const round=await start(page,'measure-pour',10);
+  const pixelsPerUnit=await page.locator('.studio-jug-picture').evaluateAll((jugs,capacities)=>jugs.map((jug,i)=>jug.getBoundingClientRect().height/capacities[i]),round.capacities);
+  expect(Math.max(...pixelsPerUnit)-Math.min(...pixelsPerUnit)).toBeLessThan(.25);
+  expect(solvePour(round).length).toBeGreaterThanOrEqual(10);
+  const goal=await page.locator('.studio-objective').textContent();
+  await page.locator('[data-jug="0"]').tap();await page.locator('[data-jug="1"]').tap();
+  expect(await page.evaluate(()=>score())).toMatchObject({rounds:{0:{done:false,mistake:false}}});
+  await page.locator('.studio-next').tap();expect(await page.locator('.studio-objective').textContent()).not.toBe(goal);
+  await solve(page,'measure-pour',buildStudioRound('measure-pour',10,1));
 });
 
 test('beat maker saves separate age patterns, restores reloads, and stays playable offline',async({page,context})=>{
@@ -89,6 +113,8 @@ test('beat audio is explicitly cancelled on background and controller close, inc
   });
   await start(page,'beat-maker',10);expect(await page.evaluate(()=>__contexts.length)).toBe(0);await page.locator('[data-track="0"][data-beat-step="0"]').tap();expect(await page.evaluate(()=>__contexts.length)).toBe(0);
   await page.locator('.studio-beat-play').tap();await page.evaluate(()=>dispatchEvent(new Event('pagehide')));await expect(page.locator('.studio-beat-play')).toBeEnabled();
+  await expect.poll(()=>page.evaluate(()=>__contexts.every(context=>context.state==='closed'))).toBe(true);
+  await page.locator('.studio-beat-play').tap();await page.evaluate(()=>dispatchEvent(new Event('doodle-native-inactive')));await expect(page.locator('.studio-beat-play')).toBeEnabled();
   await expect.poll(()=>page.evaluate(()=>__contexts.every(context=>context.state==='closed'))).toBe(true);
   await page.locator('.studio-beat-play').tap();await page.evaluate(()=>controller.close());await expect(page.locator('.studio-screen')).toBeHidden();
   await expect.poll(()=>page.evaluate(()=>__contexts.every(context=>context.state==='closed'))).toBe(true);
