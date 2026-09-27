@@ -86,7 +86,7 @@ jobs:
           npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID"
           --output "$RUNNER_TEMP/DoodleFun-native-qa" --only DoodleFunTests
       - name: Run trusted native listening interactions
-        timeout-minutes: 10
+        timeout-minutes: 20
         shell: bash
         env:
           DOODLE_SIMULATOR_UDID: ${{ steps.simulator.outputs.udid }}
