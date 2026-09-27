@@ -565,8 +565,13 @@ final class ActivityCatalogUITests: XCTestCase {
         }
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: backgrounded, object: app)], timeout: 10), .completed)
         app.activate()
+        // Parent protection closes Coach when the app becomes inactive, and
+        // close cancels its speech. A fresh, explicit Coach action reopens it.
+        XCTAssertTrue(control(["Close coach"]).waitForNonExistence(timeout: 10))
+        reveal(control(["Coach"], identifier: "coach-open"), toward: .down).tap()
         XCTAssertTrue(control(["Hear these tips"]).waitForExistence(timeout: 10))
-        XCTAssertTrue(text("Spoken help stopped.").waitForExistence(timeout: 10))
+        XCTAssertTrue(control(["Hear these tips"]).isEnabled)
+        XCTAssertFalse(text("Spoken help finished.").exists, "Reopening Coach cannot preserve playback completion from a cancelled clip.")
         XCTAssertFalse(control(["Stop spoken help"]).exists, "Returning never resumes a coaching clip automatically.")
         reveal(control(["Close coach"]), toward: .down, inCoach: true).tap()
         XCTAssertTrue(control(["Listen"]).waitForExistence(timeout: 10))
