@@ -357,32 +357,34 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   }
   function renderSorting() {
     const round = current.round;
-    objective.textContent = round.objective || 'Put each picture in its basket.';
-    play.append(element('p', 'discover-tip', '1. Tap a picture.   2. Tap its basket.'));
-    const items = element('div', 'discover-sort-items'); items.setAttribute('role', 'group'); items.setAttribute('aria-label', 'Pictures to sort');
+    objective.textContent = round.objective || 'Put each item in its basket.';
+    play.append(element('p', 'discover-tip', '1. Tap an item.   2. Tap its basket.'));
+    const items = element('div', 'discover-sort-items'); items.setAttribute('role', 'group'); items.setAttribute('aria-label', 'Items to sort');
     round.items.forEach(item => {
       const node = button('', `discover-sort-item ${current.sorted.has(item.id) ? 'is-sorted' : ''}`, () => {
         current.selected = item.id; message(`${item.name} is ready. Tap its basket.`); render();
       }); node.dataset.item = item.id; node.setAttribute('aria-label', `${item.name}${current.sorted.has(item.id) ? ', sorted' : ''}`); node.setAttribute('aria-pressed', String(current.selected === item.id)); node.disabled = current.sorted.has(item.id);
-      node.append(tokenPicture(item), element('span', '', item.name)); if (current.sorted.has(item.id)) node.append(element('span', 'discover-tick', '✓')); items.append(node);
+      node.append(tokenPicture(item));
+      if (item.text === undefined || String(item.text) !== item.name) node.append(element('span', '', item.name));
+      if (current.sorted.has(item.id)) node.append(element('span', 'discover-tick', '✓')); items.append(node);
     });
     const baskets = element('div', 'discover-baskets'); baskets.style.setProperty('--baskets', round.categories.length);
     round.categories.forEach(category => {
       const node = button('', 'discover-basket', () => {
         if (current.done) return;
         const selected = round.items.find(item => item.id === current.selected);
-        if (!selected) { message('Choose a picture first, then tap its basket.', 'retry'); return; }
+        if (!selected) { message('Choose an item first, then tap its basket.', 'retry'); return; }
         if (selected.category !== category.id) { message(`Check ${selected.name} against the basket rule. Try another basket, or ask for a hint.`, 'retry'); return; }
         current.sorted.add(selected.id); current.selected = null;
         if (current.sorted.size === round.items.length) complete('Every item fits its basket rule. Lovely sorting!');
-        else message(`${selected.name} found its basket. Choose another picture.`, 'success');
+        else message(`${selected.name} found its basket. Choose another item.`, 'success');
         render();
       }); node.dataset.category = category.id; node.setAttribute('aria-label', `${category.name} basket`); node.disabled = current.done;
       const sorted = round.items.filter(item => item.category === category.id && current.sorted.has(item.id));
       node.append(tokenPicture(category), element('strong', '', category.name));
       const collection = element('span', 'discover-basket-collection', sorted.length ? sorted.map(item => item.emoji||item.text||'✓').join(' ') : '＋'); collection.setAttribute('aria-hidden', 'true'); node.append(collection); baskets.append(node);
     });
-    play.append(items, baskets, element('p', 'discover-tip', `${current.sorted.size} of ${round.items.length} pictures sorted`));
+    play.append(items, baskets, element('p', 'discover-tip', `${current.sorted.size} of ${round.items.length} items sorted`));
   }
   function renderMemory() {
     const round = current.round;
