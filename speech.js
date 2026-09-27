@@ -89,6 +89,7 @@ export function requestSpeech(value) {
     const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;
     if(!match||!Audio){fallback(job);return;}
     try{
+      const binary=globalThis.atob(match[1]),bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));
       try{const session=globalThis.navigator?.audioSession;if(session&&session.type!=='playback')session.type='playback';}catch{}
       const native=globalThis.webkit?.messageHandlers?.doodleAudio;
       const prepared=Promise.resolve(native?native.postMessage({type:'prepareGameAudio'}):{ok:true}).catch(()=>({ok:false}));
@@ -98,8 +99,8 @@ export function requestSpeech(value) {
       // Resume happens in the Hear click stack; decoding and the native reply
       // may finish later, but neither may revive a cancelled request.
       const resumed=context.state==='running'?Promise.resolve():context.resume();
-      const binary=globalThis.atob(match[1]),bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));
-      const decoded=context.decodeAudioData(bytes.buffer);
+      let decoded;
+      try{decoded=context.decodeAudioData(bytes.buffer);}catch(error){decoded=Promise.reject(error);}
       job.timer=setTimeout(()=>fallback(job),5000);
       Promise.all([prepared,resumed,decoded]).then(([preparation,,buffer])=>{
         if(current!==job||job.token!==generation||job.context!==context)return;

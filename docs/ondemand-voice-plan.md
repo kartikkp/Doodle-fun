@@ -53,7 +53,7 @@ Available local tools include `say`, `afconvert`, `afinfo`, Python and Swift. `f
 
 ## Verification status
 
-- **35/35 focused Node checks passed:** 13 speech lifecycle/fallback checks, 19 listening generation/lifecycle checks, and three existing coaching checks.
+- **36/36 focused Node checks passed:** 14 speech lifecycle/fallback checks, 19 listening generation/lifecycle checks, and three existing coaching checks.
 - **10/10 isolated Chromium/WebKit clip checks passed:** a known PCM fixture rendered nonzero audio only after Hear; navigation, page hide and native inactivity cancelled it; retry worked; corrupt data fell back once without a remote request. These establish playback behavior, not the naturalness of the generated coach.
 - Added built-app checks for silent visual feedback despite legacy opt-in, Hear availability despite legacy opt-out, and an actual bundled AAC coaching clip completing offline without TTS fallback. These require the final synchronized bundle and are pending integration execution.
 - Listening answer models now start hidden at every age and reset after replay, retry, wrong answers, interruption and audio failure. Explicit Hint remains available. Ages 9–10 include middle-position sound recall, varied melody/rhythm sequences, and distinct length increases while younger beat copying remains untimed.

@@ -78,6 +78,15 @@ test('dynamic text and an invalid clip fall back only for the explicit request',
   assert.equal(state.contexts[0].state,'closed');
 });
 
+test('malformed base64 and synchronous decoder failure cannot leave an unhandled resume rejection',async t=>{
+  const state=setup(t);state.set('__DOODLE_VOICE_CLIPS__',{'Hello, learner.':'data:audio/wav;base64,A'});
+  assert.equal((await requestSpeech('Hello, learner.')).source,'device');assert.equal(state.contexts.length,0);
+  state.set('__DOODLE_VOICE_CLIPS__',{'Hello, learner.':clip});
+  AudioContext.prototype.resume=()=>Promise.reject(new Error('Resume denied'));
+  AudioContext.prototype.decodeAudioData=()=>{throw new Error('Synchronous decode failure');};
+  assert.equal((await requestSpeech('Hello, learner.')).source,'device');assert.equal(state.contexts[0].state,'closed');
+});
+
 test('native denial cannot schedule a clip and fallback stays part of the requested help',async t=>{
   const state=setup(t);webkit.messageHandlers.doodleAudio.postMessage=()=>Promise.resolve({ok:false});
   assert.deepEqual(await requestSpeech('Hello, learner.'),{status:'requested',source:'device'});assert.equal(state.contexts[0].sources.length,0);
