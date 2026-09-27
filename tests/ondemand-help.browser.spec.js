@@ -25,8 +25,10 @@ async function expectQuiet(page) {
 
 test('legacy narration opt-in cannot speak discovery answers or visual hints',async({page})=>{
   await observe(page);await page.goto('/#shape-match');await expectQuiet(page);
-  const round=buildDiscoveryRound('shape-match',2,0),wrong=round.choices.find(choice=>choice.id!==round.answer);
-  await page.locator(`[data-choice="${wrong.id}"]`).click();await expectQuiet(page);
+  const round=buildDiscoveryRound('shape-match',2,0);
+  // Distractors are randomized in the running app. Choose a visible wrong
+  // answer, rather than generating a second, unrelated set in the test.
+  await page.locator(`[data-choice]:not([data-choice="${round.answer}"])`).first().click();await expectQuiet(page);
   await page.locator('.discover-hint').click();await expectQuiet(page);
   await page.locator(`[data-choice="${round.answer}"]`).click();await expect(page.locator('.discover-status')).toHaveClass(/is-success/);await expectQuiet(page);
   await page.locator('.discover-next').click();await expectQuiet(page);
@@ -49,7 +51,9 @@ for(const [route,selector] of [['shape-match','.discover-hear'],['size-order','.
   // separate real-DSP coverage below and never falls back to pass that test.
   await page.evaluate(()=>{window.__DOODLE_VOICE_CLIPS__={};});await hear.click();
   await expect.poll(()=>page.evaluate(()=>window.__spokenMessages.filter(message=>message.type==='speak').length)).toBe(1);
-  expect(await page.evaluate(()=>window.__spokenMessages.find(message=>message.type==='speak').text.length)).toBeGreaterThan(10);
+  const spoken=await page.evaluate(()=>window.__spokenMessages.find(message=>message.type==='speak').text);
+  if(route==='subtraction')expect(spoken).toBe(await page.locator('.challenge-card h2').textContent());
+  else expect(spoken.length).toBeGreaterThan(10);
 });
 
 test('bundled Coach recording completes offline only after Hear and can be stopped',async({page,context},info)=>{
