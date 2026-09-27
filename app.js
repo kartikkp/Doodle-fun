@@ -41,16 +41,61 @@ function renderProgress(value) {
   $('home-progress').textContent = count ? `${count} little ${count === 1 ? 'win' : 'wins'}` : 'Every try counts';
   $('home-progress-sub').textContent = count ? 'Look what you’re learning!' : 'Play at your own pace';
 }
+function familyCopy(activity,age) {
+  const revised={};
+  const copy=(id,description,skill)=>revised[id]={description,skill};
+  if(age>=4)copy('beat-studio','Copy short and long gaps at your tempo.','Rhythm & relative timing');
+  if(age>=5)copy('sound-match','Remember a sound’s place in a sequence.','Listening & sound order');
+  if(age>=6) {
+    copy('counting','Combine place-value units. Build an amount.','Place value & number structure');
+    copy('ordering','Use measurements and order number steps.','Measurement & number order');
+    copy('shape-match','Use shape clues and explore color changes.','Geometry & color relationships');
+    copy('patterns','Find the missing picture in a pattern.','Pattern rules & prediction');
+    copy('sorting','Sort by the rule on each round.','Classification & number rules');
+    copy('memory','Remember cards and match their meanings.','Memory & relationships');
+  }
+  if(age>=7) {
+    copy('letter-match',({7:'Connect words with rhyming sounds.',8:'Connect prefixes with their meanings.',9:'Connect suffixes with their meanings.',10:'Connect word roots with their meanings.'})[age],'Word sounds & meanings');
+    copy('picture-sequence','Sequence events and spot the extra picture.','Causal order & relevance');
+    copy('maze','Plan checkpoint paths and changed routes.','Route planning & transformations');
+    copy('melody-echo','Remember melodies and action patterns.','Listening & sequence memory');
+  }
+  if(age>=8) {
+    copy('draw','Plan a picture, palette, or visual story.','Art & visual communication');
+    copy('trails','Practice longer labels, words, and numerals.','Handwriting & spacing');
+    copy('word-build','Solve word clues and choose the letters.','Vocabulary & spelling');
+    copy('number-stories','Combine numbers and find missing amounts.','Place value & missing operands');
+    copy('compare','Compare place values and reason about amounts.','Number comparison');
+    copy('shape-match','Investigate shape properties and color relations.','Geometry & color relationships');
+    copy('odd-one-out','Find the value that breaks the number rule.','Number properties');
+    copy('make-a-shape','Build shapes from their defining properties.','Geometric construction');
+    copy('melody-echo','Remember melodies and transform action patterns.','Listening & transformations');
+  }
+  if(age>=9) {
+    copy('counting',age===10?'Regroup decimal units. Build fraction amounts.':'Count fractional units. Build equivalent fractions.','Units & fractions');
+    copy('sharing','Multiply groups and reason about fair shares.','Multiplication & division');
+    copy('patterns','Find missing numbers using changing rules.','Arithmetic patterns');
+    copy('compare',age===10?'Compare decimals, then find the difference.':'Compare numbers, then find the difference.','Comparison & difference');
+    copy('ordering',age===10?'Compare perimeters and order decimals.':'Compare areas and order number steps.','Measurement & number order');
+    copy('memory',age===10?'Remember and match equivalent fractions.':'Match multiplication expressions and products.','Memory & number relationships');
+  }
+  if(age===10) {
+    copy('number-stories','Combine decimals and find missing amounts.','Decimal relationships');
+    copy('sorting','Sort fractions by their value compared with half.','Fraction benchmarks');
+    copy('odd-one-out','Find the fraction that breaks the value rule.','Fraction equivalence');
+  }
+  return revised[activity.id] || activity;
+}
 function renderCatalog() {
-  const tier=getProfile(settings).tier;
+  const profile=getProfile(settings),tier=profile.tier;
   $('activity-filters').innerHTML=CATEGORIES.map(category=>`<button class="activity-filter" type="button" data-filter="${category.id}" aria-pressed="${filter===category.id}"><span aria-hidden="true">${({all:'✦',create:'✎',letters:'Aa',numbers:'123',discover:'◇',listen:'♪'})[category.id]}</span>${category.label}</button>`).join('');
   const homeOrder=settings.age<=4 ? ['draw','sound-match','shape-match','counting','ordering','memory','trails','sorting','picture-sequence','melody-echo'] : settings.age<=7 ? ['draw','melody-echo','patterns','word-build','sharing','make-a-shape','pitch-path','number-stories','beat-studio','maze'] : ['number-stories','patterns','memory','compare','maze','melody-echo','pitch-path','beat-studio','sharing','draw'];
   const visible=ACTIVITIES.filter(activity=>filter==='all'||activity.category===filter);
   if(filter==='all')visible.sort((a,b)=>(homeOrder.includes(a.id)?homeOrder.indexOf(a.id):99)-(homeOrder.includes(b.id)?homeOrder.indexOf(b.id):99));
   $('activity-count').textContent=`${visible.length} activities`;
-  $('activity-guidance').textContent=tier==='little'?'Big targets, small steps. Explore words and number puzzles together.':tier==='explorer'?'Try a new idea. Hints and practice are always here.':'Try number reasoning, rule puzzles and memory challenges. Letter tracing and counting remain here for foundation practice.';
+  $('activity-guidance').textContent=tier==='little'?'Big targets, small steps. Explore words and number puzzles together.':tier==='explorer'?'Try a new idea. Hints and practice are always here.':'Try number reasoning, word relationships, rule puzzles and memory challenges. Tracing remains here for handwriting practice.';
   const classes={create:'card-draw',letters:'card-letters',numbers:'card-numbers',discover:'card-color',listen:'card-listen'};
-  $('activity-grid').innerHTML=visible.map(activity=>`<a class="activity-card ${classes[activity.category]}" id="card-${activity.id}" href="#${activity.id}" data-engine="${activity.engine}" data-family="${activity.id}"><div class="card-topline"><span class="skill-tag">${CATEGORIES.find(c=>c.id===activity.category).label}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-picture" aria-hidden="true">${activityArt(activity.id,{age:settings.age})}</div><div class="card-bottom"><div><h3>${activity.title}</h3><p>${activity.description}</p></div></div><div class="card-footnote">${activity.skill}${activity.modes.length>1?`<span class="card-mode-count">${activity.modes.length} ways to play</span>`:''}</div></a>`).join('');
+  $('activity-grid').innerHTML=visible.map(activity=>{const copy=familyCopy(activity,profile.challengeAge);return `<a class="activity-card ${classes[activity.category]}" id="card-${activity.id}" href="#${activity.id}" data-engine="${activity.engine}" data-family="${activity.id}"><div class="card-topline"><span class="skill-tag">${CATEGORIES.find(c=>c.id===activity.category).label}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-picture" aria-hidden="true">${activityArt(activity.id,{age:settings.age})}</div><div class="card-bottom"><div><h3>${activity.title}</h3><p>${copy.description}</p></div></div><div class="card-footnote">${copy.skill}${activity.modes.length>1?`<span class="card-mode-count">${activity.modes.length} ways to play</span>`:''}</div></a>`;}).join('');
 }
 function learningModeChanged({set,mode,pageMode}) {
   const next=pageMode==='trace' ? {shapes:'prewriting',upper:'uppercase',lower:'lowercase',words:'word-tracing',nums:'number-tracing'}[set] : {count:'counting',add:'addition',groups:'equal-groups'}[mode];
@@ -126,7 +171,7 @@ function renderCoach() {
   const tips=coachingFor(activeRoute,profile.challengeAge);
   $('coach-summary').textContent=`Age ${settings.age}${profile.challengeAge!==settings.age?` · practice step ${profile.challengeAge}`:''} · ${tips.together?'Play together': 'Your pace'}`;
   $('coach-title').textContent=getTitle() || activity.title;
-  const foundations=['prewriting','uppercase','lowercase','word-tracing','number-tracing','counting','ten-frame','letter-match','color-match','size-order','picture-sequence'];
+  const foundations=['prewriting','uppercase','lowercase','word-tracing','number-tracing'];
   $('coach-together').textContent=tips.together?'Try this together. A grown-up can read the clues and model the first step.':settings.age>=9&&foundations.includes(activeRoute)?'This is foundation practice at any age. For a bigger thinking challenge, try Number stories, Pattern parade, or Memory garden.':'Take your time. Use a hint whenever it helps.';
   for(const key of ['start','strategy','reflect','offline']) $(`coach-${key}`).textContent=tips[key];
   const offset=adjustments[activeRoute] || 0;

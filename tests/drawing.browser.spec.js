@@ -274,7 +274,7 @@ for (const viewport of [{ width: 667, height: 375 }, { width: 844, height: 390 }
       return { paper, viewport: { left: visible?.offsetLeft || 0, top: visible?.offsetTop || 0,
         width: visible?.width || innerWidth, height: visible?.height || innerHeight },
       navigation: { measured: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--activity-nav-height')),
-        actual: document.querySelector('#activity-coach-bar').getBoundingClientRect().height + document.querySelector('#activity-mode-bar').getBoundingClientRect().height },
+        actual: document.querySelector('#activity-navigation').getBoundingClientRect().height },
       document: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
       scrollX, scrollY };
     });
@@ -293,11 +293,11 @@ for (const viewport of [{ width: 667, height: 375 }, { width: 844, height: 390 }
     }
     // The supplies can scroll inside their panel; each actual control must
     // remain a full-sized, unobstructed target when brought into view.
-    for (const [selector, minimum] of [['.draw-tool', 48], ['.draw-save', 46], ['.draw-shuffle', 44], ['.draw-size', 44], ['.draw-actions .button', 44]]) {
+    for (const [selector, minimum] of [['.draw-tool', 48], ['.draw-save', 48], ['.draw-shuffle', 48], ['.draw-size', 48], ['.draw-actions .button', 48]]) {
       for (const control of await page.locator(selector).all()) {
         await control.scrollIntoViewIfNeeded();
         const box = await control.boundingBox();
-        expect(box.width).toBeGreaterThanOrEqual(44);
+        expect(box.width).toBeGreaterThanOrEqual(48);
         expect(box.height).toBeGreaterThanOrEqual(minimum);
         expect(box.x).toBeGreaterThanOrEqual(0); expect(box.y).toBeGreaterThanOrEqual(0);
         expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
@@ -322,7 +322,8 @@ test('drawing height follows navigation padding changes without a viewport resiz
   await page.setViewportSize({ width: 667, height: 375 });
   const measure = () => page.evaluate(() => ({
     measured: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--activity-nav-height')),
-    actual: document.querySelector('#activity-coach-bar').getBoundingClientRect().height + document.querySelector('#activity-mode-bar').getBoundingClientRect().height,
+    actual: document.querySelector('#activity-navigation').getBoundingClientRect().height,
+    paddingBottom: parseFloat(getComputedStyle(document.querySelector('#activity-navigation')).paddingBottom),
     paper: document.querySelector('.draw-canvas').getBoundingClientRect().toJSON(),
     viewport: { width: innerWidth, height: innerHeight },
   }));
@@ -330,7 +331,7 @@ test('drawing height follows navigation padding changes without a viewport resiz
   const before = await measure();
   // Safe-area/padding can settle after rotation without changing the navigation
   // content box. Force that separate event and require the canvas to follow it.
-  const padding = await page.addStyleTag({ content: '#activity-coach-bar,#activity-mode-bar{padding-bottom:12px!important}' });
+  const padding = await page.addStyleTag({ content: `#activity-navigation{padding-bottom:${before.paddingBottom + 16}px!important}` });
   let expanded;
   try {
     await expect.poll(async () => { const r = await measure(); return r.actual - before.actual; }).toBe(16);
