@@ -6,7 +6,16 @@ async function open(page,id,age){
   await page.goto(`/#${id}`);await expect(page.locator('.discover-title')).toBeVisible();
 }
 async function layout(page){
-  const measurement=await page.locator('#discovery-view').evaluate(view=>({overflow:document.documentElement.scrollWidth>innerWidth,buttons:[...view.querySelectorAll('button')].map(b=>b.getBoundingClientRect()).filter(r=>r.width>0).map(r=>[r.width,r.height])}));
+  const measurement=await page.locator('#discovery-view').evaluate(async view=>{
+    const buttons=[...view.querySelectorAll('button')];
+    // A just-released button can still be returning from its pressed scale,
+    // especially when the next action rotates the viewport. Measure its
+    // settled touch target without changing styles or lowering the minimum.
+    await Promise.all(buttons.flatMap(b=>b.getAnimations())
+      .filter(animation=>Number.isFinite(animation.effect.getComputedTiming().endTime))
+      .map(animation=>animation.finished.catch(()=>{})));
+    return {overflow:document.documentElement.scrollWidth>innerWidth,buttons:buttons.map(b=>b.getBoundingClientRect()).filter(r=>r.width>0).map(r=>[r.width,r.height])};
+  });
   expect(measurement.overflow).toBe(false);
   for(const [width,height]of measurement.buttons){expect(width).toBeGreaterThanOrEqual(47.5);expect(height).toBeGreaterThanOrEqual(47.5);}
 }
