@@ -1,3 +1,13 @@
+# Pipeline follow-up — compact typography and bounded CI jobs
+
+September 27, 2026. The owner reported failed checks on the creative revision. Hosted run `36347261267` passed 946/948 browser cases: the old-layout negative control depended on host font widths, and compact WebKit coloring had only 117.44px of paper. It also passed all 321 native integration cases before the shared 45-minute job limit cancelled the audio phase. Preserve those failures; do not call that run green.
+
+Corrections are on `codex/creative-play-parent-controls`: a deterministic genuinely clipped negative-control fixture; removal of the optional idea caption on short 320px-class portrait screens, preserving the complete idea and touch controls; separate Chromium/WebKit jobs, native integration groups of 170 and 151, and an independent seven-case trusted audio job. Coverage tests prove each native integration case appears exactly once and both browser projects remain. No Xcode signing or game/scoring logic changes.
+
+Current runtime `5412695fbce253e1`, standalone/native SHA256 `d84afe33144e8f6f997163ba2ef3f957872535a4fcb39dae9f35c6c9efc87f6c`. Local syntax, 190 unit and 20 focused layout checks pass, including wider-font rendering, actual coloring/Undo and old-layout negative controls. The full browser inventory is now 950 cases. Hosted confirmation belongs to the [current PR checks](https://github.com/kartikkp/Doodle-fun/pull/9/checks); the older feature-candidate evidence below is retained with its original identity. No new TestFlight upload is included. See [QA follow-up](../docs/creative-play-qa.md#pipeline-follow-up).
+
+---
+
 # Current work — creativity, tactile learning and parent controls
 
 September 27, 2026. The complete owner feedback batch is implemented on `codex/creative-play-parent-controls`: triangle labels; three touch learning families; optional PIN/hint control; drawing first at every age with richer tools; Pencil-only input; enlarged phone tracing; learning medals/progression excluding creative modes; and saved free beat composition. The catalog is 24 families / 38 modes, preserving all prior routes. No new TestFlight upload is claimed; build 4 below remains the last verified distribution.

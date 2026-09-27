@@ -1,5 +1,17 @@
 # Creative play, parent controls and progression QA
 
+## Pipeline follow-up
+
+The owner-reported hosted run `36347261267` passed **946/948** browser cases. Its two failures were a host-font-dependent old-layout negative control and a real compact WebKit coloring layout with **117.44px** of paper. The iPhone job passed **321/321** integration cases in 37m49s, then exceeded its shared 45-minute limit during trusted audio; its cancelled result remains retained.
+
+Current candidate **`5412695fbce253e1`**, standalone/native SHA256 **`d84afe33144e8f6f997163ba2ef3f957872535a4fcb39dae9f35c6c9efc87f6c`**. A Verdana probe reproduces the same 117.44px coloring geometry locally. The compact layout now hides only the optional caption on short portrait phones, retaining the full creative idea, shuffle action and full-size controls. The rail negative control explicitly reproduces an observed 79px rail clipping an 89px button, independent of installed fonts; positive production checks keep natural typography and real taps.
+
+**Local verification:** syntax and 190 unit checks pass; all 20 focused Chromium/WebKit layout cases pass, including wider-font drawing space, coloring/Undo and both old-layout negative controls. The browser inventory is now 950 cases. CI runs Chromium and WebKit separately, native integration in disjoint 170/151-case groups, and all seven trusted audio cases in their own job. Two new coverage tests prove the integration groups have exactly the original 321 unique cases, the seven audio methods remain, and neither browser project is omitted. YAML parsing, 15 Bash syntax checks and selector-token round trips passed. Every job and evidence upload remains bounded.
+
+Follow the [current PR checks](https://github.com/kartikkp/Doodle-fun/pull/9/checks) for hosted confirmation; these local checks do not claim the hosted jobs have completed. Raw hosted logs, annotations, screenshots/traces and local follow-up results remain in workspace `work/phase8-ci-followup/`. The owner project hash is unchanged. This is a pipeline/layout repair, with no new TestFlight upload.
+
+## Original feature-candidate record
+
 September 27, 2026. Implementation candidate **`6dbe51a8db7f3ab9`**, standalone/native HTML SHA256 **`6f0c1f7178bdb43bb18b286b3073ee6219ee22e70535a9ecb59c60e6e8ee1228`**. The catalog contains **24 families / 38 modes**, retaining every earlier 21-family / 34-mode route. This report separates source-controller checks, bundled-browser checks, native integration and trusted gestures. Simulator or generated-signal results do not establish physical audibility, Pencil feel or children's enjoyment.
 
 ## Delivered behavior
