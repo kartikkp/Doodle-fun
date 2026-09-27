@@ -48,3 +48,11 @@ Success: every visible card launches and plays, the downloaded HTML works indepe
 3. Bundle offline synthetic coaching clips, retain explicit device-voice questions, and verify all mode/age playthroughs, audio output, cancellation, visual layouts and native iPhone behavior.
 
 Success: all 34 modes remain available; quiet entry/retry/completion; explicit Hear and Hint; meaningful older-child tasks; synchronized offline bundles; versioned QA that separates digital/simulator evidence from physical audibility and child testing.
+
+## Phase 8 — Creative play, tactile learning and parent controls
+
+1. Prominent drawing for every age, progressive art tools, Pencil-only drawing and enlarged phone word tracing.
+2. Mirror Mosaic, Balance Workshop, Measure & Pour, and ungraded free Beat Maker.
+3. Honest best-medal progression, consistent optional PIN-gated hints/settings, triangle-art repair, integrated offline/native QA and reviewable delivery.
+
+Success: preserve all existing games/artwork/progress; meaningful new manipulations; no unsolicited audio; creative freedom ungraded; consistent help restrictions; verified touch layouts and scoring boundaries. Separate hardware Pencil validation and child enjoyment from automated evidence.

@@ -1,3 +1,11 @@
+# Current work — creativity, tactile learning and parent controls
+
+September 27, 2026. After testing TestFlight build 4, the owner requested the complete feedback batch be implemented: repair Numbers triangle labels; add meaningful touch-first learning; optional parent PIN/hint control; make drawing central for every age with richer tools; improve iPad Pencil handling; enlarge phone word tracing; add learning medals/progression excluding creative activities; and enable free beat composition. Branch `codex/creative-play-parent-controls` starts from the verified build-4 release record. Implementation and QA are in progress; no new TestFlight build is claimed.
+
+Plans: `.planning/phases/08-creative-play-parent-controls/08-01-PLAN.md` through `08-04-PLAN.md`. Drawing/tracing, new games, and progression are parallel ownership areas. Parent controls, integration, catalog and final QA belong to the primary agent. All changes retain the offline app and existing artwork/progress. The protected owner Xcode project hash remains `2e791a5bd2c9db4081f91afc6115669507c014b30fee9161ca0fcbd6e7c2acbd`.
+
+---
+
 # Current state — TestFlight build 4 available to existing testers
 
 Updated September 27, 2026. The owner merged PR #8 and requested TestFlight distribution. **Doodle Fun 2.1.0 (4) uploaded successfully at 15:27:13 UTC (11:27:13 America/New_York)**. Xcode returned exit 0, “Upload succeeded”, “Uploaded DoodleFun” and “Uploaded package is processing.” App Store Connect subsequently showed processing **Complete**. Around 16:13 UTC, both existing group Builds pages showed build 4 **Testing**: **Doodle Fun Internal** (1 tester) and **Doodle Fun Beta** (2 testers). The saved What to Test notes were read back in the distribution dialog. Submit for Review completed with automatic tester notifications enabled; no review wait was shown afterward. Build 4 installation and notification receipt have not been verified.
