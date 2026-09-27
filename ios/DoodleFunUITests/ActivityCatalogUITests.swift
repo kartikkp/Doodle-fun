@@ -487,6 +487,60 @@ final class ActivityCatalogUITests: XCTestCase {
         leaveListening()
     }
 
+    func testTrustedBeatMakerPlaysSavedCompositionAndStaysStoppedAfterBackground() {
+        reveal(control(["Age 6"]), toward: .down).tap()
+        let beatFamily = Self.activities.first { $0.id == "beat-studio" }!
+        reveal(card(beatFamily)).tap()
+        reveal(control(["Make a beat"]), toward: .down).tap()
+        XCTAssertTrue(text("Make a beat that is yours.").waitForExistence(timeout: 10))
+        let play = control(["▶ Play"]), stop = control(["■ Stop"])
+        XCTAssertTrue(play.isEnabled); XCTAssertFalse(stop.isEnabled, "Opening the composer cannot autoplay.")
+        let first = control(["Drum, step 1"]), fourth = control(["Bell, step 4"])
+        reveal(first).tap(); reveal(fourth).tap()
+        XCTAssertEqual(first.value as? String, "1"); XCTAssertEqual(fourth.value as? String, "1")
+        XCTAssertFalse(stop.isEnabled, "Editing notes stays silent.")
+        // Eight steps at 60 bpm make running playback observable to XCUI.
+        for _ in 0..<3 { reveal(control(["− Slower"]), toward: .down).tap() }
+        XCTAssertTrue(text("60 beats / min").exists)
+        reveal(play, toward: .down).tap()
+        XCTAssertTrue(listeningStatus(begins: "Playing step ").waitForExistence(timeout: 10),
+                      "A scheduled event fires only while the real AudioContext is running.")
+        XCTAssertTrue(text("Your pattern is ready to change or play again.").waitForExistence(timeout: 15),
+                      "Successful playback requires the real audio clock to reach the final scheduled event.")
+        XCTAssertTrue(play.isEnabled); XCTAssertFalse(stop.isEnabled)
+        XCTAssertFalse(text("Sound could not start. Your pattern is saved; tap Play to try again.").exists)
+        capture("Beat maker — trusted composed pattern completed real playback")
+
+        reveal(play, toward: .down).tap()
+        XCTAssertTrue(listeningStatus(begins: "Playing step ").waitForExistence(timeout: 10))
+        reveal(stop, toward: .down).tap()
+        XCTAssertTrue(text("Stopped. Your pattern is saved.").waitForExistence(timeout: 10))
+        XCTAssertTrue(play.isEnabled); XCTAssertFalse(stop.isEnabled)
+        reveal(play, toward: .down).tap()
+        XCTAssertTrue(listeningStatus(begins: "Playing step ").waitForExistence(timeout: 10))
+        XCUIDevice.shared.press(.home)
+        let backgrounded = NSPredicate { _, _ in
+            let state = self.app.state
+            return state == .runningBackground || state == .runningBackgroundSuspended
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: backgrounded, object: app)], timeout: 10), .completed)
+        app.activate()
+        XCTAssertTrue(play.waitForExistence(timeout: 10)); XCTAssertTrue(play.isEnabled); XCTAssertFalse(stop.isEnabled)
+        XCTAssertFalse(listeningStatus(begins: "Playing step ").exists, "Returning cannot restart the saved composition.")
+        XCTAssertEqual(first.value as? String, "1"); XCTAssertEqual(fourth.value as? String, "1")
+        XCTAssertTrue(text("60 beats / min").exists)
+        capture("Beat maker — saved notes after native background interruption")
+        leaveListening()
+        reveal(card(beatFamily)).tap()
+        reveal(control(["Make a beat"]), toward: .down).tap()
+        XCTAssertTrue(first.waitForExistence(timeout: 10))
+        XCTAssertEqual(first.value as? String, "1"); XCTAssertEqual(fourth.value as? String, "1")
+        XCTAssertTrue(play.isEnabled); XCTAssertFalse(stop.isEnabled)
+        XCTAssertTrue(text("60 beats / min").exists, "Navigation preserves the locally saved composition and tempo.")
+        XCTAssertFalse(control(["Check"]).exists, "Free composition never exposes correctness grading.")
+        leaveListening()
+    }
+
     func testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground() {
         openListening("melody-echo")
         reveal(control(["Coach"], identifier: "coach-open"), toward: .down).tap()
