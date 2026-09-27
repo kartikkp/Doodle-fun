@@ -23,14 +23,14 @@ if(stored?.version===SCORE_VERSION&&stored.entries&&typeof stored.entries==='obj
     for(const [id,round]of Object.entries(value.rounds||{}).slice(0,1000))if(id.length<=180&&round&&typeof round==='object')rounds[id]={mistake:round.mistake===true,hint:round.hint===true,done:round.done===true};
     const seen=Array.isArray(value.seen)?value.seen.filter(id=>typeof id==='string'&&id.length<=180).slice(-2000):[];
     const result=value.result&&rank[value.result.medal]&&value.result.total===required&&Number.isInteger(value.result.clean)&&value.result.clean>=0&&value.result.clean<=required?copy(value.result):null;
-    state.entries[key]={mode:value.mode,age:clamp(value.age),step:clamp(value.step),required,cursor:value.cursor,attempt:value.attempt,rounds,seen,bestMedal:rank[value.bestMedal]?value.bestMedal:null,result,skips:Math.max(0,Math.min(required,Number(value.skips)||0))};
+    state.entries[key]={mode:value.mode,age:clamp(value.age),step:clamp(value.step),required,cursor:value.cursor,attempt:value.attempt,rounds,seen,bestMedal:rank[value.bestMedal]?value.bestMedal:null,result};
   }
 }
 export function roundsRequired(mode,step) {return COMPLEX.has(mode)?3:clamp(step)<=3?3:clamp(step)<=5?4:5;}
 function entry(mode,age,step,create=false) {
   if(!validMode(mode)||EXCLUDED.has(mode))return null;
   const key=keyFor(mode,age,step);
-  if(!state.entries[key]&&create)state.entries[key]={mode,age:clamp(age),step:clamp(step),required:roundsRequired(mode,step),cursor:0,attempt:1,rounds:Object.create(null),seen:[],bestMedal:null,result:null,skips:0};
+  if(!state.entries[key]&&create)state.entries[key]={mode,age:clamp(age),step:clamp(step),required:roundsRequired(mode,step),cursor:0,attempt:1,rounds:Object.create(null),seen:[],bestMedal:null,result:null};
   return state.entries[key]||null;
 }
 function view(value,mode,age,step) {
@@ -43,7 +43,7 @@ export function getProgress(){return {version:SCORE_VERSION,currentRound:getCurr
 export function getModeProgress(mode,age=6,step=age){return view(entry(mode,age,step),mode,age,step);}
 export function getRoundCursor(mode,age=6,step=age){return entry(mode,age,step)?.cursor??0;}
 export function subscribeProgress(callback){listeners.add(callback);return()=>listeners.delete(callback);}
-function freshSet(value){value.attempt++;value.rounds=Object.create(null);value.skips=0;}
+function freshSet(value){value.attempt++;value.rounds=Object.create(null);}
 export function beginRound({mode,age=6,step=age,roundKey,scored=true,automaticSets=true}={}) {
   if(!validMode(mode)){current=null;return null;}
   const previous=current;
@@ -57,9 +57,6 @@ export function beginRound({mode,age=6,step=age,roundKey,scored=true,automaticSe
       if(!automaticSets){if(changed)publish();return getCurrentRound();}
       freshSet(value);
     }
-    // Skipping an unfinished question cannot improve the set's perfect score.
-    // Leaving and returning to the same round is harmless.
-    if(previous?.scored&&previous.mode===mode&&previous.age===current.age&&previous.step===current.step&&previous.roundKey!==id&&value.rounds[previous.roundKey]&&!value.rounds[previous.roundKey].done)value.skips=Math.min(value.required,value.skips+1);
     value.rounds[id]={mistake:false,hint:false,done:false};
   }
   if(changed)publish();
@@ -75,7 +72,10 @@ export function completeRound(){
   const seed=Number(current.roundKey);if(Number.isSafeInteger(seed)&&seed>=0)value.cursor=Math.max(value.cursor,seed+1);else value.cursor++;
   const completed=Object.values(value.rounds).filter(item=>item.done);
   if(completed.length===value.required){
-    const clean=Math.max(0,completed.filter(item=>!item.mistake&&!item.hint).length-value.skips);
+    // Browsing untouched items is free. Retain evidence from an abandoned
+    // supported/incorrect round, but count it only once if it is later solved.
+    const abandoned=Object.values(value.rounds).filter(item=>!item.done&&(item.mistake||item.hint)).length;
+    const clean=Math.max(0,completed.filter(item=>!item.mistake&&!item.hint).length-abandoned);
     const medal=clean===value.required?'gold':clean===value.required-1?'silver':'bronze';
     value.result={medal,clean,total:value.required,sessionId:value.attempt};
     if((rank[medal]||0)>(rank[value.bestMedal]||0))value.bestMedal=medal;

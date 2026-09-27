@@ -87,13 +87,31 @@ test('age and skill step preserve distinct histories and step fixes the scoring 
   assert.equal(p.getModeProgress('counting',10,10).completed,1);
 });
 
-test('skipping an unfinished question cannot produce a perfect set',async()=>{
+test('browsing untouched questions does not lower a medal',async()=>{
   const p=await fresh();
   p.beginRound({mode:'counting',age:2,step:2,roundKey:'0'});
   for(let i=1;i<=3;i++)round(p,'counting',i,{age:2});
-  assert.equal(p.getModeProgress('counting',2,2).bestMedal,'silver');
+  assert.equal(p.getModeProgress('counting',2,2).bestMedal,'gold');
   round(p,'counting',0,{age:2});
   assert.equal(p.getModeProgress('counting',2,2).completed,3,'revisiting skipped content cannot overflow a finished set');
+});
+
+test('abandoned incorrect or supported rounds retain their evidence across reload',async()=>{
+  for(const evidence of ['recordMistake','recordHint']){
+    let p=await fresh();p.beginRound({mode:'counting',age:2,step:2,roundKey:'0'});p[evidence]();
+    p=await import(`../progression.js?abandoned=${++instance}`);
+    for(let i=1;i<=3;i++)round(p,'counting',i,{age:2});
+    assert.equal(p.getModeProgress('counting',2,2).bestMedal,'silver');
+    assert.equal(p.getModeProgress('counting',2,2).result.clean,2);
+  }
+});
+
+test('repeatedly leaving and later completing an imperfect question counts it only once',async()=>{
+  const p=await fresh();p.beginRound({mode:'counting',age:2,step:2,roundKey:'0'});p.recordMistake();p.recordHint();
+  for(const key of ['1','0','1','0','1'])p.beginRound({mode:'counting',age:2,step:2,roundKey:key});
+  p.completeRound();round(p,'counting',0,{age:2});round(p,'counting',2,{age:2});
+  assert.equal(p.getModeProgress('counting',2,2).bestMedal,'silver');
+  assert.equal(p.getModeProgress('counting',2,2).result.clean,2);
 });
 
 test('creative activities and explicitly unscored practice never acquire medals',async()=>{
