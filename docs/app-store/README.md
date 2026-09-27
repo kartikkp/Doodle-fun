@@ -1,5 +1,7 @@
 # Doodle Fun — TestFlight and App Store kit
 
+**New activity/voice revision in preparation:** PR #8 now also includes requested hints, harder age-specific games, illustrated interfaces and 116 offline coaching clips. This revision is not on TestFlight. The build 3 archive described below predates it. Refresh store screenshots before a public submission. See [revision QA](../challenge-design-voice-qa.md).
+
 **September 26, 2026: build 3 is prepared but not uploaded.** It removes game mute/volume controls, ignores old muted/low settings, and strengthens Beat Studio percussion. Device media volume controls game sound; Read aloud controls optional spoken help. The archive passed signature/content checks, but distribution export reports no available account/distribution certificate while the Mac is locked. Native runtime verification and successful export/upload remain pending. See [current audio QA](../system-volume-audio-qa.md). Build 2 remains the last verified internal TestFlight distribution; its record below is retained.
 
 | App record | Verified value |
