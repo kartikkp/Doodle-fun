@@ -93,7 +93,7 @@ async function trace(qa) {
   qa.click(`[data-learn-item="${ch}"]`);
   // Canonical source strokes use the whole 0..1 board. Focused letter tracing
   // has its own trusted-gesture checks; do not project full-word points into it.
-  if(set==='words'){
+  if(set!=='shapes'&&ch.length>1){
     const whole=qa.button('Whole word');if(!whole.disabled)qa.click(whole);
     qa.assert(qa.el('[data-testid="trace-board"]').dataset.focusLetter==='whole','Canonical tracing coordinates use the whole-word board');
   }
