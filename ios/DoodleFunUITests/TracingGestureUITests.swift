@@ -97,7 +97,10 @@ final class TracingGestureUITests: XCTestCase {
                 let right = origin.withOffset(CGVector(dx: visibleRail.midX - windowFrame.minX + distance / 2,
                                                        dy: visibleRail.midY - windowFrame.minY))
                 let towardStart = frame.minX < visibleRail.minX
-                (towardStart ? left : right).press(forDuration: 0.05, thenDragTo: towardStart ? right : left)
+                // Settle before release so a short pan does not fling the
+                // scroll container past the measured target.
+                (towardStart ? left : right).press(forDuration: 0.05, thenDragTo: towardStart ? right : left,
+                                                withVelocity: .default, thenHoldForDuration: 0.3)
             }
         }
         let screenshot = XCTAttachment(screenshot: app.screenshot())
