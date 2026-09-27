@@ -102,3 +102,23 @@ for(const viewport of [{width:320,height:568},{width:375,height:667}])for(const 
     await expect.poll(async()=>(await paper.boundingBox()).width).toBeLessThanOrEqual(120);
   }
 });
+
+test('compact coloring preserves paper space with wider system-font metrics',async({page})=>{
+  await page.setViewportSize({width:320,height:568});
+  await page.addInitScript(()=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:10,level:'auto'})));
+  await page.goto('/#coloring');await page.locator('.draw-template-card').first().tap();
+  // Verdana reproduces the hosted WebKit wrapping that left only 117px of paper.
+  await page.addStyleTag({content:'body{font-family:Verdana,sans-serif!important}'});
+  const paper=page.locator('.draw-canvas');
+  await expect.poll(async()=>(await paper.boundingBox()).width).toBeGreaterThan(120);
+  const fixed=await paper.boundingBox();
+  await expect(page.locator('.draw-challenge')).toBeVisible();
+  await expect(page.getByRole('button',{name:'Try another drawing idea'})).toBeVisible();
+  const before=await paper.evaluate(node=>node.toDataURL());await paper.tap({position:{x:30,y:40}});
+  expect(await paper.evaluate(node=>node.toDataURL())).not.toBe(before);
+  await page.getByRole('button',{name:'Undo last action',exact:true}).tap();expect(await paper.evaluate(node=>node.toDataURL())).toBe(before);
+  await page.screenshot({path:test.info().outputPath('compact-coloring-wide-font.png')});
+  // Restore the previous extra caption. Its wrapping must consume drawing space.
+  await page.addStyleTag({content:'.draw-prompt-label{display:inline!important}'});
+  await expect.poll(async()=>(await paper.boundingBox()).width).toBeLessThan(fixed.width-16);
+});

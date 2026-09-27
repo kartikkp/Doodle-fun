@@ -126,3 +126,9 @@ body[data-appearance-band="studio"] .draw-controls{border-radius:12px}body[data-
 
 .draw-more{min-height:48px;padding:10px 12px}.draw-extra-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}.draw-extra-tools .draw-tool{min-height:56px;font-size:15px}.draw-studio-options{display:grid;gap:10px;margin:18px 0}.draw-studio-options label{display:flex;justify-content:space-between;font-weight:700}.draw-studio-options input{width:100%;min-height:48px;accent-color:#367762}.draw-studio-options .button[aria-pressed=true]{background:#dceee2;border-color:#558d73}.draw-pencil-option{display:flex;align-items:center;gap:10px;min-height:52px;font-weight:700}.draw-pencil-option input{width:28px;height:28px;accent-color:#367762}.draw-extra-dialog>p{margin:10px 0 16px}.draw-extra-dialog>[data-close]{margin-top:8px;width:100%}.draw-tool-tip{padding-top:12px;border-top:1px solid var(--line)}
 @media(max-width:370px){.draw-heading h1{font-size:18px}.draw-more{font-size:13px;padding:8px}.draw-header{gap:5px}.draw-heading .draw-eyebrow{font-size:9px}}
+
+/* On short portrait phones, give the optional idea's caption back to the paper.
+   The complete idea and shuffle action remain visible with full-size controls. */
+@media (max-width:370px) and (max-height:650px) and (orientation:portrait) {
+  .draw-prompt-label { display:none; }
+}
