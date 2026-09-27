@@ -46,6 +46,55 @@ final class TracingGestureUITests: XCTestCase {
         XCTFail("Could not bring \(element.label) fully into view.")
     }
 
+    private func revealInHorizontalRail(_ element: XCUIElement, railLabel: String) {
+        let rail = named(railLabel)
+        XCTAssertTrue(rail.waitForExistence(timeout: 15), "The named scrolling rail must be accessible.")
+        for _ in 0..<16 {
+            let window = app.windows.firstMatch
+            let windowFrame = window.frame
+            let top: CGFloat = windowFrame.height / windowFrame.width > 1.9 ? 62 : 20
+            let bottom: CGFloat = windowFrame.height / windowFrame.width > 1.9 ? 34 : 0
+            // The compact phone's navigation begins immediately below its
+            // 20pt status bar. Extra page-content margins reject safe controls.
+            let safeBounds = CGRect(x: windowFrame.minX, y: windowFrame.minY + top,
+                                    width: windowFrame.width, height: windowFrame.height - top - bottom)
+            let railFrame = rail.frame
+            let visibleRail = railFrame.intersection(safeBounds)
+            let frame = element.frame
+            if element.exists, !frame.isEmpty, visibleRail.contains(frame), element.isHittable {
+                XCTAssertGreaterThanOrEqual(frame.width, 48, "Tracing choices need a full 48pt touch target.")
+                XCTAssertGreaterThanOrEqual(frame.height, 48, "Tracing choices need a full 48pt touch target.")
+                return
+            }
+            let origin = window.coordinate(withNormalizedOffset: .zero)
+            if railFrame.minY < safeBounds.minY || railFrame.maxY > safeBounds.maxY {
+                let downward = railFrame.minY < safeBounds.minY
+                let distance = min(CGFloat(220), max(CGFloat(70), abs(railFrame.midY - safeBounds.midY)))
+                let upper = origin.withOffset(CGVector(dx: 8, dy: safeBounds.midY - windowFrame.minY - distance / 2))
+                let lower = origin.withOffset(CGVector(dx: 8, dy: safeBounds.midY - windowFrame.minY + distance / 2))
+                (downward ? upper : lower).press(forDuration: 0.05, thenDragTo: downward ? lower : upper)
+            } else if visibleRail.width >= 96, visibleRail.height >= 48 {
+                // Gesture within this observed rail, not on the tracing board.
+                // Scroll right to reveal a left-clipped choice and vice versa.
+                let left = origin.withOffset(CGVector(dx: visibleRail.minX - windowFrame.minX + visibleRail.width * 0.2,
+                                                      dy: visibleRail.midY - windowFrame.minY))
+                let right = origin.withOffset(CGVector(dx: visibleRail.minX - windowFrame.minX + visibleRail.width * 0.8,
+                                                       dy: visibleRail.midY - windowFrame.minY))
+                let towardStart = frame.minX < visibleRail.minX
+                (towardStart ? left : right).press(forDuration: 0.05, thenDragTo: towardStart ? right : left)
+            }
+        }
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Unreachable tracing rail target - \(element.label)"
+        screenshot.lifetime = .keepAlways
+        add(screenshot)
+        let hierarchy = XCTAttachment(string: app.debugDescription)
+        hierarchy.name = "Tracing rail accessibility tree - \(railLabel)"
+        hierarchy.lifetime = .keepAlways
+        add(hierarchy)
+        XCTFail("Could not bring \(element.label) fully into \(railLabel). Target: \(element.frame), rail: \(rail.frame).")
+    }
+
     private func stroke(_ start: CGVector, _ end: CGVector) {
         let board = named("Trace the guide with a finger or Pencil")
         reveal(board, drawingSurface: true)
@@ -64,13 +113,13 @@ final class TracingGestureUITests: XCTestCase {
         // gesture cases explicitly exercise the retained line/shape mode.
         let firstLines = named("First lines")
         XCTAssertTrue(firstLines.waitForExistence(timeout: 15))
-        reveal(firstLines)
+        revealInHorizontalRail(firstLines, railLabel: "Trail studio practice modes")
         firstLines.tap()
         // Older ages open an age-specific motif in this mode. Select the
         // retained straight line before checking the same trusted gestures.
         let down = app.buttons["Down"].exists ? app.buttons["Down"] : app.switches["Down"]
         XCTAssertTrue(down.waitForExistence(timeout: 15))
-        reveal(down)
+        revealInHorizontalRail(down, railLabel: "Choose what to trace")
         down.tap()
         let board = named("Trace the guide with a finger or Pencil")
         XCTAssertTrue(board.waitForExistence(timeout: 15))
@@ -89,7 +138,7 @@ final class TracingGestureUITests: XCTestCase {
         XCTAssertFalse(check.isEnabled)
 
         let cross = named("Cross")
-        reveal(cross)
+        revealInHorizontalRail(cross, railLabel: "Choose what to trace")
         cross.tap()
         stroke(CGVector(dx: 0.5, dy: 0.2), CGVector(dx: 0.5, dy: 0.8))
         XCTAssertTrue(check.isEnabled, "One of two strokes is incomplete.")
