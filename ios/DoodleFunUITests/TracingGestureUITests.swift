@@ -47,8 +47,19 @@ final class TracingGestureUITests: XCTestCase {
     }
 
     private func revealInHorizontalRail(_ element: XCUIElement, railLabel: String) {
-        let rail = named(railLabel)
-        XCTAssertTrue(rail.waitForExistence(timeout: 15), "The named scrolling rail must be accessible.")
+        // iOS 18 WebKit appends the navigation role to this accessible label;
+        // the retained native hierarchy records ", navigation" exactly.
+        let rail = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label IN %@", [railLabel, railLabel + ", navigation"])
+        ).firstMatch
+        guard rail.waitForExistence(timeout: 15) else {
+            let hierarchy = XCTAttachment(string: app.debugDescription)
+            hierarchy.name = "Missing tracing rail - \(railLabel)"
+            hierarchy.lifetime = .keepAlways
+            add(hierarchy)
+            XCTFail("The named scrolling rail must be accessible: \(railLabel)")
+            return
+        }
         for _ in 0..<16 {
             let window = app.windows.firstMatch
             let windowFrame = window.frame
