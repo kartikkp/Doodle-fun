@@ -143,14 +143,36 @@ export const WORDS = [
   {ch:'dog',word:'dog',em:'🐶'}, {ch:'map',word:'map',em:'🗺️'},
   {ch:'box',word:'box',em:'📦'}, {ch:'red',word:'red',em:'🔴'},
 ];
+const AGE_WORDS={
+  2:['up','on','in','go'],3:['cat','sun','dog','map'],4:['hat','bus','hen','cup'],5:['ship','fish','frog','star'],6:['brush','plant','shell','train'],7:['rabbit','sunset','picnic','basket'],8:['replay','unpack','careful','helpful'],9:['hopeful','teacher','rebuild','quietly'],10:['evidence','fraction','symmetry','decision']
+};
 export function makeWordStrokes(word) {
-  return [...word].flatMap((ch, i) => (STROKES[ch] || []).map(stroke =>
-    stroke.map(([x,y]) => [x*.4 + i*.28 + .02, y*.4 + .29])));
+  const columns=Math.min(4,word.length),scale=word.length<=3?.4:.31,rows=Math.ceil(word.length/columns);
+  return [...word].flatMap((ch,i)=>(STROKES[ch]||[]).map(stroke=>stroke.map(([x,y])=>[
+    x*scale+(i%columns)*scale*.7+.06,
+    y*scale+(rows===1?.29:Math.floor(i/columns)*.46+.06)
+  ])));
 }
-export function getLearningItems(set) {
-  if (set === 'shapes') return SHAPES;
-  if (set === 'words') return WORDS.map(item => ({...item, strokes: makeWordStrokes(item.ch)}));
-  return (LETTER_DATA[set] || LETTER_DATA.upper).map(item => ({...item, strokes:STROKES[item.ch]}));
+export function getLearningItems(set,age) {
+  const exactAge=Number.isInteger(age)?Math.max(2,Math.min(10,age)):null;
+  if(set==='shapes') {
+    if(!exactAge||exactAge<=4)return SHAPES;
+    const count=exactAge-3;
+    const motif={ch:`trail-${exactAge}`,label:['','', '', '', '', 'Repeat waves','Mirror peaks','Loop border','Turned motif','Reflected motif','Pattern border'][exactAge],word:`Plan ${count} connected movements. Keep the spacing even.`,em:'∿',strokes:[Array.from({length:count*18+1},(_,i)=>{const t=i/(count*18);return [.08+t*.84,.5+(exactAge%2?Math.sin(t*Math.PI*count*2):2/Math.PI*Math.asin(Math.sin(t*Math.PI*count*2)))*.18];})]};
+    return [motif,...SHAPES];
+  }
+  if(set==='words')return (exactAge?AGE_WORDS[exactAge].map(ch=>({ch,word:ch,em:'✎'})):WORDS).map(item=>({...item,strokes:makeWordStrokes(item.ch)}));
+  const base=(LETTER_DATA[set]||LETTER_DATA.upper).map(item=>({...item,strokes:STROKES[item.ch]}));
+  if(!exactAge||exactAge<=5)return base;
+  if(set==='nums') {
+    const labels={6:['12','15','18','20'],7:['24','37','56','82'],8:['125','246','380','507'],9:['1024','2057','3680','4906'],10:['1205','3078','5049','8062']}[exactAge];
+    return [...labels.map(ch=>({ch,word:exactAge>=9?'Keep each digit in its own place.':'Write the whole number in order.',em:'▦',strokes:makeWordStrokes(ch)})),...base];
+  }
+  if(exactAge>=7&&['upper','lower'].includes(set)) {
+    const words={7:['Sun','Map','Sky'],8:['Mars','Moon','June'],9:['Nasa','Stem','Dna'],10:['Orbit','Earth','Solar']}[exactAge];
+    return [...words.map(word=>{const ch=set==='upper'?word.toUpperCase():word.toLowerCase();return {ch,word:set==='upper'?'Capitals for a label or title.':'Write a label with evenly spaced letters.',em:'✎',strokes:makeWordStrokes(ch)};}),...base];
+  }
+  return base;
 }
 
 export function pathLength(path) {
@@ -222,21 +244,31 @@ export function evaluateTrace(targets, ink, options={}) {
     reason:passed?'complete':!enoughInk?'keep-going':completed<targets.length?'coverage':!notExcessive?'extra-ink':'precision'};
 }
 
-export function buildQuantityQuestion(value, mode='count', max=10, variant=0, age=6) {
+export function buildQuantityQuestion(value, mode='count', max=10, variant=0, age=5) {
   const number=Number.isFinite(value)?Math.max(0,Math.min(max,Math.floor(value))):0;
   const n=Math.max(0,Math.floor(Number(variant)||0));
-  if(age>=9&&mode==='add') {
-    const operands=age===9?[27+(n*17)%61,18+(n*13)%67]:[126+(n*37)%173,57+(n*19)%128,38+(n*23)%96];
-    const answer=operands.reduce((sum,amount)=>sum+amount,0);
-    return {answer,operands,left:operands[0],middle:operands.length===3?operands[1]:0,right:operands.at(-1),mode,representation:'place-value',maxValue:age===9?200:700,
-      prompt:`${operands.join(' + ')} = ?`,spoken:`What is ${operands.join(' plus ')}?`,
-      strategy:`Split each number into hundreds, tens and ones. Add the ones, exchange ten ones for one ten if needed, then combine the tens and hundreds.`,
-      worked:operands.map(amount=>`${amount} = ${Math.floor(amount/100)*100} + ${Math.floor(amount/10)%10*10} + ${amount%10}`).join('; ')};
+  if(age>=6&&mode==='count') {
+    const units=age===6?[10,1]:age===7?[10,1]:age===8?[100,10,1]:age===9?[100,10,1]:[100,10,1];
+    const amounts=age===6?[1,1+n%9]:age===7?[2+n%6,n*3%10]:age===8?[1+n%5,1+n%8,n*7%10]:age===9?[1+n%5,10+n%7,1+n%9]:[1+n%4,2+n%13,3+n%14];
+    const answer=amounts.reduce((sum,amount,i)=>sum+amount*units[i],0),decimal=age===10;
+    const bundles=units.map((unit,i)=>({count:amounts[i],unit,label:decimal?(i===0?'ones':i===1?'tenths':'hundredths'):(unit===100?'hundreds':unit===10?'tens':'ones')}));
+    return {mode,answer,bundles,representation:'unit-model',answerScale:decimal?100:1,maxValue:decimal?700:999,
+      prompt:decimal?'What decimal amount do these units make?':'How many altogether in these bundles?',spoken:bundles.map(b=>`${b.count} ${b.label}`).join(', ')+'. What amount do they make?',
+      strategy:age<=7?'A ten is one bundle of ten ones. Count the tens, then add the ones.':decimal?'Ten hundredths make one tenth. Ten tenths make one whole. Regroup the units, then combine them.':'Ten ones make a ten. Ten tens make a hundred. Combine the units, exchanging when needed.',
+      worked:bundles.map(b=>`${b.count} × ${decimal?b.unit/100:b.unit}`).join(' + ')};
   }
-  if(age>=9&&mode==='groups') {
-    const groups=age===9?4+n%6:3+n%7,each=age===9?4+(n*3)%7:12+(n*7)%24,answer=groups*each;
+  if(age>=7&&mode==='add') {
+    const operands=age===7?[17+n*7%32,8+n*3%23]:age===8?[27+n*17%61,18+n*13%67]:age===9?[126+n*37%173,57+n*19%128]:[126+n*37%173,57+n*19%128,38+n*23%96];
+    const answer=operands.reduce((sum,amount)=>sum+amount,0);
+    return {answer,operands,left:operands[0],middle:operands.length===3?operands[1]:0,right:operands.at(-1),mode,representation:'place-value',maxValue:age<=8?200:700,
+      answerScale:age===10?100:1,prompt:`${operands.map(x=>age===10?(x/100).toFixed(2):x).join(' + ')} = ?`,spoken:`What is ${operands.map(x=>age===10?(x/100).toFixed(2):x).join(' plus ')}?`,
+      strategy:age===10?'Line up the decimal places. Combine hundredths, then tenths, then ones. Exchange ten of a smaller unit for one of the next unit.':'Split each number into hundreds, tens and ones. Add the ones, exchange ten ones for one ten if needed, then combine the tens and hundreds.',
+      worked:operands.map(amount=>age===10?`${(amount/100).toFixed(2)} = ${Math.floor(amount/100)} + ${(Math.floor(amount/10)%10/10).toFixed(1)} + ${(amount%10/100).toFixed(2)}`:`${amount} = ${Math.floor(amount/100)*100} + ${Math.floor(amount/10)%10*10} + ${amount%10}`).join('; ')};
+  }
+  if(age>=7&&mode==='groups') {
+    const groups=age===7?2+n%4:age===8?3+n%6:age===9?4+n%6:12+n%8,each=age===7?2+n%4:age===8?3+n*3%7:age===9?12+n*7%14:12+n*7%24,answer=groups*each;
     const tens=Math.floor(each/10)*10,ones=each%10;
-    return {groups,each,answer,mode,representation:'place-value',maxValue:age===9?100:350,
+    return {groups,each,answer,mode,representation:'place-value',maxValue:age<=8?100:age===9?250:700,
       prompt:`${groups} groups of ${each}. How many?`,spoken:`There are ${groups} groups with ${each} in each group. How many altogether?`,
       strategy:age===9?`Use a fact you know. Split ${groups} groups into ${groups-1} groups and one more group of ${each}.`:`Split each group into ${tens} and ${ones}. Multiply each part by ${groups}, then add the two products.`,
       worked:age===9?`${groups} × ${each} = (${groups-1} × ${each}) + ${each}`:`${groups} × ${each} = (${groups} × ${tens}) + (${groups} × ${ones})`};
@@ -245,7 +277,7 @@ export function buildQuantityQuestion(value, mode='count', max=10, variant=0, ag
     const left=age>=10?Math.floor(number/3):(Math.floor(number/2)+Math.abs(Math.floor(variant)))%(number+1);
     const middle=age>=10?(Math.floor(number/3)+Math.abs(Math.floor(variant)))%(number-left+1):0,right=number-left-middle;
     const operands=age>=10?[left,middle,right]:[left,right];
-    return {answer:number,left,right,middle,operands,prompt:`${operands.join(' + ')} = ?`,spoken:`What is ${operands.join(' plus ')}?`,strategy:`Start with ${operands[0]}. ${operands.slice(1).map(value=>`Count on ${value} more.`).join(' ')} Tap each dot once to check the total.`,mode};
+    return {answer:number,left,right,middle,operands,answerScale:age===10?100:1,prompt:`${operands.map(x=>age===10?(x/100).toFixed(2):x).join(' + ')} = ?`,spoken:`What is ${operands.map(x=>age===10?(x/100).toFixed(2):x).join(' plus ')}?`,strategy:`Start with ${operands[0]}. ${operands.slice(1).map(value=>`Count on ${value} more.`).join(' ')} Tap each dot once to check the total.`,mode};
   }
   if (mode==='groups') {
     const possibilities=[];

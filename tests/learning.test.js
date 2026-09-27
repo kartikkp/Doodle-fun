@@ -130,7 +130,7 @@ test('every exact age gets valid bounded quantity questions and age ten combines
   }
 });
 
-test('older addition regroups and equal groups use multiplication beyond twenty without changing counting',()=>{
+test('older arithmetic regroups while counting composes place-value and decimal units',()=>{
   for(const age of [9,10]) {
     const totals=new Set();
     for(let round=0;round<24;round++) {
@@ -140,7 +140,7 @@ test('older addition regroups and equal groups use multiplication beyond twenty 
         assert.equal(q.answer,mode==='add'?q.operands.reduce((a,b)=>a+b,0):q.groups*q.each);
         if(age===10)assert.ok(q.answer>20);
       }
-      const count=buildQuantityQuestion(round%21,'count',20,round,age);assert.equal(count.answer,round%21);assert.equal(count.representation,undefined);
+      const count=buildQuantityQuestion(round%21,'count',20,round,age);assert.equal(count.answer,count.bundles.reduce((sum,b)=>sum+b.count*b.unit,0));assert.equal(count.representation,'unit-model');if(age===10)assert.equal(count.answerScale,100);
     }
     assert.ok(totals.size>15,'rounds change the mathematical problem');
     assert.ok(buildQuantityQuestion(11,'add',20,0,age).operands.reduce((sum,value)=>sum+value%10,0)>=10,'opening round requires regrouping');

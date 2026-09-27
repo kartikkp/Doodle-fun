@@ -48,25 +48,25 @@ test('subtraction and missing-part choices have exactly one mathematically corre
 test('frames visit every quantity in the supported age range, including zero',()=>{
   for(const [index,profile]of profiles.entries()) {
     const size=profile.frameSize,seen=new Set();
-    for(let round=0;round<=profile.numberMax;round++){const q=generateChallenge('ten-frame',profile,round);assert.equal(q.size,size);seen.add(q.target);}
+    for(let round=0;round<=(profile.numberMax+1)*2;round++){const q=generateChallenge('ten-frame',profile,round);assert.equal(q.size,size);seen.add(q.target);}
     assert.deepEqual([...seen].sort((a,b)=>a-b),Array.from({length:profile.numberMax+1},(_,i)=>i));
   }
 });
-test('case matching grows from two supported pairs to six distinct case pairs',()=>{
+test('letter relationships progress from case through rhyme and meaningful word parts',()=>{
   for(const [index,profile]of profiles.entries())for(let round=0;round<30;round++) {
     const q=generateChallenge('letter-match',profile,round);
     assert.equal(q.pairs.length,profile.letterPairs);assert.equal(new Set(q.pairs).size,q.pairs.length);
-    assert.deepEqual(q.upper.map(ch=>ch.toLowerCase()).sort(),[...q.lower].sort());
+    if(q.relationships){assert.deepEqual(q.upper.slice().sort(),q.relationships.map(p=>p.upper).sort());assert.deepEqual(q.lower.slice().sort(),q.relationships.map(p=>p.lower).sort());assert.equal(new Set(q.lower).size,q.pairs.length);}else assert.deepEqual(q.upper.map(ch=>ch.toLowerCase()).sort(),[...q.lower].sort());
   }
 });
 test('word tiles preserve all letters including repeats, with longer words for older children',()=>{
   for(const [index,profile]of profiles.entries())for(let round=0;round<20;round++) {
     const q=generateChallenge('word-build',profile,round);
-    assert.equal(q.word.length,profile.wordLength);
+    assert.ok(q.word.length>=2&&q.word.length<=8);if(profile.challengeAge>=9)assert.ok(q.word.length>=6);
     assert.deepEqual(q.tiles.filter(tile=>!tile.distractor).map(tile=>tile.letter).sort(),[...q.word].sort());
     assert.equal(new Set(q.tiles.map(tile=>tile.index)).size,q.tiles.length);assert.ok(q.tiles.length<=10);assert.ok(q.picture&&q.clue);
   }
-  assert.equal(generateChallenge('word-build',getProfile({age:9}),2).tiles.filter(tile=>tile.letter==='b').length,2);
+  assert.equal(generateChallenge('word-build',getProfile({age:10}),4).tiles.filter(tile=>tile.letter==='e').length,3);
 });
 
 test('older math uses place value without raising the foundational twenty-object limit',()=>{

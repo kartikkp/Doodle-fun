@@ -53,5 +53,5 @@ export function getProfile(settings = DEFAULT_SETTINGS) {
     frameSize:[5,5,5,10,10,20,20,20,20],
     wordLength:[2,3,3,3,4,4,5,6,8],
   };
-  return {tier,age,challengeAge,challengeOffset,...profiles[tier],...Object.fromEntries(Object.entries(byAge).map(([key,values])=>[key,values[index]])),modelByDefault:challengeAge<=4};
+  return {tier,age,challengeAge,challengeOffset,...profiles[tier],...Object.fromEntries(Object.entries(byAge).map(([key,values])=>[key,values[index]])),modelByDefault:false};
 }
