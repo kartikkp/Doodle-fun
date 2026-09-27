@@ -142,6 +142,7 @@ async function quantity(qa) {
     qa.assert(operands.join(',')===frames.join(','),'Every printed addition operand matches its own dot frame');
     qa.assert(Math.round(operands.reduce((total,value)=>total+value,0)*scale)===answer,'Printed addition question yields the accepted total');
   }
+  if(compact)qa.assert(qa.el('.learn-place-strategy').hidden,'Worked strategy stays hidden until requested');
   const wrong=qa.all('.learn-answer').find(button=>Number(button.dataset.answer)!==answer);
   qa.click(wrong);
   qa.assert(!complete('.learn-feedback')&&qa.text('.learn-feedback').includes('Try again'),'Wrong quantity gives recoverable feedback');
@@ -150,7 +151,18 @@ async function quantity(qa) {
     qa.assert(qa.all('.learn-count-dot')[answer-1].textContent==='1','First tapped dot receives ordinal one');
   }
   qa.click('.learn-count-coach');
-  if(compact)qa.assert(!qa.el('.learn-place-strategy').hidden&&qa.text('.learn-place-strategy').length>15,'Place-value hint reveals a worked strategy without reducing the exercise to hundreds of tap targets');
+  if(compact) {
+    qa.assert(visible(qa.el('.learn-place-strategy'))&&qa.text('.learn-place-strategy').length>0,'Requested hint reveals a worked strategy');
+    if(qa.el('[data-testid="quantity-frame"]').dataset.representation==='unit-model') {
+      const unitValues={hundreds:100,tens:10,ones:1,tenths:.1,hundredths:.01};
+      const bundles=qa.all('.learn-unit-bundle').map(tile=>({count:Number(tile.querySelector('strong').textContent),unit:unitValues[tile.querySelector('span').textContent]}));
+      const expected=bundles.map(({count,unit})=>`${count} × ${unit}`).join(' + ');
+      qa.assert(bundles.length>=2&&bundles.every(({count,unit})=>Number.isInteger(count)&&count>=0&&Number.isFinite(unit)),'Displayed bundles have valid counts and place-value units');
+      qa.assert(qa.text('.learn-place-strategy')===expected,'Worked hint corresponds to every displayed unit bundle');
+      qa.assert(Math.round(bundles.reduce((sum,{count,unit})=>sum+count*unit,0)*scale)===answer,'Independently combined unit bundles yield the accepted quantity');
+    }
+    qa.assert(!complete('.learn-feedback'),'Opening the strategy does not grant completion');
+  }
   else qa.assert(qa.all('.learn-count-dot.is-counted').length===answer,'Counting hint covers every dot');
   qa.check('wrong answer, one-to-one counting and visual hint');
   qa.click(qa.all('.learn-answer').find(button=>Number(button.dataset.answer)===answer));
@@ -163,81 +175,88 @@ async function quantity(qa) {
 }
 
 async function challenge(qa) {
+  // A family can open its learning mode before switching to a challenge.
+  // Hidden engine DOM remains mounted; assertions must inspect this game only.
+  const view=qa.el('#challenges-view');
+  const find=selector=>qa.el(selector,view);
+  const all=selector=>qa.all(selector,view);
+  const text=selector=>find(selector).textContent.trim();
+  const click=target=>qa.click(typeof target==='string'?find(target):target);
   const q=generateChallenge(qa.id,getProfile({age:qa.age}),0);
   const feedback=()=>complete('.challenge-feedback'),scale=q.answerScale||1;
-  const wrongNumeric=()=>qa.click(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`);
+  const wrongNumeric=()=>click(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`);
   if(qa.id==='compare') {
-    const groups=qa.all('.challenge-quantity');
+    const groups=all('.challenge-quantity');
     if(q.model==='place-value') {
       qa.assert(groups.map(group=>Math.round(Number(group.querySelector('.challenge-quantity-number').textContent)*scale)).join(',')===[q.left,q.right].join(','),'Printed comparison numbers match the generated quantities');
-      qa.assert(qa.all('.challenge-dot,.challenge-pair-row').length===0,'Older quantities use compact numerals, never hundreds of dots');
+      qa.assert(all('.challenge-dot,.challenge-pair-row').length===0,'Older quantities use compact numerals, never hundreds of dots');
     } else qa.assert(groups[0].querySelectorAll('.challenge-dot').length===q.left&&groups[1].querySelectorAll('.challenge-dot').length===q.right,'Comparison quantities match their visible dots');
-    qa.click(`[data-answer="${q.answer==='same'?'left':'same'}"]`);
-    qa.assert(!feedback()&&qa.el('.challenge-comparison-model').hidden,'Wrong comparison keeps the model hidden without credit');
-    qa.click('.challenge-hint-button');
-    qa.click(`[data-answer="${q.answer}"]`);
+    click(`[data-answer="${q.answer==='same'?'left':'same'}"]`);
+    qa.assert(!feedback()&&find('.challenge-comparison-model').hidden,'Wrong comparison keeps the model hidden without credit');
+    click('.challenge-hint-button');
+    click(`[data-answer="${q.answer}"]`);
     if(q.followup) {
       qa.assert(!feedback(),'Difference follow-up is required before credit');
-      qa.click(`[data-follow-answer="${q.followup.choices.find(value=>value!==q.followup.answer)}"]`);
+      click(`[data-follow-answer="${q.followup.choices.find(value=>value!==q.followup.answer)}"]`);
       qa.assert(!feedback(),'Wrong difference cannot complete');
-      qa.click(`[data-follow-answer="${q.followup.answer}"]`);
+      click(`[data-follow-answer="${q.followup.answer}"]`);
     }
   } else if(qa.id==='number-order') {
-    qa.click(`[data-tile="${q.sequence.at(-1)}"]`);
-    qa.assert(qa.all('.challenge-slot.is-filled').length===0,'Out-of-order tile does not fill a slot');
-    qa.click('.challenge-hint-button');
-    qa.assert(qa.el(`[data-tile="${q.sequence[0]}"]`).classList.contains('is-suggested'),'Hint identifies first legal number');
-    for(const number of q.sequence)qa.click(`[data-tile="${number}"]`);
-    qa.assert(qa.all('.challenge-slot.is-filled').map(slot=>Math.round(Number(slot.textContent)*scale)).join(',')===q.sequence.join(','),'Rendered sequence follows the requested order');
+    click(`[data-tile="${q.sequence.at(-1)}"]`);
+    qa.assert(all('.challenge-slot.is-filled').length===0,'Out-of-order tile does not fill a slot');
+    click('.challenge-hint-button');
+    qa.assert(find(`[data-tile="${q.sequence[0]}"]`).classList.contains('is-suggested'),'Hint identifies first legal number');
+    for(const number of q.sequence)click(`[data-tile="${number}"]`);
+    qa.assert(all('.challenge-slot.is-filled').map(slot=>Math.round(Number(slot.textContent)*scale)).join(',')===q.sequence.join(','),'Rendered sequence follows the requested order');
   } else if(qa.id==='subtraction'||qa.id==='number-bonds') {
     if(q.model==='place-value') {
-      qa.assert(qa.text('.challenge-prompt')===q.prompt,'Printed place-value equation matches the requested unknown');
-      qa.assert(qa.all('.challenge-dot').length===0,'Older arithmetic avoids object-counting shortcuts');
-      qa.assert(qa.el('.challenge-place-support').hidden,'Strategy is optional before an attempt');
+      qa.assert(text('.challenge-prompt')===q.prompt,'Printed place-value equation matches the requested unknown');
+      qa.assert(all('.challenge-dot').length===0,'Older arithmetic avoids object-counting shortcuts');
+      qa.assert(find('.challenge-place-support').hidden,'Strategy is optional before an attempt');
       const expected=qa.id==='subtraction'?{start:q.removed+q.remaining,removed:q.start-q.remaining,remaining:q.start-q.removed}[q.ask]:q.ask==='total'?q.firstPart+q.secondPart:q.total-q.part;
       qa.assert(q.answer===expected,'Accepted unknown satisfies the complete equation');
-    } else if(qa.id==='subtraction')qa.assert(qa.all('.challenge-dot.is-crossed').length===q.removed,'Crossed-out objects show the removed quantity');
+    } else if(qa.id==='subtraction')qa.assert(all('.challenge-dot.is-crossed').length===q.removed,'Crossed-out objects show the removed quantity');
     wrongNumeric();qa.assert(!feedback(),'Wrong numeric answer does not complete');
     if(q.model==='place-value') {
-      qa.assert(qa.text('.challenge-feedback').includes('Try again'),'Retry offers another attempt without revealing a solution');
-      qa.click('.challenge-hint-button');qa.assert(!qa.el('.challenge-place-support').hidden,'Place-value strategy is available without granting credit');qa.assert(!feedback(),'Opening a strategy does not complete the equation');
+      qa.assert(text('.challenge-feedback').includes('Try again'),'Retry offers another attempt without revealing a solution');
+      click('.challenge-hint-button');qa.assert(!find('.challenge-place-support').hidden,'Place-value strategy is available without granting credit');qa.assert(!feedback(),'Opening a strategy does not complete the equation');
     } else if(qa.id==='number-bonds') {
-      qa.assert(qa.el('.challenge-bond-support').hidden,'Wrong missing part does not reveal the picture');qa.click('.challenge-hint-button');qa.assert(!qa.el('.challenge-bond-support').hidden,'Requested hint reveals the picture');
-      qa.assert(qa.all('.challenge-bond-support .challenge-dot.is-empty').length===q.answer,'Empty dots represent the actual missing part');
-    } else qa.click('.challenge-hint-button');
-    qa.click(`[data-answer="${q.answer}"]`);
+      qa.assert(find('.challenge-bond-support').hidden,'Wrong missing part does not reveal the picture');click('.challenge-hint-button');qa.assert(!find('.challenge-bond-support').hidden,'Requested hint reveals the picture');
+      qa.assert(all('.challenge-bond-support .challenge-dot.is-empty').length===q.answer,'Empty dots represent the actual missing part');
+    } else click('.challenge-hint-button');
+    click(`[data-answer="${q.answer}"]`);
   } else if(qa.id==='ten-frame') {
-    qa.assert(qa.all('[data-cell]').length===q.size,'Frame capacity matches the age configuration');
-    qa.click(qa.button('Check my frame'));qa.assert(!feedback(),'Empty frame is not a correct nonzero target');
-    qa.click('[data-cell="0"]');qa.click('[data-cell="0"]');
-    qa.assert(qa.el('[data-cell="0"]').getAttribute('aria-pressed')==='false','A dot can be removed by tapping it again');
-    qa.click('.challenge-hint-button');
-    for(let i=0;i<q.target;i++)qa.click(`[data-cell="${i}"]`);
-    qa.click(qa.button('Check my frame'));
-    qa.assert(qa.all('[data-cell][aria-pressed="true"]').length===q.target,'Exact filled amount is visible');
+    qa.assert(all('[data-cell]').length===q.size,'Frame capacity matches the age configuration');
+    click(qa.button('Check my frame'));qa.assert(!feedback(),'Empty frame is not a correct nonzero target');
+    click('[data-cell="0"]');click('[data-cell="0"]');
+    qa.assert(find('[data-cell="0"]').getAttribute('aria-pressed')==='false','A dot can be removed by tapping it again');
+    click('.challenge-hint-button');
+    for(let i=0;i<q.target;i++)click(`[data-cell="${i}"]`);
+    click(qa.button('Check my frame'));
+    qa.assert(all('[data-cell][aria-pressed="true"]').length===q.target,'Exact filled amount is visible');
   } else if(qa.id==='letter-match') {
     if(q.pairs.length>1) {
-      qa.click(`[data-side="upper"][data-letter="${q.relationships?.[0].upper??q.pairs[0].toUpperCase()}"]`);qa.click(`[data-side="lower"][data-letter="${q.relationships?.[1].lower??q.pairs[1]}"]`);
-      qa.assert(qa.all('.challenge-letter.is-matched').length===0,'Different letters do not match');
+      click(`[data-side="upper"][data-letter="${q.relationships?.[0].upper??q.pairs[0].toUpperCase()}"]`);click(`[data-side="lower"][data-letter="${q.relationships?.[1].lower??q.pairs[1]}"]`);
+      qa.assert(all('.challenge-letter.is-matched').length===0,'Different letters do not match');
     }
-    qa.click('.challenge-hint-button');
-    qa.assert(qa.all('.challenge-partner-model').every(visible),'All partner models become available');
-    for(const [i,letter]of q.pairs.entries()){qa.click(`[data-side="upper"][data-letter="${q.relationships?.[i].upper??letter.toUpperCase()}"]`);qa.click(`[data-side="lower"][data-letter="${q.relationships?.[i].lower??letter}"]`);}
-    qa.assert(qa.all('.challenge-letter.is-matched').length===q.pairs.length*2,'Every letter pair is matched');
+    click('.challenge-hint-button');
+    qa.assert(all('.challenge-partner-model').every(visible),'All partner models become available');
+    for(const [i,letter]of q.pairs.entries()){click(`[data-side="upper"][data-letter="${q.relationships?.[i].upper??letter.toUpperCase()}"]`);click(`[data-side="lower"][data-letter="${q.relationships?.[i].lower??letter}"]`);}
+    qa.assert(all('.challenge-letter.is-matched').length===q.pairs.length*2,'Every letter pair is matched');
   } else if(qa.id==='word-build') {
-    qa.assert(!visible(qa.el('.challenge-word-model')),'All ages begin without the word solution');
+    qa.assert(!visible(find('.challenge-word-model')),'All ages begin without the word solution');
     const wrong=q.tiles.find(tile=>tile.letter!==q.word[0]);
-    qa.click(`[data-tile="${wrong.index}"]`);
-    qa.assert(!visible(qa.el('.challenge-word-model'))&&!feedback(),'Wrong first letter keeps the word model hidden');
-    qa.click(qa.button('Show next letter'));
-    for(const letter of q.word)qa.click(qa.all(`[data-character="${letter}"]`).find(button=>!button.disabled));
-    qa.assert(qa.all('.challenge-slot.is-filled').map(slot=>slot.textContent.toLowerCase()).join('')===q.word,'Every displayed spelling slot is correct, including repeated letters');
+    click(`[data-tile="${wrong.index}"]`);
+    qa.assert(!visible(find('.challenge-word-model'))&&!feedback(),'Wrong first letter keeps the word model hidden');
+    click(qa.button('Show next letter'));
+    for(const letter of q.word)click(all(`[data-character="${letter}"]`).find(button=>!button.disabled));
+    qa.assert(all('.challenge-slot.is-filled').map(slot=>slot.textContent.toLowerCase()).join('')===q.word,'Every displayed spelling slot is correct, including repeated letters');
   }
   qa.check('incorrect attempt and contextual support');
   qa.assert(feedback(),'Correct full solution completes the challenge');
-  qa.assert(qa.all('[data-answer],[data-follow-answer],[data-tile],[data-cell],[data-letter]').every(node=>node.disabled),'Completed actions are disabled against duplicate credit');
-  qa.click('.challenge-new');
-  qa.assert(!feedback()&&qa.text('.challenge-round')==='ROUND 2','Next round starts fresh');
+  qa.assert(all('[data-answer],[data-follow-answer],[data-tile],[data-cell],[data-letter]').every(node=>node.disabled),'Completed actions are disabled against duplicate credit');
+  click('.challenge-new');
+  qa.assert(!feedback()&&text('.challenge-round')==='ROUND 2','Next round starts fresh');
   qa.check('complete solution, duplicate protection and next round');
 }
 
