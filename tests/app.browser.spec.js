@@ -117,3 +117,14 @@ test('changing activities immediately clears the previous activity notice',async
   await expect(page.locator('#learning-view')).toBeVisible();
   await expect(notice).toBeHidden();
 });
+
+test('compact home keeps category scrolling inside the viewport',async({page})=>{
+  await page.setViewportSize({width:320,height:568});
+  await page.goto('/');
+  const fits=()=>page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth);
+  expect(await fits()).toBe(true);
+  await page.locator('[data-filter="listen"]').click();
+  await expect(page.locator('#activity-count')).toHaveText('4 activities');
+  expect(await fits()).toBe(true);
+  expect(await page.evaluate(()=>window.scrollX)).toBe(0);
+});
