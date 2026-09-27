@@ -1,6 +1,6 @@
 // TEST ONLY: real packaged studio controllers, driven through their visible DOM.
 // Generated round data supplies expectations; it does not mutate production state.
-import {buildStudioRound,solvePour} from '../../../studio-play.js';
+import {buildStudioRound,mirrorSource,solveBalance,solvePour} from '../../../studio-play.js';
 
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const score=qa=>Object.values(JSON.parse(localStorage.getItem('doodle-fun:v2:medal-progress-v1')||'{"entries":{}}').entries).find(entry=>entry.mode===qa.id&&entry.age===qa.age&&entry.step===qa.age);
@@ -29,11 +29,8 @@ async function tactile(qa){
   }else if(qa.id==='balance-lab'){
     qa.assert(qa.all('.studio-block.is-fixed',view).length===round.fixed.length,'The starting weights stay on the left');
     if(round.mystery)qa.assert(find('.studio-evidence').textContent.includes(String(round.mystery)),'Unknown-weight evidence is available without an answer button');
-    let remaining=round.target;
-    for(const weight of [...round.weights].reverse()){
-      click(`[data-weight="${weight}"]`);
-      while(remaining>=weight){click('[data-pan="1"]');remaining-=weight;}
-    }
+    const solution=solveBalance(round);qa.assert(solution?.length>0,'The weight target and age-specific constraints have a legal solution');
+    for(const weight of solution){click(`[data-weight="${weight}"]`);click('[data-pan="1"]');}
     const right=qa.all('[data-side="1"] .studio-block',view).reduce((sum,piece)=>sum+Number(piece.textContent),0);
     qa.assert(right===round.target,'The visible right weights equal the full left-side amount');
     qa.assert(find('.studio-balance-observation').textContent.includes('level'),'The balance visibly becomes level before Check');
@@ -62,8 +59,10 @@ async function tactile(qa){
 
   if(qa.id==='mirror-mosaic'){
     click('.studio-free');qa.assert(find('.studio-check').hidden,'Free mirror creation has no correctness check');
-    click('button[data-cell="0"]');const copies=qa.all('.studio-mirror-cell[data-color="1"]',view).length;
-    qa.assert(copies===(round.axis==='both'?4:2),'Free creation places actual reflected copies');
+    const nextRound=buildStudioRound(qa.id,qa.age,1),cell=1,source=mirrorSource(nextRound.size,nextRound.axis,cell);
+    const expected=nextRound.solution.filter((_,index)=>mirrorSource(nextRound.size,nextRound.axis,index)===source).length;
+    click(`button[data-cell="${cell}"]`);const copies=qa.all('.studio-mirror-cell[data-color="1"]',view).length;
+    qa.assert(copies===expected,'Free creation places the correct reflection orbit for this age and axis');
     click('.studio-undo');qa.assert(qa.all('.studio-mirror-cell[data-color="1"]',view).length===0,'Free mirror work is reversible');
     qa.assert(completed(qa)===1,'Open creation never adds a scored completion');
     click('.studio-free');qa.check('ungraded symmetric creation and recovery');
