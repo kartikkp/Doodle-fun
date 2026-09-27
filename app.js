@@ -148,6 +148,9 @@ function changeChallenge(offset) {
 function goHome() { location.hash='home'; }
 function route() {
   const nav = ++navigationId;
+  clearTimeout(noticeTimer);
+  $('app-notice').hidden = true;
+  $('app-notice').textContent = '';
   const requested = location.hash.slice(1) || 'home';
   const activity = getActivity(requested,settings.age);
   const previous=activeRoute;
