@@ -1,19 +1,20 @@
 import {test,expect} from '@playwright/test';
-import {DISCOVERY_IDS} from '../discovery.js';
+import {DISCOVERY_IDS,buildDiscoveryRound} from '../discovery.js';
 test.use({hasTouch:true,viewport:{width:375,height:812}});
 for(let age=2;age<=10;age++)for(const id of DISCOVERY_IDS){
   test(`age ${age}: ${id} hint, incorrect attempt, recovery and next`,async({page})=>{
     await page.addInitScript(value=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:value,level:'auto',sound:false})),age);
     await page.goto(`/#${id}`);await expect(page.locator('.discover-title')).toBeVisible();
+    if(id==='shape-match')await expect(page.locator('.discover-model .discover-shape')).toHaveCount(0);
     const hint=async()=>{await page.locator('.discover-hint').tap();await expect(page.locator('.discover-status')).toHaveClass(/is-hint/);};
     if(['shape-match','color-match','patterns','odd-one-out'].includes(id)){
       let answer;
-      if(id==='shape-match'||id==='color-match')answer=id==='shape-match'?'circle':'red';
-      else if(id==='patterns'){if(age>=9){await hint();answer=(await page.locator('.discover-status').textContent()).match(/missing number is (\d+)/)[1];}else answer=(await page.locator('.discover-pattern-token').first().getAttribute('aria-label')).split(': ')[1];}
+      if(id==='shape-match'||id==='color-match')answer=buildDiscoveryRound(id,age,0).answer;
+      else if(id==='patterns'){if(age>=9){const numbers=(await page.locator('.discover-pattern-token').allTextContents()).map(Number);answer=String(age===9?numbers[1]+(numbers[1]-numbers[0]):numbers[1]-2);}else answer=(await page.locator('.discover-pattern-token').first().getAttribute('aria-label')).split(': ')[1];}
       else answer='0';
       const correct=id==='patterns'?page.getByRole('button',{name:answer,exact:true}):page.locator(`[data-choice="${answer}"]`);
       const value=await correct.getAttribute('data-choice');await page.locator(`[data-choice]:not([data-choice="${value}"])`).first().tap();
-      await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);await hint();await correct.tap();
+      await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);await expect(page.locator('.is-hint')).toHaveCount(0);if(id==='shape-match')await expect(page.locator('.discover-model .discover-shape')).toHaveCount(0);await hint();await correct.tap();
     }else if(id==='sorting'){
       await hint();await page.locator('.is-hint[data-item]').tap();await hint();await page.locator('[data-category]:not(.is-hint)').first().tap();await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);
       for(let i=0;i<14&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();if(await page.locator('[data-item][aria-pressed="true"]').count()===0)await page.locator('.is-hint[data-item]').tap();await hint();await page.locator('.is-hint[data-category]').tap();}
@@ -22,7 +23,7 @@ for(let age=2;age<=10;age++)for(const id of DISCOVERY_IDS){
       for(let i=0;i<7&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();await page.locator('.is-hint[data-card]').tap();}
     }else{
       await page.locator('[data-cell="0"]').tap();await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);
-      for(let i=0;i<(age>=9?120:36)&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();await page.locator('.is-hint[data-cell]').tap();}
+      for(let i=0;i<(age>=7?120:36)&&!(await page.locator('.discover-next.is-ready').count());i++){await hint();await page.locator('.is-hint[data-cell]').tap();}
     }
     await expect(page.locator('.discover-next')).toHaveClass(/is-ready/);await expect(page.locator('.discover-status')).toHaveClass(/is-success/);
     await page.locator('.discover-restart').tap();await expect(page.locator('.discover-next')).not.toHaveClass(/is-ready/);

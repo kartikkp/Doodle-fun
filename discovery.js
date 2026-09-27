@@ -1,5 +1,6 @@
 import { getProfile, readStore, writeStore } from './core.js';
-import { canSpeak, speak as say, stopSpeaking } from './speech.js';
+import { canSpeak, requestSpeech, stopSpeaking } from './speech.js';
+import { objectArt } from './activity-art.js';
 
 export const DISCOVERY_IDS = ['shape-match', 'color-match', 'patterns', 'sorting', 'odd-one-out', 'memory', 'maze'];
 const META = {
@@ -43,7 +44,7 @@ export function discoveryConfig(value) {
   const age = Math.max(2, Math.min(10, Math.round(Number(value) || ({little:3,explorer:6,maker:9}[value]) || 6))), i = age - 2;
   const fields = {
     choices:[2,2,3,3,4,4,5,6,6], memoryPairs:[2,2,3,3,4,4,5,6,6], mazeSize:[3,3,4,4,5,5,6,6,6],
-    sortCategories:[2,2,2,3,3,3,3,3,4], sortItemsEach:[2,3,3,2,3,2,2,3,3],
+    sortCategories:[2,2,2,4,2,2,2,4,3], sortItemsEach:[2,3,3,2,3,2,2,3,3],
     shapePool:[2,3,4,5,6,7,8,8,8], colorPool:[4,5,6,7,8,8,9,10,10], oddCount:[3,3,3,4,4,5,5,6,6],
   };
   return {age,tier:age<=4?'little':age<=7?'explorer':'maker',...Object.fromEntries(Object.entries(fields).map(([key,values])=>[key,values[i]]))};
@@ -89,12 +90,16 @@ function numberPattern(age,index,random) {
   return {id:'patterns',tier:'maker',age,kind:'number-rule',values,missingIndex,rule,sequence:values.map(numberToken),target,choices,answer:target.id};
 }
 function relatedMemory(age,index,random) {
-  const n=Math.max(0,Math.floor(index));
-  const relations=age===9
-    ? [[3,4],[3,6],[4,6],[4,7],[5,7],[6,7],[6,8],[7,8]].map(([a,b],i)=>({id:`product-${a*b}`,faces:[`${a} × ${b}`,String(a*b)],meaning:`${a} × ${b} = ${a*b}`}))
-    : [[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5]].map(([a,b],i)=>{const scale=2+(n+i)%3;return{id:`fraction-${a}-${b}`,faces:[`${a}/${b}`,`${a*scale}/${b*scale}`],meaning:`${a}/${b} = ${a*scale}/${b*scale}`};});
-  const selected=shuffle(relations,random).slice(0,6);
-  return {id:'memory',tier:'maker',age,pairs:6,relation:age===9?'products':'fractions',cards:shuffle(selected.flatMap(pair=>pair.faces.map((text,i)=>({id:pair.id,key:`${pair.id}-${i}`,name:text,text,meaning:pair.meaning}))),random)};
+  const n=Math.max(0,Math.floor(index)),pairs=discoveryConfig(age).memoryPairs;
+  const values=Array.from({length:8},(_,i)=>i+2);
+  const relations=age===5?values.map(value=>({id:`quantity-${value}`,faces:[{dots:value,name:`${value} dots`},{text:String(value),name:String(value)}],meaning:`${value} dots and the numeral ${value}`}))
+    :age===6?['A','B','D','G','H','M','Q','R'].map(letter=>({id:`letter-${letter}`,faces:[{text:letter,name:letter},{text:letter.toLowerCase(),name:letter.toLowerCase()}],meaning:`${letter} and ${letter.toLowerCase()} are the same letter`}))
+    :age===7?values.map(value=>({id:`sum-${value+3}`,faces:[{text:`${value} + 3`,name:`${value} plus 3`},{text:String(value+3),name:String(value+3)}],meaning:`${value} + 3 = ${value+3}`}))
+    :age===8?[[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5]].map(([a,b])=>({id:`part-${a}-${b}`,faces:[{text:`${a}/${b}`,name:`${a}/${b}`},{parts:[a,b],name:`${a} of ${b} equal parts shaded`}],meaning:`${a} of ${b} equal parts is ${a}/${b}`}))
+    :age===9?[[3,4],[3,6],[4,6],[4,7],[5,7],[6,7],[6,8],[7,8]].map(([a,b])=>({id:`product-${a*b}`,faces:[{text:`${a} × ${b}`,name:`${a} times ${b}`},{text:String(a*b),name:String(a*b)}],meaning:`${a} × ${b} = ${a*b}`}))
+    :[[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5],[3,5]].map(([a,b],i)=>{const scale=2+(n+i)%3;return{id:`fraction-${a}-${b}`,faces:[{text:`${a}/${b}`,name:`${a}/${b}`},{text:`${a*scale}/${b*scale}`,name:`${a*scale}/${b*scale}`}],meaning:`${a}/${b} = ${a*scale}/${b*scale}`};});
+  const relation=({5:'quantities',6:'letters',7:'sums',8:'parts',9:'products',10:'fractions'})[age];
+  return {id:'memory',tier:discoveryConfig(age).tier,age,pairs,relation,cards:shuffle(shuffle(relations,random).slice(0,pairs).flatMap(pair=>pair.faces.map((face,i)=>({...face,id:pair.id,key:`${pair.id}-${i}`,meaning:pair.meaning}))),random)};
 }
 export function mazeRoute(maze,start,goal) {
   const queue=[[start]],seen=new Set([start]);
@@ -112,24 +117,126 @@ function planningMaze(age,config,random) {
   const offRoute=interior.filter(i=>!direct.includes(i));
   const first=offRoute.length?shuffle(offRoute,random)[0]:direct[Math.max(2,direct.length-3)];
   const second=direct[1];
-  return {id:'maze',tier:'maker',age,...maze,checkpoints:age===9?[first]:[first,second]};
+  return {id:'maze',tier:'maker',age,...maze,checkpoints:age===7||age===9?[first]:[first,second]};
+}
+const SHAPE_FACTS={circle:{sides:0,corners:0,rightAngles:0,equalSides:false},square:{sides:4,corners:4,rightAngles:4,equalSides:true},triangle:{sides:3,corners:3,rightAngles:0,equalSides:false},rectangle:{sides:4,corners:4,rightAngles:4,equalSides:false},oval:{sides:0,corners:0,rightAngles:0,equalSides:false},star:{sides:10,corners:10,rightAngles:0,equalSides:false},pentagon:{sides:5,corners:5,rightAngles:0,equalSides:true},hexagon:{sides:6,corners:6,rightAngles:0,equalSides:true}};
+function polygon(name,id,points) {
+  const edges=points.map((point,i)=>[points[(i+1)%points.length][0]-point[0],points[(i+1)%points.length][1]-point[1]]),lengths=edges.map(([x,y])=>Math.hypot(x,y));
+  let parallelPairs=0,rightAngles=0,obtuseAngles=0;
+  edges.forEach((edge,i)=>{for(let j=i+1;j<edges.length;j++)if(Math.abs(edge[0]*edges[j][1]-edge[1]*edges[j][0])/(lengths[i]*lengths[j])<.001)parallelPairs++;
+    const previous=edges[(i+edges.length-1)%edges.length],dot=-previous[0]*edge[0]-previous[1]*edge[1],normalized=dot/(lengths[i]*lengths[(i+edges.length-1)%edges.length]);if(Math.abs(normalized)<.001)rightAngles++;else if(normalized<0)obtuseAngles++;
+  });
+  const center=points.reduce((sum,[x,y])=>[sum[0]+x/points.length,sum[1]+y/points.length],[0,0]),axes=[];
+  for(let i=0;i<points.length;i++)for(const point of [points[i],[(points[i][0]+points[(i+1)%points.length][0])/2,(points[i][1]+points[(i+1)%points.length][1])/2]]){
+    const dx=point[0]-center[0],dy=point[1]-center[1],length=Math.hypot(dx,dy);if(length<.001)continue;const ux=dx/length,uy=dy/length;
+    if(axes.some(([x,y])=>Math.abs(x*uy-y*ux)<.001))continue;
+    if(points.every(([x,y])=>{const px=x-center[0],py=y-center[1],projection=px*ux+py*uy,rx=2*projection*ux-px+center[0],ry=2*projection*uy-py+center[1];return points.some(([a,b])=>Math.hypot(a-rx,b-ry)<.01);}))axes.push([ux,uy]);
+  }
+  return{id,name,points,svg:`<polygon points="${points.map(point=>point.join(',')).join(' ')}"/>`,sides:points.length,corners:points.length,rightAngles,obtuseAngles,parallelPairs,symmetry:axes.length,equalSides:Math.max(...lengths)-Math.min(...lengths)<.01};
+}
+const regular=(count)=>Array.from({length:count},(_,i)=>[50+38*Math.cos(-Math.PI/2+i*Math.PI*2/count),50+38*Math.sin(-Math.PI/2+i*Math.PI*2/count)]);
+const PROPERTY_SHAPES=[
+  polygon('Square','square',[[20,20],[80,20],[80,80],[20,80]]),polygon('Rectangle','rectangle',[[12,28],[88,28],[88,72],[12,72]]),
+  polygon('Rhombus','rhombus',[[50,8],[82,50],[50,92],[18,50]]),polygon('Parallelogram','parallelogram',[[30,20],[88,20],[70,80],[12,80]]),
+  polygon('Trapezoid','trapezoid',[[28,20],[72,20],[90,80],[10,80]]),polygon('Kite','kite',[[50,10],[83,50],[50,85],[17,50]]),
+  polygon('Equilateral triangle','equilateral-triangle',regular(3)),polygon('Right triangle','right-triangle',[[20,15],[20,85],[80,85]]),
+  polygon('Obtuse triangle','obtuse-triangle',[[10,75],[50,45],[90,75]]),polygon('Regular pentagon','pentagon',regular(5)),polygon('Regular hexagon','hexagon',regular(6)),polygon('Irregular pentagon','irregular-pentagon',[[15,20],[75,15],[90,50],[60,85],[20,75]]),polygon('Irregular hexagon','irregular-hexagon',[[28,12],[65,16],[90,43],[78,82],[29,87],[12,52]]),
+];
+function propertyShapeRound(age,index,random,config){
+  const targets=age===10?PROPERTY_SHAPES.filter(shape=>shape.sides===4):PROPERTY_SHAPES,target=targets[index%targets.length];
+  const criteria=age===8?[['sides',target.sides],['rightAngles',target.rightAngles],['obtuseAngles',target.obtuseAngles],['parallelPairs',target.parallelPairs],['equalSides',target.equalSides]]:age===9?[['sides',target.sides],['symmetry',target.symmetry],['rightAngles',target.rightAngles],['equalSides',target.equalSides]]:[['sides',4],['parallelPairs',target.parallelPairs],['rightAngles',target.rightAngles],['equalSides',target.equalSides],['symmetry',target.symmetry]];
+  const objective=age===8?`Find a ${target.sides}-sided shape with ${target.rightAngles} right angles, ${target.obtuseAngles} obtuse angles and ${target.parallelPairs} pairs of parallel sides, with ${target.equalSides?'all sides equal':'some unequal sides'}.`:age===9?`Find a ${target.sides}-sided shape with ${target.symmetry} lines of symmetry, ${target.rightAngles} right angles, and ${target.equalSides?'all sides equal':'some unequal sides'}.`:`Find a quadrilateral with ${target.parallelPairs} pairs of parallel sides, ${target.rightAngles} right angles, ${target.symmetry} lines of symmetry, and ${target.equalSides?'all sides equal':'some unequal sides'}.`;
+  const pool=PROPERTY_SHAPES.filter(shape=>shape.id===target.id||!criteria.every(([key,value])=>shape[key]===value));
+  const contrast=pool.find(shape=>shape.id!==target.id&&shape.sides===target.sides);
+  const selected=contrast?shuffle([...choicesFor(target,pool.filter(shape=>shape.id!==contrast.id),config.choices-1,random),contrast],random):choicesFor(target,pool,config.choices,random);
+  const choices=selected.map((shape,i)=>({...shape,svg:`<g transform="rotate(${[0,25,45,70][(index+i)%4]} 50 50)">${shape.svg}</g>`}));
+  const clue=`${target.name} fits all the properties. A right angle is a square corner; parallel lines never meet. A symmetry line folds a shape into matching halves.`;
+  return{id:'shape-match',tier:config.tier,age,target:{...target,clue},criteria,objective,choices,answer:target.id,hint:`${target.name}: ${clue}`};
+}
+function shapeRound(age,index,random,config) {
+  if(age>=8)return propertyShapeRound(age,index,random,config);
+  const pool=SHAPES.slice(0,Math.max(3,config.shapePool)).map(shape=>({...shape,...SHAPE_FACTS[shape.id]}));
+  let target=pool[index%pool.length],criteria=[],objective;
+  if(age<=3)objective=`Find the ${target.name.toLowerCase()}.`;
+  else {
+    const eligible=pool.filter(shape=>shape.sides>0&&shape.id!=='star');target=eligible[index%eligible.length];
+    if(age>=6&&index%2===0)target=pool.find(shape=>shape.id===(index%4===0?'square':'rectangle'))||target;
+    criteria=[['sides',target.sides]];
+    objective=`Find a shape with ${target.sides} straight sides.`;
+    if(target.sides===4){criteria.push(['equalSides',target.equalSides]);objective+=target.equalSides?' All four sides are equal.':' Two sides are long and two are short.';}
+    if(age>=7){criteria.push(['rightAngles',target.rightAngles]);objective+=target.rightAngles?` It has ${target.rightAngles} square corners.`:' It has no square corners.';}
+    if(age===9&&target.sides===4)objective=`Find a quadrilateral with four square corners and ${target.equalSides?'four equal sides':'two long and two short sides'}.`;
+    if(age===10&&target.sides===4)objective=`A square is also a rectangle. Find ${target.equalSides?'the rectangle with all sides equal':'the rectangle whose sides are not all equal'}.`;
+  }
+  const fits=shape=>criteria.every(([key,value])=>shape[key]===value);
+  const candidates=criteria.length?pool.filter(shape=>shape.id===target.id||!fits(shape)):pool;
+  const choices=choicesFor(target,candidates,config.choices,random).map(shape=>({...shape,svg:age>=5?`<g transform="rotate(${[0,20,45,70][(index+pool.indexOf(shape))%4]} 50 50)">${shape.svg}</g>`:shape.svg}));
+  return{id:'shape-match',tier:config.tier,age,target,criteria,objective,choices,answer:target.id,hint:`${target.name}: ${target.clue}`};
+}
+function colorRound(age,index,random,config) {
+  const n=index%3,base=COLORS[[0,1,2][n]],mixes=[[0,2,4],[0,1,5],[1,2,3]];
+  let target,objective,inputs=[],pool=COLORS,task='name';
+  if(age<=3){target=COLORS[index%config.colorPool];objective=`Find ${target.name.toLowerCase()}.`;}
+  else if(age<=5){const [a,b,c]=mixes[index%3];target=COLORS[c];inputs=[COLORS[a],COLORS[b]];objective=`Mix ${COLORS[a].name.toLowerCase()} and ${COLORS[b].name.toLowerCase()} paint. Which color does this make?`;task='paint-mix';}
+  else if(age===6||age===7||age===9){
+    const tint=age!==7,channels=base.color.slice(1).match(/../g).map(value=>parseInt(value,16));
+    const shade=(lighter)=>'#'+channels.map(value=>Math.round(lighter?value+(255-value)*.48:value*.45).toString(16).padStart(2,'0')).join('');
+    target={id:`${base.id}-${tint?'tint':'shade'}`,name:`${tint?'Light':'Dark'} ${base.name.toLowerCase()}`,color:shade(tint)};
+    const opposite={id:`${base.id}-${tint?'shade':'tint'}`,name:`${tint?'Dark':'Light'} ${base.name.toLowerCase()}`,color:shade(!tint)};
+    pool=[target,base,opposite,COLORS[n+3]];inputs=[base];task=tint?'tint':'shade';
+    objective=age===9?`Keep the same hue as ${base.name.toLowerCase()}, but make it lighter. Which sample fits both rules?`:`Add ${tint?'white':'black'} to ${base.name.toLowerCase()} paint. Choose the ${tint?'lighter tint':'darker shade'}.`;
+  }else if(age===8){const warm=[COLORS[0],COLORS[2],COLORS[4]],cool=[COLORS[1],COLORS[3],COLORS[5]],wanted=index%2?cool:warm,others=index%2?warm:cool;target=wanted[index%3];pool=[target,...others];task='temperature';objective=`Choose the ${index%2?'cool':'warm'} color for this palette.`;}
+  else {const pairs=[[0,3],[1,4],[2,5],[3,0],[4,1],[5,2]],[a,b]=pairs[index%pairs.length];inputs=[COLORS[a]];target=COLORS[b];task='complement';objective=`On a six-color paint wheel, which color is opposite ${COLORS[a].name.toLowerCase()}?`;}
+  return{id:'color-match',tier:config.tier,age,target,objective,inputs,task,choices:choicesFor(target,pool,Math.min(4,config.choices),random),answer:target.id,hint:`Choose ${target.name.toLowerCase()}. ${task==='complement'?'Opposite pairs are red/green, blue/orange and yellow/purple.':task==='temperature'?'Red, orange and yellow are warm; blue, green and purple are cool.':'Compare the rule with each sample.'}`};
+}
+function attributeSort(age,index,random,config) {
+  let categories,items,objective;
+  if(age===4||age===5){
+    categories=age===4?[{id:'curved',name:'Curved edge',emoji:'○'},{id:'straight',name:'Only straight edges',emoji:'△'}]:[{id:'red-round',name:'Red + round'},{id:'red-straight',name:'Red + straight'},{id:'blue-round',name:'Blue + round'},{id:'blue-straight',name:'Blue + straight'}];
+    items=Array.from({length:age===4?6:8},(_,i)=>{const shape=SHAPES[[0,1,2,4][(i+index)%4]],round=shape.sides===0||['circle','oval'].includes(shape.id),red=i%2===0,color=red?'#db5058':'#398ace';return{id:`shape-${i}`,name:`${red?'Red':'Blue'} ${shape.name.toLowerCase()}`,svg:`<g style="fill:${color}">${shape.svg}</g>`,category:age===4?(round?'curved':'straight'):`${red?'red':'blue'}-${round?'round':'straight'}`};});
+    objective=age===4?'Sort by edges: curved or only straight.':'Use both rules: color and edge type.';
+  }else {
+    const factor=age===6?2:age===7?3:age===8?4:age===9?3:2;
+    categories=age>=9?[{id:'both',name:age===10?'Less than 1/2':`Multiple of 3 and 4`},{id:'first',name:age===10?'Equal to 1/2':'Multiple of 3 only'},{id:'second',name:age===10?'Greater than 1/2':'Multiple of 4 only'},...(age===9?[{id:'neither',name:'Neither'}]:[])]:[{id:'yes',name:age===6?'Even':`Multiple of ${factor}`},{id:'no',name:age===6?'Odd':`Not a multiple of ${factor}`}];
+    const bank=age===9?[12,15,16,17,24,27,28,29].map(value=>value+12*(index%4)):[...Array(8)].map((_,i)=>i+2+index%5);
+    items=bank.map((value,i)=>{if(age===10){const denominator=4+2*((i+index)%3),numerator=denominator/2+[-1,0,1][i%3];return{id:`fraction-${i}`,name:`${numerator}/${denominator}`,text:`${numerator}/${denominator}`,category:numerator*2<denominator?'both':numerator*2===denominator?'first':'second',numerator,denominator};}return{id:`value-${value}`,name:String(value),text:String(value),value,category:age===9?value%3===0?(value%4===0?'both':'first'):(value%4===0?'second':'neither'):value%factor===0?'yes':'no'};});
+    objective=age===10?'Compare each fraction with one half.':age===9?'Sort using both divisibility rules.':age===6?'Sort numbers into even and odd.':`Does each number divide into groups of ${factor} with none left over?`;
+  }
+  return{id:'sorting',tier:config.tier,age,categories,items:shuffle(items,random),objective};
+}
+function ruleOddity(age,index,random,config){
+  if(age<=7){
+    const rule=age===4?'All but one picture are red. Ignore the shape.':age===5?'All but one shape have a curved edge.':age===6?'All but one shape have four corners.':'All but one shape are red AND have four corners.';
+    const choices=Array.from({length:config.oddCount},(_,i)=>{
+      const wrong=i===0,shape=age===4?SHAPES[(i+index)%4]:age===5?SHAPES[wrong?2:i%2?0:4]:SHAPES[wrong&&age===6?2:i%2?1:3],red=age===4||age===7?!wrong:i%2===0;
+      const color=red?'#db5058':'#398ace',name=`${red?'Red':'Blue'} ${shape.name.toLowerCase()}`;
+      return{id:String(i),value:{...shape,id:`item-${i}`,name,red,corners:SHAPE_FACTS[shape.id].corners,curved:['circle','oval'].includes(shape.id),svg:`<g style="fill:${color}">${shape.svg}</g>`}};
+    });
+    return{id:'odd-one-out',tier:config.tier,age,rule,property:'rule',choices:shuffle(choices,random),answer:'0',same:{name:'pictures that fit the rule'},different:choices[0].value};
+  }
+  if(age===10){const choices=Array.from({length:config.oddCount},(_,i)=>{const denominator=4+2*((i+index)%6),numerator=denominator/2+(i===0?1:0);return{id:String(i),value:{id:`fraction-${i}`,name:`${numerator}/${denominator}`,text:`${numerator}/${denominator}`,numerator,denominator}};});return{id:'odd-one-out',tier:config.tier,age,property:'fraction rule',rule:'All but one fraction equal one half. Which fraction breaks the rule?',choices:shuffle(choices,random),answer:'0',same:{name:'fractions equal to one half'},different:choices[0].value};}
+  const factorTargets=[12,18,24,30,36],whole=factorTargets[index%factorTargets.length],divisor=age===8?whole:6+(index%2)*6;
+  const valid=age===8?Array.from({length:whole},(_,i)=>i+1).filter(value=>whole%value===0).slice(0,config.oddCount-1):Array.from({length:config.oddCount-1},(_,i)=>(i+2+index%3)*divisor);
+  let exception=age===8?whole-1:valid[0]+1;while(valid.includes(exception)||(age===8?whole%exception===0:exception%divisor===0))exception++;
+  const values=[exception,...valid],choices=shuffle(values.map((value,i)=>({id:String(i),value:{id:`number-${value}`,text:String(value),name:String(value),number:value}})),random);
+  return{id:'odd-one-out',tier:config.tier,age,property:age===8?'factor rule':'common-multiple rule',rule:age===8?`All but one number are factors of ${whole}. Which number does not divide ${whole} exactly?`:`All but one number are multiples of BOTH ${divisor===6?'2 and 3':'3 and 4'}. Which number breaks the rule?`,divisor,whole,choices,answer:'0',same:{name:age===8?`factors of ${whole}`:`common multiples of ${divisor===6?'2 and 3':'3 and 4'}`},different:choices.find(item=>item.id==='0').value};
 }
 export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math.random) {
   const config = discoveryConfig(difficulty), {age,tier} = config;
-  if (id === 'shape-match' || id === 'color-match') {
-    const pool = id === 'shape-match' ? SHAPES.slice(0, config.shapePool) : COLORS.slice(0, config.colorPool);
-    const target = pool[((index % pool.length) + pool.length) % pool.length];
-    return { id, tier, age, target, choices: choicesFor(target, pool, config.choices, random), answer: target.id };
-  }
+  if(id==='shape-match')return shapeRound(age,index,random,config);
+  if(id==='color-match')return colorRound(age,index,random,config);
   if (id === 'patterns') {
     if(age>=9)return numberPattern(age,index,random);
     const forms = age <= 3 ? [[0,1]] : age === 4 ? [[0,1],[0,0,1]] : age <= 6 ? [[0,1],[0,0,1],[0,1,2]] : age === 7 ? [[0,1,2],[0,0,1,1]] : age === 8 ? [[0,0,1,1],[0,1,1,2]] : age === 9 ? [[0,1,0,1,2],[0,0,1,1]] : [[0,0,1,0,2],[0,1,1,2,2]];
     const form = forms[index % forms.length], symbols = shuffle(TOKENS, random), repeat = form.map(i => symbols[i]);
-    const length = repeat.length * 2 + (age === 4 ? index % 2 : 0);
+    const length = repeat.length * 2 + index % repeat.length;
     const sequence = Array.from({ length }, (_, i) => repeat[i % repeat.length]), target = repeat[length % repeat.length];
-    return { id, tier, age, repeat, sequence, target, choices: choicesFor(target, TOKENS, Math.min(4, config.choices), random), answer: target.id };
+    const missingIndex=age>=6&&index%2===1?repeat.length+index%repeat.length:undefined;
+    const answerTarget=missingIndex===undefined?target:sequence[missingIndex];
+    return { id, tier, age, repeat, sequence, target:answerTarget, missingIndex, choices: choicesFor(answerTarget, TOKENS, Math.min(4, config.choices), random), answer: answerTarget.id };
   }
   if (id === 'sorting') {
+    if(age>=4)return attributeSort(age,index,random,config);
     const categories = age >= 7 ? [
       { id: 'land', name: age === 10 ? 'On roads' : 'On land', emoji: '🛣️', items: [['car', 'Car', '🚗'], ['bus', 'Bus', '🚌'], ['bike', 'Bicycle', '🚲']] },
       { id: 'air', name: 'In the air', emoji: '☁️', items: [['plane', 'Airplane', '✈️'], ['helicopter', 'Helicopter', '🚁'], ['small-plane', 'Small plane', '🛩️']] },
@@ -143,6 +250,7 @@ export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math
     return { id, tier, age, categories: categories.map(({ items, ...category }) => category), items: shuffle(categories.flatMap(category => category.items.slice(0,config.sortItemsEach).map(([itemId, name, emoji]) => ({ id: itemId, name, emoji, category: category.id }))), random) };
   }
   if (id === 'odd-one-out') {
+    if(age>=4)return ruleOddity(age,index,random,config);
     const property = age <= 3 ? 'color' : age <= 5 ? 'shape' : age <= 7 ? ['color','shape'][index%2] : ['shape','number'][index%2];
     const count = config.oddCount, dots = age >= 9 ? age - 3 : 4;
     const same = property === 'color' ? COLORS[index % 4] : property === 'shape' ? SHAPES[index % 5] : { id: 'same-count', name: `${dots} dots`, dots };
@@ -151,11 +259,12 @@ export function buildDiscoveryRound(id, difficulty = 6, index = 0, random = Math
     return { id, tier, age, property, same, different, choices: items, answer: '0' };
   }
   if (id === 'memory') {
-    if(age>=9)return relatedMemory(age,index,random);
+    if(age>=5)return relatedMemory(age,index,random);
+    if(age===4){const shapes=shuffle(SHAPES.filter(shape=>!['star','oval'].includes(shape.id)),random).slice(0,config.memoryPairs);return{id,tier,age,pairs:config.memoryPairs,relation:'shapes',cards:shuffle(shapes.flatMap(shape=>[0,1].map((face)=>({...shape,key:`${shape.id}-${face}`,svg:`<g transform="rotate(${face?35:0} 50 50)" style="fill:${face?'#398ace':'#db5058'}">${shape.svg}</g>`,meaning:`The ${shape.name.toLowerCase()} keeps its shape when turned.`}))),random)};}
     const pairs = shuffle(MEMORY, random).slice(0, config.memoryPairs);
-    return { id, tier, age, pairs: config.memoryPairs, cards: shuffle(pairs.flatMap(item => [{ ...item, key: `${item.id}-a` }, { ...item, key: `${item.id}-b` }]), random) };
+    return { id, tier, age, pairs: config.memoryPairs, cards: shuffle(pairs.flatMap(item => [{ ...item, key: `${item.id}-a` }, { ...item, key: `${item.id}-b`, scale:age===3?.72:1 }]), random) };
   }
-  if (id === 'maze') return age>=9?planningMaze(age,config,random):{ id, tier, age, ...makeMaze(config.mazeSize, random) };
+  if (id === 'maze') return age>=7?planningMaze(age,config,random):{ id, tier, age, ...makeMaze(config.mazeSize, random) };
   throw new Error(`Unknown discovery activity: ${id}`);
 }
 
@@ -167,11 +276,12 @@ function shapePicture(shape) {
   return wrap;
 }
 function tokenPicture(item) {
+  if(item.parts){const [filled,total]=item.parts,node=element('span','discover-fraction-parts');node.setAttribute('aria-hidden','true');node.style.display='grid';node.style.gridTemplateColumns=`repeat(${total}, 1fr)`;node.style.width='100%';node.style.height='44px';for(let i=0;i<total;i++){const part=element('i');part.style.background=i<filled?'#5754d6':'#fff';part.style.border='2px solid #28334d';node.append(part);}return node;}
   if (item.text!==undefined) { const number=element('span','discover-number',item.text);number.setAttribute('aria-hidden','true');return number; }
   if (item.svg) return shapePicture(item);
   if (item.color) { const swatch = element('span', 'discover-swatch'); swatch.style.background = item.color; swatch.setAttribute('aria-hidden', 'true'); return swatch; }
   if (item.dots) { const dots = element('span', 'discover-dot-group'); dots.setAttribute('aria-hidden', 'true'); for (let i = 0; i < item.dots; i++) dots.append(element('i')); return dots; }
-  const emoji = element('span', 'discover-emoji', item.emoji); emoji.setAttribute('aria-hidden', 'true'); return emoji;
+  const emoji = element('span', 'discover-emoji');if(item.scale)emoji.style.transform=`scale(${item.scale})`;const art=objectArt(item.id);if(art)emoji.innerHTML=art;else emoji.textContent=item.emoji||'▧'; emoji.setAttribute('aria-hidden', 'true'); return emoji;
 }
 function getProgress() {
   const stored = readStore('discovery-progress-v1', {});
@@ -186,7 +296,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   const $ = selector => container.querySelector(selector);
   title = $('.discover-title'); objective = $('.discover-objective'); play = $('.discover-play'); status = $('.discover-status');
   nextButton = $('.discover-next'); restartButton = $('.discover-restart'); hearButton = $('.discover-hear'); counter = $('.discover-round-count');
-  function speak(text) { if(active && getSettings().sound) say(text); }
+  function speak(text) { if(active) requestSpeech(text); }
   function report() { onProgress({ source: 'discovery', completedCount: Object.values(progress).reduce((sum, count) => sum + count, 0) }); }
   function fresh(index = 0) { return { index, round: buildDiscoveryRound(currentId, profile.challengeAge, index), done: false, recorded: false, selected: null, sorted: new Set(), flipped: [], matched: new Set(), path: [0], message: '', feedback: '' }; }
   function getSession() { const key = `${currentId}:${profile.challengeAge}`; if (!sessions.has(key)) sessions.set(key, fresh()); current = sessions.get(key); }
@@ -194,7 +304,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   function complete(text) {
     current.done = true;
     if (!current.recorded) { current.recorded = true; progress[currentId] = Math.min(100000, progress[currentId] + 1); writeStore('discovery-progress-v1', progress); report(); }
-    message(`✓ ${text}`, 'success'); nextButton.classList.add('is-ready'); speak(text); updateCounter();
+    message(`✓ ${text}`, 'success'); nextButton.classList.add('is-ready'); updateCounter();
   }
   function updateCounter() { counter.textContent = `${progress[currentId]} ${progress[currentId] === 1 ? 'discovery' : 'discoveries'} made`; }
   function choiceButton(item, label, action) { const node = button('', 'discover-choice', action); node.dataset.choice = item.id; node.setAttribute('aria-label', label); node.append(tokenPicture(item), element('span', 'discover-choice-label', item.name)); return node; }
@@ -206,37 +316,33 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       return;
     }
     node.classList.remove('is-try'); node.classList.add('is-correct');
-    const text = currentId === 'shape-match' ? `${current.round.target.name}! ${current.round.target.clue}` : currentId === 'color-match' ? `${current.round.target.name} matches! You found the same color.` : currentId === 'patterns' ? current.round.kind==='number-rule'?`${current.round.target.name} fits the missing space. ${current.round.rule}`:`${current.round.target.name} comes next. The pattern repeats!` : `You spotted the different ${current.round.property}!`;
+    const text = currentId === 'shape-match' ? `${current.round.target.name}! ${current.round.target.clue}` : currentId === 'color-match' ? `${current.round.target.name} fits the color rule!` : currentId === 'patterns' ? current.round.kind==='number-rule'?`${current.round.target.name} fits the missing space. ${current.round.rule}`:`${current.round.target.name} ${current.round.missingIndex!==undefined?'fits the missing space':'comes next'}. The pattern repeats!` : `You spotted the different ${current.round.property}!`;
     complete(text);
     play.querySelectorAll('[data-choice]').forEach(button => { button.disabled = true; });
   }
   function renderChoices() {
     const round = current.round, stage = element('div', 'discover-choice-stage');
     if (currentId === 'shape-match' || currentId === 'color-match') {
-      objective.textContent = currentId === 'shape-match' ? `Find the ${round.target.name.toLowerCase()}.` : `Find this color: ${round.target.name.toLowerCase()}.`;
-      const model = element('div', `discover-model ${currentId === 'shape-match' && profile.tier !== 'little' ? 'discover-model-clue' : ''}`);
-      if (currentId === 'color-match' || profile.tier === 'little') model.append(tokenPicture(round.target));
-      else {
-        const clue = element('span', 'discover-model-spark', '?');
-        clue.setAttribute('aria-hidden', 'true');
-        model.append(clue);
-      }
-      const words = element('div'); words.append(element('strong', '', currentId === 'shape-match' ? round.target.name : 'Match the swatch'), element('p', '', currentId === 'shape-match' ? round.target.clue : 'Look at the colors and their names.')); model.append(words); stage.append(model);
+      objective.textContent=round.objective;
+      const model=element('div','discover-model discover-model-clue');
+      const clue=element('span','discover-model-spark','?');clue.setAttribute('aria-hidden','true');model.append(clue);
+      if(round.inputs?.length){const inputs=element('div','discover-color-inputs');inputs.setAttribute('aria-label','Colors in the question');round.inputs.forEach(input=>{const chip=element('span');chip.append(tokenPicture(input),element('span','',input.name));inputs.append(chip);});model.append(inputs);}
+      model.append(element('p','discover-tip','Use the question to choose. Hint can show an example.'));stage.append(model);
     } else if (currentId === 'patterns') {
       const numeric=round.kind==='number-rule';
-      objective.textContent = numeric?'Which number is missing?':'Which picture comes next?';
+      objective.textContent = numeric?'Which number is missing?':round.missingIndex!==undefined?'Which picture is missing?':'Which picture comes next?';
       const line = element('div', 'discover-pattern-strip'); line.setAttribute('role', 'list'); line.setAttribute('aria-label', numeric?'Number pattern to complete':'Pattern to complete');
       round.sequence.forEach((item, index) => {
-        const missing=numeric&&index===round.missingIndex,token=element('div',`discover-pattern-token${missing?' discover-pattern-blank':''}`);
+        const missing=index===round.missingIndex,token=element('div',`discover-pattern-token${missing?' discover-pattern-blank':''}`);
         token.setAttribute('role','listitem');token.setAttribute('aria-label',`${index+1}: ${missing?'missing number':item.name}`);
         if(missing)token.textContent='?';else token.append(tokenPicture(item));line.append(token);
       });
-      if(!numeric){const blank=element('div','discover-pattern-token discover-pattern-blank','?');blank.setAttribute('aria-label','What comes next?');line.append(blank);}
+      if(!numeric&&round.missingIndex===undefined){const blank=element('div','discover-pattern-token discover-pattern-blank','?');blank.setAttribute('aria-label','What comes next?');line.append(blank);}
       stage.append(line);
       stage.append(element('p','discover-tip',numeric?'Look at every step. The same rule must fit before and after the missing number.':profile.tier==='little'?'Look, say the pictures, then keep it going.':'Find the repeating part. Then choose the next picture.'));
     } else {
-      objective.textContent = `Find the different ${round.property}.`;
-      stage.append(element('p', 'discover-tip', `All but one have the same ${round.property}. Which one stands out?`));
+      objective.textContent = round.rule || `Find the different ${round.property}.`;
+      stage.append(element('p', 'discover-tip', round.rule?'Check each choice against the same rule.':`All but one have the same ${round.property}. Which one stands out?`));
     }
     const grid = element('div', `discover-choice-grid ${round.choices.length > 4 ? 'discover-six' : ''}`); grid.setAttribute('role', 'group'); grid.setAttribute('aria-label', 'Choose an answer');
     round.choices.forEach((entry, index) => {
@@ -251,7 +357,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   }
   function renderSorting() {
     const round = current.round;
-    objective.textContent = profile.challengeAge >= 7 ? 'Where does each vehicle travel?' : 'Put each picture in its basket.';
+    objective.textContent = round.objective || 'Put each picture in its basket.';
     play.append(element('p', 'discover-tip', '1. Tap a picture.   2. Tap its basket.'));
     const items = element('div', 'discover-sort-items'); items.setAttribute('role', 'group'); items.setAttribute('aria-label', 'Pictures to sort');
     round.items.forEach(item => {
@@ -266,22 +372,22 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
         if (current.done) return;
         const selected = round.items.find(item => item.id === current.selected);
         if (!selected) { message('Choose a picture first, then tap its basket.', 'retry'); return; }
-        if (selected.category !== category.id) { const correct = round.categories.find(c => c.id === selected.category); message(`${selected.name} belongs in “${correct.name}”. Try that basket.`, 'retry'); return; }
+        if (selected.category !== category.id) { message(`Check ${selected.name} against the basket rule. Try another basket, or ask for a hint.`, 'retry'); return; }
         current.sorted.add(selected.id); current.selected = null;
-        if (current.sorted.size === round.items.length) complete('Every picture has a home. Lovely sorting!');
+        if (current.sorted.size === round.items.length) complete('Every item fits its basket rule. Lovely sorting!');
         else message(`${selected.name} found its basket. Choose another picture.`, 'success');
         render();
       }); node.dataset.category = category.id; node.setAttribute('aria-label', `${category.name} basket`); node.disabled = current.done;
       const sorted = round.items.filter(item => item.category === category.id && current.sorted.has(item.id));
       node.append(tokenPicture(category), element('strong', '', category.name));
-      const collection = element('span', 'discover-basket-collection', sorted.length ? sorted.map(item => item.emoji).join(' ') : '＋'); collection.setAttribute('aria-hidden', 'true'); node.append(collection); baskets.append(node);
+      const collection = element('span', 'discover-basket-collection', sorted.length ? sorted.map(item => item.emoji||item.text||'✓').join(' ') : '＋'); collection.setAttribute('aria-hidden', 'true'); node.append(collection); baskets.append(node);
     });
     play.append(items, baskets, element('p', 'discover-tip', `${current.sorted.size} of ${round.items.length} pictures sorted`));
   }
   function renderMemory() {
     const round = current.round;
-    objective.textContent = round.relation==='products'?'Match each multiplication to its answer.':round.relation==='fractions'?'Match fractions with the same value.':`Find ${round.pairs} matching pairs.`;
-    play.append(element('p','discover-tip',round.relation?'Find 6 pairs. Cards can look different and still have the same value. Remember both the value and its place.':'Tap two cards. Remember where the pictures live.'));
+    objective.textContent=({shapes:'Match the same shape, even when it is turned or colored differently.',quantities:'Match dots to the numeral.',letters:'Match big and small forms of the same letter.',sums:'Match each sum to its total.',parts:'Match shaded parts to a fraction.',products:'Match each multiplication to its answer.',fractions:'Match fractions with the same value.'})[round.relation]||`Find ${round.pairs} matching pairs.`;
+    play.append(element('p','discover-tip',round.relation?`Find ${round.pairs} pairs. Match the meaning as well as remembering its place.`:'Tap two cards. Remember where the pictures live.'));
     const grid = element('div', `discover-memory-grid ${round.pairs === 2 ? 'discover-memory-small' : ''}`);
     round.cards.forEach((card, index) => {
       const faceUp = current.flipped.includes(index) || current.matched.has(card.id), matched = current.matched.has(card.id);
@@ -293,9 +399,9 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
           if (a.id === b.id) {
             current.matched.add(a.id); current.flipped = [];
             if (current.matched.size === round.pairs) complete('You found every pair. What a memory!');
-            else message(round.relation?`${a.meaning}. Different forms, the same value!`:`A pair of ${a.name.toLowerCase()} pictures! Keep exploring.`, 'success');
-          } else message(round.relation?'Those values are different. Work them out, then turn the cards over.':'Two different pictures. Look carefully, then turn them over.', 'retry');
-        } else message(`${card.name}. ${round.relation?'Find a card with the same value.':'Can you find its matching picture?'}`);
+            else message(round.relation?`${a.meaning}. You found the relationship!`:`A pair of ${a.name.toLowerCase()} pictures! Keep exploring.`, 'success');
+          } else message(round.relation?'Those cards do not make a pair under this rule. Look again, then turn them over.':'Two different pictures. Look carefully, then turn them over.', 'retry');
+        } else message(`${card.name}. ${round.relation?'Find its partner under the rule.':'Can you find its matching picture?'}`);
         render();
       });
       node.dataset.card = String(index); node.dataset.matched = String(matched); node.setAttribute('aria-label', `Card ${index + 1}, ${matched ? `matched ${card.name}` : faceUp ? card.name : 'face down'}`);
@@ -339,7 +445,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       node.style.borderBottomColor = neighbors.includes(index + round.size) ? 'transparent' : '#657387';
       node.style.borderLeftColor = x > 0 && neighbors.includes(index - 1) ? 'transparent' : '#657387';
       node.style.borderRightColor = x < round.size - 1 && neighbors.includes(index + 1) ? 'transparent' : '#657387';
-      node.textContent = index === position ? '🐰' : index === round.goal ? '🥕' : checkpoint>=0 ? String(checkpoint+1) : possible && !current.done ? '·' : current.path.includes(index) ? '·' : '';
+      if(index===position||index===round.goal){const art=objectArt(index===position?'rabbit':'carrot');if(art){node.innerHTML=art;node.querySelector('svg').style.width='80%';node.querySelector('svg').style.height='80%';}else node.textContent=index===position?'🐰':'🥕';}else node.textContent=checkpoint>=0?String(checkpoint+1):possible&&!current.done?'·':current.path.includes(index)?'·':'';
       if(checkpoint>=0){node.classList.add('discover-checkpoint');node.classList.toggle('is-visited',checkpoint<collected);}
       board.append(node);
     });
@@ -352,11 +458,11 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     controls.append(arrows, undo, element('p', 'discover-tip', 'Follow the open paths. Take your time.')); layout.append(board, controls); play.append(layout);
   }
   function render() {
-    const meta = META[currentId]; title.textContent = getTitle() || meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name}${profile.challengeAge>=8&&['shape-match','color-match'].includes(currentId)?' · warm-up':''} · round ${current.index + 1}`;
-    hearButton.disabled = !getSettings().sound || !canSpeak(); hearButton.title = hearButton.disabled ? 'Turn on sound from the home screen to hear instructions' : 'Hear these instructions';
+    const meta = META[currentId]; title.textContent = getTitle() || meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name} · round ${current.index + 1}`;
+    hearButton.disabled = !canSpeak(); hearButton.title = hearButton.disabled ? 'Spoken instructions are unavailable on this device' : 'Hear these instructions';
     play.replaceChildren(); nextButton.classList.toggle('is-ready', current.done); container.dataset.discovery = currentId;
     if (currentId === 'sorting') renderSorting(); else if (currentId === 'memory') renderMemory(); else if (currentId === 'maze') renderMaze(); else renderChoices();
-    const openingMessage = current.round.kind === 'number-rule' ? 'Find the number that fits the rule.' : current.round.checkpoints?.length ? 'Visit each checkpoint in order, then find the carrot.' : meta[1];
+    const openingMessage = current.round.kind === 'number-rule' ? 'Find the number that fits the rule.' : current.round.checkpoints?.length ? 'Visit each checkpoint in order, then find the carrot.' : currentId==='patterns'&&current.round.missingIndex!==undefined?'Find the picture that fits the missing space.':currentId==='color-match'?'Use the color relationship in the question.':meta[1];
     message(current.message || openingMessage, current.feedback); updateCounter();
   }
   function hint() {
@@ -365,11 +471,11 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     play.querySelectorAll('.is-hint').forEach(node=>node.classList.remove('is-hint'));
     let text='';
     if(currentId==='shape-match') {
-      text=`${round.target.clue} Match this shape to one of the pictures.`;
+      text=`${round.hint} Match this shape to one of the pictures.`;
       const model=play.querySelector('.discover-model');
       model.querySelector('.discover-model-spark')?.remove();
       if(!model.querySelector('.discover-shape')) model.prepend(shapePicture(round.target));
-    } else if(currentId==='color-match') text=`Look for ${round.target.name.toLowerCase()}. Compare each picture with the big swatch.`;
+    } else if(currentId==='color-match') {text=round.hint;const model=play.querySelector('.discover-model');model.querySelector('.discover-model-spark')?.remove();model.prepend(tokenPicture(round.target));}
     else if(currentId==='patterns') {
       if(round.kind==='number-rule'){
         text=`Rule: ${round.rule} The missing number is ${round.target.name}. Try the rule on both sides to check it.`;
@@ -399,7 +505,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       play.querySelector(`[data-cell="${route[1]}"]`)?.classList.add('is-hint');
       text=`The outlined square is one step toward ${target===round.goal?'the carrot':`checkpoint ${collected+1}`}. Follow its open path.`;
     }
-    message(text,'hint'); speak(text);
+    message(text,'hint');
   }
   $('.discover-back').addEventListener('click', onBack);
   hearButton.addEventListener('click', () => speak(`${objective.textContent} ${$('.discover-tip')?.textContent || ''}`));
@@ -411,7 +517,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     if (!active || currentId !== 'maze' || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) || event.target.closest?.('dialog, input, select, textarea')) return;
     event.preventDefault(); const position = current.path[current.path.length - 1], offset = { ArrowUp: -current.round.size, ArrowDown: current.round.size, ArrowLeft: -1, ArrowRight: 1 }[event.key]; moveMaze(position + offset);
   });
-  function settingsChanged() { const next = getProfile(getSettings()), tierChanged = next.challengeAge !== profile.challengeAge; profile = next; if (!getSettings().sound) stopSpeaking(); if (active) { if (tierChanged) { getSession(); render(); } else { hearButton.disabled=!getSettings().sound||!canSpeak(); hearButton.title=hearButton.disabled?'Turn on sound to hear instructions':'Hear these instructions'; } } }
+  function settingsChanged() { const next = getProfile(getSettings()), tierChanged = next.challengeAge !== profile.challengeAge; profile = next; if (!getSettings().sound) stopSpeaking(); if (active) { if (tierChanged) { getSession(); render(); } else { hearButton.disabled=!canSpeak(); hearButton.title=hearButton.disabled?'Spoken instructions unavailable':'Hear these instructions'; } } }
   report();
   return {
     open(id) { if (!DISCOVERY_IDS.includes(id)) throw new Error(`Unknown discovery activity: ${id}`); active = true; currentId = id; profile = getProfile(getSettings()); getSession(); render(); },
