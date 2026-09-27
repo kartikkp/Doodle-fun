@@ -257,8 +257,11 @@ final class DrawingRecoveryUITests: XCTestCase {
             if name == "Rainbow" {
                 // Each cloud used to lose its lower outline to white overpaint,
                 // connecting its empty center to the surrounding background.
+                // Keep the 5×5 sample inside the same lower-left lobe: the old
+                // (0.207, 0.824) patch clips an arc after a compact screenshot is
+                // resampled to 256px. This inset still catches the erased-boundary leak.
                 let clouds: [(name: String, point: CGVector)] = [
-                    ("left", CGVector(dx: 0.207, dy: 0.824)),
+                    ("left", CGVector(dx: 0.218, dy: 0.838)),
                     ("right", CGVector(dx: 0.602, dy: 0.832))
                 ]
                 for (cloudIndex, cloud) in clouds.enumerated() {
