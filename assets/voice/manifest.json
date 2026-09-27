@@ -1,0 +1,2857 @@
+{
+  "generator": "Kokoro-82M v1.0 / kokoro-onnx 0.6.1",
+  "voice": "af_heart",
+  "speed": 0.96,
+  "modelSHA256": "beb0d1848dee9a49da392cc3df26958d46cfa35d321edf434f52949153f0df3a",
+  "voicesSHA256": "bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d",
+  "clips": [
+    {
+      "id": "ed68199aa4c93562",
+      "text": "Pick one color. Make a mark, then try a different kind of line. Build your idea from a few simple shapes. Undo lets you try a different way.",
+      "uses": [
+        {
+          "mode": "draw",
+          "age": 2
+        },
+        {
+          "mode": "draw",
+          "age": 3
+        },
+        {
+          "mode": "draw",
+          "age": 4
+        },
+        {
+          "mode": "draw",
+          "age": 5
+        },
+        {
+          "mode": "draw",
+          "age": 6
+        },
+        {
+          "mode": "draw",
+          "age": 7
+        },
+        {
+          "mode": "draw",
+          "age": 8
+        },
+        {
+          "mode": "draw",
+          "age": 9
+        },
+        {
+          "mode": "draw",
+          "age": 10
+        }
+      ],
+      "file": "ed68199aa4c93562.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.884,
+      "sampleRate": 24000,
+      "rms": 0.13473,
+      "peak": 0.85,
+      "bytes": 76445,
+      "sha256": "0e74c9d2d638ba435e79ecc12b4ab99a4458058319cb83e78fcd4cd5ee3e4556"
+    },
+    {
+      "id": "1fe4a0ae06321da7",
+      "text": "Choose a picture. Pick a color, then tap a space with Fill. Use Pen for small details. Undo takes back just your last change.",
+      "uses": [
+        {
+          "mode": "coloring",
+          "age": 2
+        },
+        {
+          "mode": "coloring",
+          "age": 3
+        },
+        {
+          "mode": "coloring",
+          "age": 4
+        },
+        {
+          "mode": "coloring",
+          "age": 5
+        },
+        {
+          "mode": "coloring",
+          "age": 6
+        },
+        {
+          "mode": "coloring",
+          "age": 7
+        },
+        {
+          "mode": "coloring",
+          "age": 8
+        },
+        {
+          "mode": "coloring",
+          "age": 9
+        },
+        {
+          "mode": "coloring",
+          "age": 10
+        }
+      ],
+      "file": "1fe4a0ae06321da7.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.1713,
+      "sampleRate": 24000,
+      "rms": 0.12893,
+      "peak": 0.85,
+      "bytes": 70305,
+      "sha256": "11c333543992b7af7f98ae1a6a0886148e84c65ac7cd1d4e8da360bc0a6aaa97"
+    },
+    {
+      "id": "ff3648d78a9438b5",
+      "text": "Start at a numbered dot. Slide along one trail at a time. Use Show me to watch the movement. Lift your finger between separate trails.",
+      "uses": [
+        {
+          "mode": "prewriting",
+          "age": 2
+        },
+        {
+          "mode": "prewriting",
+          "age": 3
+        },
+        {
+          "mode": "prewriting",
+          "age": 4
+        },
+        {
+          "mode": "prewriting",
+          "age": 5
+        },
+        {
+          "mode": "prewriting",
+          "age": 6
+        },
+        {
+          "mode": "prewriting",
+          "age": 7
+        },
+        {
+          "mode": "prewriting",
+          "age": 8
+        },
+        {
+          "mode": "prewriting",
+          "age": 9
+        },
+        {
+          "mode": "prewriting",
+          "age": 10
+        }
+      ],
+      "file": "ff3648d78a9438b5.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.2553,
+      "sampleRate": 24000,
+      "rms": 0.1228,
+      "peak": 0.85,
+      "bytes": 71130,
+      "sha256": "6c0b3dd0071f4b581fb51cb2fc5080e561ddc324c13fffefb195163066362748"
+    },
+    {
+      "id": "9a01cf27bd2781fb",
+      "text": "Pick a letter and watch Show me. Start at a numbered dot. Look for straight lines and curves. Make one stroke, lift, then make the next.",
+      "uses": [
+        {
+          "mode": "uppercase",
+          "age": 2
+        },
+        {
+          "mode": "uppercase",
+          "age": 3
+        },
+        {
+          "mode": "uppercase",
+          "age": 4
+        },
+        {
+          "mode": "uppercase",
+          "age": 5
+        },
+        {
+          "mode": "uppercase",
+          "age": 6
+        },
+        {
+          "mode": "uppercase",
+          "age": 7
+        },
+        {
+          "mode": "uppercase",
+          "age": 8
+        },
+        {
+          "mode": "uppercase",
+          "age": 9
+        },
+        {
+          "mode": "uppercase",
+          "age": 10
+        }
+      ],
+      "file": "9a01cf27bd2781fb.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.2133,
+      "sampleRate": 24000,
+      "rms": 0.13348,
+      "peak": 0.85,
+      "bytes": 71062,
+      "sha256": "5ccd9ea931953029f0b3890c1d56008874174bd868858b061e9cf83379ccc1ca"
+    },
+    {
+      "id": "0e847787e15e123a",
+      "text": "Watch Show me, then follow each little letter trail. Take curves slowly. Lift your finger where a new stroke begins.",
+      "uses": [
+        {
+          "mode": "lowercase",
+          "age": 2
+        },
+        {
+          "mode": "lowercase",
+          "age": 3
+        },
+        {
+          "mode": "lowercase",
+          "age": 4
+        },
+        {
+          "mode": "lowercase",
+          "age": 5
+        },
+        {
+          "mode": "lowercase",
+          "age": 6
+        },
+        {
+          "mode": "lowercase",
+          "age": 7
+        },
+        {
+          "mode": "lowercase",
+          "age": 8
+        },
+        {
+          "mode": "lowercase",
+          "age": 9
+        },
+        {
+          "mode": "lowercase",
+          "age": 10
+        }
+      ],
+      "file": "0e847787e15e123a.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.2033,
+      "sampleRate": 24000,
+      "rms": 0.11446,
+      "peak": 0.85,
+      "bytes": 62295,
+      "sha256": "88546e9fc1a048a5de6850696c2b0d062d4d5eb48447351b558b0765b8cce245"
+    },
+    {
+      "id": "1fe00ba547182ede",
+      "text": "Say the word together. Watch how its letters are formed. Trace one letter at a time. Pause between letters when you need to.",
+      "uses": [
+        {
+          "mode": "word-tracing",
+          "age": 2
+        },
+        {
+          "mode": "word-tracing",
+          "age": 3
+        },
+        {
+          "mode": "word-tracing",
+          "age": 4
+        },
+        {
+          "mode": "word-tracing",
+          "age": 5
+        },
+        {
+          "mode": "word-tracing",
+          "age": 6
+        },
+        {
+          "mode": "word-tracing",
+          "age": 7
+        }
+      ],
+      "file": "1fe00ba547182ede.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.6253,
+      "sampleRate": 24000,
+      "rms": 0.12975,
+      "peak": 0.85,
+      "bytes": 66125,
+      "sha256": "25f33c34033d58fecb1599c594ab3ad9530fb814e38c094fefabe1d45c98eba3"
+    },
+    {
+      "id": "13eea5663b4450bd",
+      "text": "Read the word. Study how its letters fit together, then trace it carefully. Study the guide first. When you feel ready, try with less help. Show me is always available for another look.",
+      "uses": [
+        {
+          "mode": "word-tracing",
+          "age": 8
+        },
+        {
+          "mode": "word-tracing",
+          "age": 9
+        },
+        {
+          "mode": "word-tracing",
+          "age": 10
+        }
+      ],
+      "file": "13eea5663b4450bd.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.0713,
+      "sampleRate": 24000,
+      "rms": 0.13743,
+      "peak": 0.85,
+      "bytes": 95890,
+      "sha256": "4214cb0d517385f0f33eadecdeaf8da56bdb03487cf93a06ae136106cea4ad9e"
+    },
+    {
+      "id": "c8398e9778f9219a",
+      "text": "Say the number together. Watch Show me, then trace it. Follow each bend slowly. A number is a symbol for an amount.",
+      "uses": [
+        {
+          "mode": "number-tracing",
+          "age": 2
+        },
+        {
+          "mode": "number-tracing",
+          "age": 3
+        },
+        {
+          "mode": "number-tracing",
+          "age": 4
+        },
+        {
+          "mode": "number-tracing",
+          "age": 5
+        },
+        {
+          "mode": "number-tracing",
+          "age": 6
+        },
+        {
+          "mode": "number-tracing",
+          "age": 7
+        }
+      ],
+      "file": "c8398e9778f9219a.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.4233,
+      "sampleRate": 24000,
+      "rms": 0.12319,
+      "peak": 0.85,
+      "bytes": 63179,
+      "sha256": "1399de47deccdaa0df0364b655eace69b06ea4fd15ac5a50f4c498c419821ea6"
+    },
+    {
+      "id": "fad2e1f08158297a",
+      "text": "Read the whole number. Notice every digit and its place, then trace it carefully. Study the guide first. When you feel ready, try with less help. Show me is always available for another look.",
+      "uses": [
+        {
+          "mode": "number-tracing",
+          "age": 8
+        },
+        {
+          "mode": "number-tracing",
+          "age": 9
+        },
+        {
+          "mode": "number-tracing",
+          "age": 10
+        }
+      ],
+      "file": "fad2e1f08158297a.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.6433,
+      "sampleRate": 24000,
+      "rms": 0.09877,
+      "peak": 0.85,
+      "bytes": 100106,
+      "sha256": "b932853b55795aaea458456b565aeea67f1c28008e45dd065320b6083695d368"
+    },
+    {
+      "id": "350be91333a80423",
+      "text": "Touch each dot once and say its number. The last number you say tells you how many. The numbered dots help you keep track.",
+      "uses": [
+        {
+          "mode": "counting",
+          "age": 2
+        },
+        {
+          "mode": "counting",
+          "age": 3
+        },
+        {
+          "mode": "counting",
+          "age": 4
+        },
+        {
+          "mode": "counting",
+          "age": 5
+        }
+      ],
+      "file": "350be91333a80423.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.3053,
+      "sampleRate": 24000,
+      "rms": 0.12554,
+      "peak": 0.85,
+      "bytes": 63339,
+      "sha256": "5f2f2d9ae3e64ebf41edeeedf99ac4e83a19e17288cc804a987b223f2100bf23"
+    },
+    {
+      "id": "10aeb92812e05a90",
+      "text": "Look for groups of ten and single ones. Find their total value. Count full groups in tens, then add the ones. Ten ones have the same value as one full group of ten.",
+      "uses": [
+        {
+          "mode": "counting",
+          "age": 6
+        },
+        {
+          "mode": "counting",
+          "age": 7
+        }
+      ],
+      "file": "10aeb92812e05a90.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.1353,
+      "sampleRate": 24000,
+      "rms": 0.09566,
+      "peak": 0.85,
+      "bytes": 96075,
+      "sha256": "de557d6ddac6d5c92ee283803bc7947c84fa04f6e618125fc7e5959c529bf319"
+    },
+    {
+      "id": "49e925025104cf4b",
+      "text": "Read the value of each group. Combine the hundreds, tens, and ones. Ten ones can become one ten, and ten tens can become one hundred. Regroup before you write the total.",
+      "uses": [
+        {
+          "mode": "counting",
+          "age": 8
+        },
+        {
+          "mode": "counting",
+          "age": 9
+        }
+      ],
+      "file": "49e925025104cf4b.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.1327,
+      "sampleRate": 24000,
+      "rms": 0.10476,
+      "peak": 0.85,
+      "bytes": 95370,
+      "sha256": "4e06e984f77159f9e444ae06fa2c8ada32f751168c31dd44956a4b687afc0f0d"
+    },
+    {
+      "id": "08d036372c9760f8",
+      "text": "Read the unit for each group: a whole, a tenth, or a hundredth. Find the total value. Ten hundredths make one tenth. Ten tenths make one whole. Keep each unit in its place as you combine the groups.",
+      "uses": [
+        {
+          "mode": "counting",
+          "age": 10
+        }
+      ],
+      "file": "08d036372c9760f8.m4a",
+      "mime": "audio/mp4",
+      "duration": 13.1013,
+      "sampleRate": 24000,
+      "rms": 0.09894,
+      "peak": 0.85,
+      "bytes": 111294,
+      "sha256": "ec9f68d4f0d50955394b94916115db24296c1c3c37a2fde4cbd4a1ad99fe0847"
+    },
+    {
+      "id": "7086299027c892cb",
+      "text": "Count the first group. Then include the second group. Try counting on: keep the first amount in your head and count the new dots.",
+      "uses": [
+        {
+          "mode": "addition",
+          "age": 2
+        },
+        {
+          "mode": "addition",
+          "age": 3
+        },
+        {
+          "mode": "addition",
+          "age": 4
+        },
+        {
+          "mode": "addition",
+          "age": 5
+        },
+        {
+          "mode": "addition",
+          "age": 6
+        }
+      ],
+      "file": "7086299027c892cb.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.742,
+      "sampleRate": 24000,
+      "rms": 0.12785,
+      "peak": 0.85,
+      "bytes": 66536,
+      "sha256": "f9feafdaf4779b604874943e326ed10bfb7fd89ba5e9e84f738cfb730b8ed170"
+    },
+    {
+      "id": "26a29cbdc53c8be0",
+      "text": "Combine the numbers, keeping tens and ones in their places. Add the ones first. Exchange ten ones for one ten when needed, then add the other place values.",
+      "uses": [
+        {
+          "mode": "addition",
+          "age": 7
+        },
+        {
+          "mode": "addition",
+          "age": 8
+        }
+      ],
+      "file": "26a29cbdc53c8be0.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.4087,
+      "sampleRate": 24000,
+      "rms": 0.10016,
+      "peak": 0.85,
+      "bytes": 89242,
+      "sha256": "b2f9741db65cc9874e39f6422f706056139b1305c29afc4c2c85a32f50f97693"
+    },
+    {
+      "id": "881b9f628b27f717",
+      "text": "Combine the numbers, keeping hundreds, tens, and ones in their places. Add the ones first. Exchange ten ones for one ten when needed, then add the other place values.",
+      "uses": [
+        {
+          "mode": "addition",
+          "age": 9
+        }
+      ],
+      "file": "881b9f628b27f717.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.0273,
+      "sampleRate": 24000,
+      "rms": 0.08849,
+      "peak": 0.85,
+      "bytes": 96025,
+      "sha256": "1070fb0e0e9461dc613a92587fe3e493f7e7417a8c3e65ebe56da17877ac66f5"
+    },
+    {
+      "id": "4f440019bfd8d162",
+      "text": "Line up the decimal places. Combine the whole numbers, tenths, and hundredths. Add hundredths to hundredths. Exchange ten hundredths for one tenth, and ten tenths for one whole, whenever needed.",
+      "uses": [
+        {
+          "mode": "addition",
+          "age": 10
+        }
+      ],
+      "file": "4f440019bfd8d162.m4a",
+      "mime": "audio/mp4",
+      "duration": 12.3247,
+      "sampleRate": 24000,
+      "rms": 0.09529,
+      "peak": 0.85,
+      "bytes": 105470,
+      "sha256": "7c2d3db10b79e45e9046f09b82eaa1b59b75b73399232e47445f6a6aa41e09ae"
+    },
+    {
+      "id": "cea698eb05040dab",
+      "text": "Look at one group. Count how many are in it. Each group has the same amount. Count a group at a time or count all the dots.",
+      "uses": [
+        {
+          "mode": "equal-groups",
+          "age": 2
+        },
+        {
+          "mode": "equal-groups",
+          "age": 3
+        },
+        {
+          "mode": "equal-groups",
+          "age": 4
+        },
+        {
+          "mode": "equal-groups",
+          "age": 5
+        },
+        {
+          "mode": "equal-groups",
+          "age": 6
+        }
+      ],
+      "file": "cea698eb05040dab.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.7207,
+      "sampleRate": 24000,
+      "rms": 0.14929,
+      "peak": 0.85,
+      "bytes": 67421,
+      "sha256": "67d4514cebbdeadd85e3d246d52df37c55f93aa39a595b73b1708ca9c6dec717"
+    },
+    {
+      "id": "ea4b657564a32bb7",
+      "text": "Use the size and number of equal groups to find the total. Use a multiplication fact you know. You can split the groups into two easier sets and add their totals.",
+      "uses": [
+        {
+          "mode": "equal-groups",
+          "age": 7
+        },
+        {
+          "mode": "equal-groups",
+          "age": 8
+        }
+      ],
+      "file": "ea4b657564a32bb7.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.1853,
+      "sampleRate": 24000,
+      "rms": 0.08249,
+      "peak": 0.85,
+      "bytes": 87364,
+      "sha256": "70fa00b5b06c49e131a798b7427a06133a71ee5b8985fc454929a8c60d5083fb"
+    },
+    {
+      "id": "d132978d4ed01716",
+      "text": "Use the size and number of equal groups to find the total. Split the larger factor into tens and ones. Multiply each part, then add the partial products.",
+      "uses": [
+        {
+          "mode": "equal-groups",
+          "age": 9
+        }
+      ],
+      "file": "d132978d4ed01716.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.3033,
+      "sampleRate": 24000,
+      "rms": 0.1061,
+      "peak": 0.85,
+      "bytes": 87446,
+      "sha256": "df3120e3aa6f679f8d85efc303f2fa80c8832195fbfed4b2876dcac0ff2489ae"
+    },
+    {
+      "id": "d60c3d1a4567d183",
+      "text": "Use the size and number of equal groups to find the total. Split both factors into tens and ones. Multiply every pair of parts, then add the partial products.",
+      "uses": [
+        {
+          "mode": "equal-groups",
+          "age": 10
+        }
+      ],
+      "file": "d60c3d1a4567d183.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.7713,
+      "sampleRate": 24000,
+      "rms": 0.10079,
+      "peak": 0.85,
+      "bytes": 93169,
+      "sha256": "2da236298a858f5faa93884455957b4646d5830758b249ae0291b22ccfc8d57a"
+    },
+    {
+      "id": "454a7daf0e7ba000",
+      "text": "Look at the shape or listen to its name. Find its partner. Count corners and sides. A shape keeps its name when you turn it.",
+      "uses": [
+        {
+          "mode": "shape-match",
+          "age": 2
+        },
+        {
+          "mode": "shape-match",
+          "age": 3
+        }
+      ],
+      "file": "454a7daf0e7ba000.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.702,
+      "sampleRate": 24000,
+      "rms": 0.09614,
+      "peak": 0.85,
+      "bytes": 65632,
+      "sha256": "76901f1be24020a1f14216fd14e715fa012f0699f2b175673e0efcc85e609cad"
+    },
+    {
+      "id": "c1f2ae9e422aaf61",
+      "text": "Read the shape clues. Check which picture has every property in the clue. Count the sides and compare their lengths. Turning a shape does not change its properties.",
+      "uses": [
+        {
+          "mode": "shape-match",
+          "age": 4
+        },
+        {
+          "mode": "shape-match",
+          "age": 5
+        },
+        {
+          "mode": "shape-match",
+          "age": 6
+        }
+      ],
+      "file": "c1f2ae9e422aaf61.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.652,
+      "sampleRate": 24000,
+      "rms": 0.10908,
+      "peak": 0.85,
+      "bytes": 84255,
+      "sha256": "02b8c00b78d93cc0bfe664fbb7e31abdba718c91edf69a94588d42abb870694e"
+    },
+    {
+      "id": "374b3943b3b02d93",
+      "text": "Read the shape clues. Check which picture has every property in the clue. Count the sides, compare their lengths, and look for square corners. Check every clue before choosing.",
+      "uses": [
+        {
+          "mode": "shape-match",
+          "age": 7
+        }
+      ],
+      "file": "374b3943b3b02d93.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.4,
+      "sampleRate": 24000,
+      "rms": 0.10862,
+      "peak": 0.85,
+      "bytes": 89281,
+      "sha256": "a7e1bcf509bdd4aaa9b4c55078591dbc6f3fb3f13fd4876b7b34b818f41ff829"
+    },
+    {
+      "id": "7075507bbeca1f5b",
+      "text": "Read the shape clues. Check which picture has every property in the clue. Count the sides, look for right or obtuse angles, and compare pairs of parallel sides. Every property must fit.",
+      "uses": [
+        {
+          "mode": "shape-match",
+          "age": 8
+        }
+      ],
+      "file": "7075507bbeca1f5b.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.8593,
+      "sampleRate": 24000,
+      "rms": 0.09792,
+      "peak": 0.85,
+      "bytes": 100441,
+      "sha256": "755749a84d1c8b51ee39d58bcfc7a6043aa4e663887d40d91416844b43ead31e"
+    },
+    {
+      "id": "bb43d76e0ad73fd9",
+      "text": "Read the shape clues. Check which picture has every property in the clue. Count the sides and lines of symmetry. Check the right angles and whether the side lengths are equal.",
+      "uses": [
+        {
+          "mode": "shape-match",
+          "age": 9
+        }
+      ],
+      "file": "bb43d76e0ad73fd9.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.494,
+      "sampleRate": 24000,
+      "rms": 0.1216,
+      "peak": 0.85,
+      "bytes": 89874,
+      "sha256": "21b00aac387c88b7770115c74c2033d17154a6afc0c95541b0317084e2090425"
+    },
+    {
+      "id": "12662b6525fc995b",
+      "text": "Read the shape clues. Check which picture has every property in the clue. Check parallel sides, right angles, equal lengths, and lines of symmetry. A quadrilateral can belong to more than one shape family.",
+      "uses": [
+        {
+          "mode": "shape-match",
+          "age": 10
+        }
+      ],
+      "file": "12662b6525fc995b.m4a",
+      "mime": "audio/mp4",
+      "duration": 13.0527,
+      "sampleRate": 24000,
+      "rms": 0.10837,
+      "peak": 0.85,
+      "bytes": 111350,
+      "sha256": "628283ea5482ae82cd7a716b959c77eed1a6d46ab70890c66455250ed49cdc87"
+    },
+    {
+      "id": "25e1f2f53732ddee",
+      "text": "Look at the color sample. Find the matching color. Compare one choice at a time. Say the color names together.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 2
+        },
+        {
+          "mode": "color-match",
+          "age": 3
+        }
+      ],
+      "file": "25e1f2f53732ddee.m4a",
+      "mime": "audio/mp4",
+      "duration": 6.732,
+      "sampleRate": 24000,
+      "rms": 0.10173,
+      "peak": 0.85,
+      "bytes": 58685,
+      "sha256": "dae1c70898ead2f5a36eae8aa43ea61988d7206020de3616b34ed26b6d7f4a9b"
+    },
+    {
+      "id": "f716340697ccdf72",
+      "text": "Read what the color clue asks you to change or compare. Think about the two paints named in the clue. Which color do they make when mixed?",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 4
+        }
+      ],
+      "file": "f716340697ccdf72.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.032,
+      "sampleRate": 24000,
+      "rms": 0.08845,
+      "peak": 0.85,
+      "bytes": 69048,
+      "sha256": "e567484f2156dc9b819f41d51aee5317e1cc21aa2410c9596994409b2be9d328"
+    },
+    {
+      "id": "38bc4964fb89b62d",
+      "text": "Read what the color clue asks you to change or compare. Picture the two paints mixing. Compare the result with each color choice.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 5
+        }
+      ],
+      "file": "38bc4964fb89b62d.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.0293,
+      "sampleRate": 24000,
+      "rms": 0.09446,
+      "peak": 0.85,
+      "bytes": 70835,
+      "sha256": "57ed32f2473df92f2054b7cb1d418c4d640a889344020a704df9d6418d100cf4"
+    },
+    {
+      "id": "b3ecafe7a2c0004e",
+      "text": "Read what the color clue asks you to change or compare. Adding white makes a tint. Look for a lighter version of the same color.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 6
+        }
+      ],
+      "file": "b3ecafe7a2c0004e.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.776,
+      "sampleRate": 24000,
+      "rms": 0.11201,
+      "peak": 0.85,
+      "bytes": 67182,
+      "sha256": "a90d46bce990a0c018b285b09f524a328af781ed387b45d7553aa919ac6776c2"
+    },
+    {
+      "id": "c72e62ae5adc02be",
+      "text": "Read what the color clue asks you to change or compare. Adding black makes a shade. Look for a darker version of the same color.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 7
+        }
+      ],
+      "file": "c72e62ae5adc02be.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.7973,
+      "sampleRate": 24000,
+      "rms": 0.1034,
+      "peak": 0.85,
+      "bytes": 68755,
+      "sha256": "79f1caf196495d37bb43603c47a684424565f43ce1bfac6ac99cb68984cf532c"
+    },
+    {
+      "id": "cbefeb962d5b0f1d",
+      "text": "Read what the color clue asks you to change or compare. Reds, oranges, and yellows feel warm. Blues, greens, and violets belong to the cool group.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 8
+        }
+      ],
+      "file": "cbefeb962d5b0f1d.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.238,
+      "sampleRate": 24000,
+      "rms": 0.09586,
+      "peak": 0.85,
+      "bytes": 87850,
+      "sha256": "c15262545a28c373c2a1c02e0abdd670bf87eace43ce9b202a981b2664b6c519"
+    },
+    {
+      "id": "7489c7f8ac4e8a6a",
+      "text": "Read what the color clue asks you to change or compare. Keep the color family the same while comparing lightness. A lighter version still belongs to that hue.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 9
+        }
+      ],
+      "file": "7489c7f8ac4e8a6a.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.8013,
+      "sampleRate": 24000,
+      "rms": 0.10415,
+      "peak": 0.85,
+      "bytes": 85465,
+      "sha256": "fc4473c37e339d72ab5a877335dba784f00c4f346d5c0fd6eecd8925e1f8539f"
+    },
+    {
+      "id": "637e7cecd5fedb80",
+      "text": "Read what the color clue asks you to change or compare. Find the color on the six-color wheel. Its opposite is three steps away, across the middle.",
+      "uses": [
+        {
+          "mode": "color-match",
+          "age": 10
+        }
+      ],
+      "file": "637e7cecd5fedb80.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.2253,
+      "sampleRate": 24000,
+      "rms": 0.08681,
+      "peak": 0.85,
+      "bytes": 79825,
+      "sha256": "fe75fe3b96103e5f553ed7b94e62b9d062604683097371f3592611140dda4d29"
+    },
+    {
+      "id": "12c98f758130e9f1",
+      "text": "Read the pattern from the beginning. Say each part aloud. Look for the smallest part that repeats. Repeat that whole part to find what comes next.",
+      "uses": [
+        {
+          "mode": "patterns",
+          "age": 2
+        },
+        {
+          "mode": "patterns",
+          "age": 3
+        },
+        {
+          "mode": "patterns",
+          "age": 4
+        },
+        {
+          "mode": "patterns",
+          "age": 5
+        },
+        {
+          "mode": "patterns",
+          "age": 6
+        },
+        {
+          "mode": "patterns",
+          "age": 7
+        },
+        {
+          "mode": "patterns",
+          "age": 8
+        }
+      ],
+      "file": "12c98f758130e9f1.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.8627,
+      "sampleRate": 24000,
+      "rms": 0.11423,
+      "peak": 0.85,
+      "bytes": 76727,
+      "sha256": "5f5f1be371f1bc7984d128c319344bb4625c8189079b92e48b707f209da85e45"
+    },
+    {
+      "id": "3c54828e96b36db6",
+      "text": "Study the number sequence and find the missing value. Compare neighboring numbers. Does one change repeat, or do two different changes alternate? Test your rule on every visible pair.",
+      "uses": [
+        {
+          "mode": "patterns",
+          "age": 9
+        },
+        {
+          "mode": "patterns",
+          "age": 10
+        }
+      ],
+      "file": "3c54828e96b36db6.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.57,
+      "sampleRate": 24000,
+      "rms": 0.10735,
+      "peak": 0.85,
+      "bytes": 99012,
+      "sha256": "60d970b7b4b820ea3c5cee97685205e1baad35844e4fe7e00e2f71e1820de76a"
+    },
+    {
+      "id": "d376d1fed438dd3c",
+      "text": "Pick one object. Look at what each basket is for. Say the sorting rule before choosing a basket. Check one object at a time.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 2
+        },
+        {
+          "mode": "sorting",
+          "age": 3
+        }
+      ],
+      "file": "d376d1fed438dd3c.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.0093,
+      "sampleRate": 24000,
+      "rms": 0.13444,
+      "peak": 0.85,
+      "bytes": 68241,
+      "sha256": "617542a1c6b3fedabbcdd43a1b3fcd889ea796033ba5e95c4f174e953d09c0e4"
+    },
+    {
+      "id": "8f2fb994a19442f9",
+      "text": "Read every basket label. Sort each object by the rule for this round. Look closely at the edges. Decide whether they are curved or straight.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 4
+        }
+      ],
+      "file": "8f2fb994a19442f9.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.0247,
+      "sampleRate": 24000,
+      "rms": 0.11588,
+      "peak": 0.85,
+      "bytes": 79133,
+      "sha256": "7a400599ba6c97e6f8e09f036aa31f28f7879da71d47879848bcbe33ffd5d9ac"
+    },
+    {
+      "id": "8c6f9b9001167a0f",
+      "text": "Read every basket label. Sort each object by the rule for this round. Check both the color and the edge type. Both properties must match the basket.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 5
+        }
+      ],
+      "file": "8c6f9b9001167a0f.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.7813,
+      "sampleRate": 24000,
+      "rms": 0.10607,
+      "peak": 0.85,
+      "bytes": 85516,
+      "sha256": "0d8babdcc18e9ac7141c956776e70ff37b7ad84b82014cb72a7f6c747ab5dd54"
+    },
+    {
+      "id": "a916f8411af7368d",
+      "text": "Read every basket label. Sort each object by the rule for this round. Even numbers can be shared into pairs with none left over. Odd numbers have one left.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 6
+        }
+      ],
+      "file": "a916f8411af7368d.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.3987,
+      "sampleRate": 24000,
+      "rms": 0.12246,
+      "peak": 0.85,
+      "bytes": 88511,
+      "sha256": "66526c7e3ef9f48f175a3d959a21b3dbc38eb1a3449d3be21f343f6e87e0f284"
+    },
+    {
+      "id": "60e41c984180d119",
+      "text": "Read every basket label. Sort each object by the rule for this round. Use multiplication facts to check whether the number is a multiple of the basket\u2019s number.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 7
+        },
+        {
+          "mode": "sorting",
+          "age": 8
+        }
+      ],
+      "file": "60e41c984180d119.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.0787,
+      "sampleRate": 24000,
+      "rms": 0.12951,
+      "peak": 0.85,
+      "bytes": 88039,
+      "sha256": "3777d81a25739eae5e5c8c7e2b066f50ca7e6f487430b5e62411b754b55671b3"
+    },
+    {
+      "id": "a0e3a9df0f695dda",
+      "text": "Read every basket label. Sort each object by the rule for this round. Check divisibility by three and by four separately. A number may fit both rules or neither rule.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 9
+        }
+      ],
+      "file": "a0e3a9df0f695dda.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.4126,
+      "sampleRate": 24000,
+      "rms": 0.11316,
+      "peak": 0.85,
+      "bytes": 98558,
+      "sha256": "6b1a3ceac8ed43a60327660fe24ec60297a8f20ef15a76ee1edd010343d84579"
+    },
+    {
+      "id": "a53dabed8a9a904f",
+      "text": "Read every basket label. Sort each object by the rule for this round. Compare each fraction with one half. You can double its numerator and compare that with its denominator.",
+      "uses": [
+        {
+          "mode": "sorting",
+          "age": 10
+        }
+      ],
+      "file": "a53dabed8a9a904f.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.04,
+      "sampleRate": 24000,
+      "rms": 0.11424,
+      "peak": 0.85,
+      "bytes": 94769,
+      "sha256": "79c201aedf3947e8a652af2afff4c6248be6a684f0e4ed35cc9525618b18b4ea"
+    },
+    {
+      "id": "bd209a3c491e68bb",
+      "text": "Look at the rule above the choices. Find the one that differs. Compare just that feature: color, shape, or amount. Other details can wait.",
+      "uses": [
+        {
+          "mode": "odd-one-out",
+          "age": 2
+        },
+        {
+          "mode": "odd-one-out",
+          "age": 3
+        },
+        {
+          "mode": "odd-one-out",
+          "age": 4
+        },
+        {
+          "mode": "odd-one-out",
+          "age": 5
+        },
+        {
+          "mode": "odd-one-out",
+          "age": 6
+        },
+        {
+          "mode": "odd-one-out",
+          "age": 7
+        }
+      ],
+      "file": "bd209a3c491e68bb.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.3067,
+      "sampleRate": 24000,
+      "rms": 0.10429,
+      "peak": 0.85,
+      "bytes": 81178,
+      "sha256": "253eb5ed58763684c51f060663dc8e26358c32d6a22348c4cf197cb474883d3f"
+    },
+    {
+      "id": "7576088561cc840d",
+      "text": "Read the number rule. Find the one choice that does not follow it. A factor divides the whole number with no remainder. Check each choice against the named whole.",
+      "uses": [
+        {
+          "mode": "odd-one-out",
+          "age": 8
+        }
+      ],
+      "file": "7576088561cc840d.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.78,
+      "sampleRate": 24000,
+      "rms": 0.11175,
+      "peak": 0.85,
+      "bytes": 83328,
+      "sha256": "2143086c1249fd9a45a3fbed0d8e8e1991b795a7c3b6a807bd8bbc372fae260d"
+    },
+    {
+      "id": "8e2c84a5eeb9526d",
+      "text": "Read the number rule. Find the one choice that does not follow it. A common multiple must be divisible by both named numbers. Test both rules for every choice.",
+      "uses": [
+        {
+          "mode": "odd-one-out",
+          "age": 9
+        }
+      ],
+      "file": "8e2c84a5eeb9526d.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.4087,
+      "sampleRate": 24000,
+      "rms": 0.12019,
+      "peak": 0.85,
+      "bytes": 88132,
+      "sha256": "9ee278faf3aeef87bab19d3817729e5a5fdfc65d47dc04a65ad19ec65f79f638"
+    },
+    {
+      "id": "1c29c3483586747b",
+      "text": "Read the number rule. Find the one choice that does not follow it. Fractions equivalent to one half have a denominator twice their numerator. Check every fraction before choosing.",
+      "uses": [
+        {
+          "mode": "odd-one-out",
+          "age": 10
+        }
+      ],
+      "file": "1c29c3483586747b.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.36,
+      "sampleRate": 24000,
+      "rms": 0.08762,
+      "peak": 0.85,
+      "bytes": 94711,
+      "sha256": "508887e12eb20e4da3327cad2a3ad2b53c9516f83c71a995bbcfadfc9454bb52"
+    },
+    {
+      "id": "50d551fba0ab6fcc",
+      "text": "Turn two cards. Look for a matching pair. Name each picture and remember its place. A wrong pair stays visible until you are ready.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 2
+        },
+        {
+          "mode": "memory",
+          "age": 3
+        },
+        {
+          "mode": "memory",
+          "age": 4
+        }
+      ],
+      "file": "50d551fba0ab6fcc.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.5966,
+      "sampleRate": 24000,
+      "rms": 0.11583,
+      "peak": 0.85,
+      "bytes": 74920,
+      "sha256": "6a8cd1b5e93028f81b7e56816726d9c0fb60984831017c77c6c2b07324adde33"
+    },
+    {
+      "id": "7e64fe04033cf7a2",
+      "text": "Find two cards that belong together, even when they look different. Count the dots, then remember where their matching number is.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 5
+        }
+      ],
+      "file": "7e64fe04033cf7a2.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.678,
+      "sampleRate": 24000,
+      "rms": 0.12121,
+      "peak": 0.85,
+      "bytes": 66343,
+      "sha256": "7122bbc4856e880578bc57191e6947e7a02b497143f751850684129f920e134f"
+    },
+    {
+      "id": "d982e1037dad2f4c",
+      "text": "Find two cards that belong together, even when they look different. Match each capital letter with its lowercase partner. Remember the two places.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 6
+        }
+      ],
+      "file": "d982e1037dad2f4c.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.9907,
+      "sampleRate": 24000,
+      "rms": 0.12444,
+      "peak": 0.85,
+      "bytes": 76441,
+      "sha256": "473caf9d7975e97f8abbd502645136b824879ecaa095f06651ce06d2ca3707bf"
+    },
+    {
+      "id": "c3921425e3997e93",
+      "text": "Find two cards that belong together, even when they look different. Work out the addition, then look for the matching total. Remember each card\u2019s place.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 7
+        }
+      ],
+      "file": "c3921425e3997e93.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.268,
+      "sampleRate": 24000,
+      "rms": 0.12332,
+      "peak": 0.85,
+      "bytes": 80296,
+      "sha256": "e2f567d408a7714b0b01eae3dd92f0890c251e7bfbbbae2a970c3b211abe0942"
+    },
+    {
+      "id": "0ef92148f1fcd073",
+      "text": "Find two cards that belong together, even when they look different. Count the equal parts and the shaded parts. Match the picture with its fraction.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 8
+        }
+      ],
+      "file": "0ef92148f1fcd073.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.9053,
+      "sampleRate": 24000,
+      "rms": 0.12419,
+      "peak": 0.85,
+      "bytes": 76477,
+      "sha256": "bfb2ad4310e569cf2e8c32eb0aa416521ff1a82d9fb9f87055b7f58db6f0f726"
+    },
+    {
+      "id": "33e11dd7588a5ff2",
+      "text": "Find two cards that have the same value, even when they look different. Work out each multiplication fact, then remember where its product is hidden.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 9
+        }
+      ],
+      "file": "33e11dd7588a5ff2.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.264,
+      "sampleRate": 24000,
+      "rms": 0.12235,
+      "peak": 0.85,
+      "bytes": 80679,
+      "sha256": "3f7492bad853308008d00dec61d0fb69b487d06f86ddfaef84c515fd431b4679"
+    },
+    {
+      "id": "74ce0c226b3636b4",
+      "text": "Find two cards that have the same value, even when they look different. Find equivalent fractions. Multiply or divide the numerator and denominator by the same number.",
+      "uses": [
+        {
+          "mode": "memory",
+          "age": 10
+        }
+      ],
+      "file": "74ce0c226b3636b4.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.976,
+      "sampleRate": 24000,
+      "rms": 0.11762,
+      "peak": 0.85,
+      "bytes": 94323,
+      "sha256": "11277fe85693f1d8b85127359db0dd294dbf72df66c9612ff0a433ee14ff4604"
+    },
+    {
+      "id": "9b36e96fadd7a530",
+      "text": "Find Bunny. Tap a highlighted neighbor or an arrow to move. Look ahead for an open path. Undo a move if you reach a dead end.",
+      "uses": [
+        {
+          "mode": "maze",
+          "age": 2
+        },
+        {
+          "mode": "maze",
+          "age": 3
+        },
+        {
+          "mode": "maze",
+          "age": 4
+        },
+        {
+          "mode": "maze",
+          "age": 5
+        },
+        {
+          "mode": "maze",
+          "age": 6
+        }
+      ],
+      "file": "9b36e96fadd7a530.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.0533,
+      "sampleRate": 24000,
+      "rms": 0.12688,
+      "peak": 0.85,
+      "bytes": 69731,
+      "sha256": "4a63ed587eceb708b09f28c2c43b03f64683c9db4dce3e894e1a409813635731"
+    },
+    {
+      "id": "a4a7d684a17d8b7b",
+      "text": "Find Bunny. Tap a highlighted neighbor or an arrow to move. Plan a route through the numbered checkpoints in order before reaching the carrot. Undo is always available.",
+      "uses": [
+        {
+          "mode": "maze",
+          "age": 7
+        },
+        {
+          "mode": "maze",
+          "age": 8
+        },
+        {
+          "mode": "maze",
+          "age": 9
+        },
+        {
+          "mode": "maze",
+          "age": 10
+        }
+      ],
+      "file": "a4a7d684a17d8b7b.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.474,
+      "sampleRate": 24000,
+      "rms": 0.11243,
+      "peak": 0.85,
+      "bytes": 88120,
+      "sha256": "948410970f10f989334593bbb3eac01f2e7c5b23ab0c516b8b6b395f9eb56288"
+    },
+    {
+      "id": "030820ab180391b4",
+      "text": "Count or match up the two groups. Read which kind of group to choose. Pair one object on the left with one on the right. Leftovers show which group has more.",
+      "uses": [
+        {
+          "mode": "compare",
+          "age": 2
+        },
+        {
+          "mode": "compare",
+          "age": 3
+        },
+        {
+          "mode": "compare",
+          "age": 4
+        },
+        {
+          "mode": "compare",
+          "age": 5
+        },
+        {
+          "mode": "compare",
+          "age": 6
+        },
+        {
+          "mode": "compare",
+          "age": 7
+        }
+      ],
+      "file": "030820ab180391b4.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.6733,
+      "sampleRate": 24000,
+      "rms": 0.13906,
+      "peak": 0.85,
+      "bytes": 82778,
+      "sha256": "19d6620dd6e481517b04a261ad1d91346e1c2773d65f4b4552fd9c1a14026656"
+    },
+    {
+      "id": "31778ba30d37b74b",
+      "text": "Count or match up the two groups. Read which kind of group to choose. Compare hundreds, then tens, then ones. Subtract to find the difference.",
+      "uses": [
+        {
+          "mode": "compare",
+          "age": 8
+        },
+        {
+          "mode": "compare",
+          "age": 9
+        }
+      ],
+      "file": "31778ba30d37b74b.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.034,
+      "sampleRate": 24000,
+      "rms": 0.11821,
+      "peak": 0.85,
+      "bytes": 78168,
+      "sha256": "efca7df44c07b171ed5ac23179e2515988f93667c7ac9cdcf860402d58fe15ab"
+    },
+    {
+      "id": "17408066edc4ae52",
+      "text": "Compare the decimal amounts, then find the difference the clue asks for. Line up the ones, tenths, and hundredths. Compare the values, then subtract matching places to find their difference.",
+      "uses": [
+        {
+          "mode": "compare",
+          "age": 10
+        }
+      ],
+      "file": "17408066edc4ae52.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.9933,
+      "sampleRate": 24000,
+      "rms": 0.10757,
+      "peak": 0.85,
+      "bytes": 103073,
+      "sha256": "dea145eb118d67750a24dcdf1a79fe0cd267b59f639af9f0cbd554d53cb7ca98"
+    },
+    {
+      "id": "847249e9b53c6a7a",
+      "text": "Find the smallest number. Tap it first. Check the gap between numbers. Some older challenges skip by the same amount.",
+      "uses": [
+        {
+          "mode": "number-order",
+          "age": 2
+        },
+        {
+          "mode": "number-order",
+          "age": 3
+        },
+        {
+          "mode": "number-order",
+          "age": 4
+        },
+        {
+          "mode": "number-order",
+          "age": 5
+        },
+        {
+          "mode": "number-order",
+          "age": 6
+        },
+        {
+          "mode": "number-order",
+          "age": 7
+        }
+      ],
+      "file": "847249e9b53c6a7a.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.604,
+      "sampleRate": 24000,
+      "rms": 0.11196,
+      "peak": 0.85,
+      "bytes": 66219,
+      "sha256": "245e7f8b21185d51abcf5b5c4997bb4f156b7edc1278d8a4a84f57d9406b65b7"
+    },
+    {
+      "id": "119ecec1abf38f1e",
+      "text": "Find the smallest number. Tap it first. Compare the place values. Follow the requested direction and look for the gap between numbers.",
+      "uses": [
+        {
+          "mode": "number-order",
+          "age": 8
+        }
+      ],
+      "file": "119ecec1abf38f1e.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.4573,
+      "sampleRate": 24000,
+      "rms": 0.09866,
+      "peak": 0.85,
+      "bytes": 71537,
+      "sha256": "520bce390a5b8c240e8635fde65cfbfe5c2a3174fdb02cf061e81a11147c48a0"
+    },
+    {
+      "id": "595500ca5488febd",
+      "text": "Read the direction. Start with the biggest or the smallest number, as the clue asks. Compare the place values. Follow the requested direction and look for the gap between numbers.",
+      "uses": [
+        {
+          "mode": "number-order",
+          "age": 9
+        }
+      ],
+      "file": "595500ca5488febd.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.178,
+      "sampleRate": 24000,
+      "rms": 0.09997,
+      "peak": 0.85,
+      "bytes": 96494,
+      "sha256": "acceaf8ad10371ec22720c1992e174adb5726410a7a6680478a82d537be3f55b"
+    },
+    {
+      "id": "f9a21f5773780c8f",
+      "text": "Read the requested direction. Put the decimal amounts in order. Compare whole numbers first, then tenths, then hundredths. Follow the direction in the clue.",
+      "uses": [
+        {
+          "mode": "number-order",
+          "age": 10
+        }
+      ],
+      "file": "f9a21f5773780c8f.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.928,
+      "sampleRate": 24000,
+      "rms": 0.10275,
+      "peak": 0.85,
+      "bytes": 85170,
+      "sha256": "9317ec12c42e1f7032b204027f8f139984256bcd051c812fdc9f615631535f1f"
+    },
+    {
+      "id": "6f64e318b2f70e19",
+      "text": "Count the whole group. Notice which objects are crossed out. The crossed-out objects have gone away. Count only the ones still there.",
+      "uses": [
+        {
+          "mode": "subtraction",
+          "age": 2
+        },
+        {
+          "mode": "subtraction",
+          "age": 3
+        },
+        {
+          "mode": "subtraction",
+          "age": 4
+        },
+        {
+          "mode": "subtraction",
+          "age": 5
+        },
+        {
+          "mode": "subtraction",
+          "age": 6
+        },
+        {
+          "mode": "subtraction",
+          "age": 7
+        }
+      ],
+      "file": "6f64e318b2f70e19.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.776,
+      "sampleRate": 24000,
+      "rms": 0.14194,
+      "peak": 0.85,
+      "bytes": 66452,
+      "sha256": "da0b5f27999c45065d7f7508d64433e27e9881653b3a07803055bcfad0769baf"
+    },
+    {
+      "id": "5c6108aa265c47bf",
+      "text": "Find the missing number: the starting amount, the amount taken away, or what remains. Use place value and exchange a ten when needed. Add the difference back to check your subtraction.",
+      "uses": [
+        {
+          "mode": "subtraction",
+          "age": 8
+        },
+        {
+          "mode": "subtraction",
+          "age": 9
+        }
+      ],
+      "file": "5c6108aa265c47bf.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.4867,
+      "sampleRate": 24000,
+      "rms": 0.11368,
+      "peak": 0.85,
+      "bytes": 99236,
+      "sha256": "252f97ba33bc96f8a59794cc26686f6336b14efa205b2a28edd5c89e357e7860"
+    },
+    {
+      "id": "cd9010dfab8818b8",
+      "text": "Read the decimal amounts. Decide whether the missing number is a whole or one of its parts. Line up the ones, tenths, and hundredths. Exchange one whole for ten tenths, or one tenth for ten hundredths, when you need to regroup.",
+      "uses": [
+        {
+          "mode": "subtraction",
+          "age": 10
+        },
+        {
+          "mode": "number-bonds",
+          "age": 10
+        }
+      ],
+      "file": "cd9010dfab8818b8.m4a",
+      "mime": "audio/mp4",
+      "duration": 14.3787,
+      "sampleRate": 24000,
+      "rms": 0.11048,
+      "peak": 0.85,
+      "bytes": 122673,
+      "sha256": "a9397ef8ef9a3ba9684304653d2c6686e2347d87d632ca395b085850c6d95e29"
+    },
+    {
+      "id": "4971972431c57750",
+      "text": "Find the whole and the part you already know. Count on from the known part until you reach the whole. The extra amount is the missing part.",
+      "uses": [
+        {
+          "mode": "number-bonds",
+          "age": 2
+        },
+        {
+          "mode": "number-bonds",
+          "age": 3
+        },
+        {
+          "mode": "number-bonds",
+          "age": 4
+        },
+        {
+          "mode": "number-bonds",
+          "age": 5
+        },
+        {
+          "mode": "number-bonds",
+          "age": 6
+        },
+        {
+          "mode": "number-bonds",
+          "age": 7
+        }
+      ],
+      "file": "4971972431c57750.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.14,
+      "sampleRate": 24000,
+      "rms": 0.08521,
+      "peak": 0.85,
+      "bytes": 69604,
+      "sha256": "e3f8aef0b9479753e514be6d0af3044eab079442f6ffa80b9ec44683ab1d3632"
+    },
+    {
+      "id": "f527910cb6b10f86",
+      "text": "Find the whole and the part you already know. Decide whether you need the whole or a missing part. Use addition or subtraction and check with the opposite operation.",
+      "uses": [
+        {
+          "mode": "number-bonds",
+          "age": 8
+        },
+        {
+          "mode": "number-bonds",
+          "age": 9
+        }
+      ],
+      "file": "f527910cb6b10f86.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.0147,
+      "sampleRate": 24000,
+      "rms": 0.11697,
+      "peak": 0.85,
+      "bytes": 87509,
+      "sha256": "8bdd9e81b2c9105765e2142ef971fc403bd39dc36c710d77e92bf32b1e0f0b67"
+    },
+    {
+      "id": "2781c720575d8c36",
+      "text": "Read the target. Tap spaces to make that many dots. Fill a row before starting the next. Tap a filled space to remove a dot, then Check.",
+      "uses": [
+        {
+          "mode": "ten-frame",
+          "age": 2
+        },
+        {
+          "mode": "ten-frame",
+          "age": 3
+        },
+        {
+          "mode": "ten-frame",
+          "age": 4
+        },
+        {
+          "mode": "ten-frame",
+          "age": 5
+        }
+      ],
+      "file": "2781c720575d8c36.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.0233,
+      "sampleRate": 24000,
+      "rms": 0.1307,
+      "peak": 0.85,
+      "bytes": 77525,
+      "sha256": "74245b34ded144b6df25b96a1220eb9e43560e50402e22f94d4cff86245a0e6e"
+    },
+    {
+      "id": "85cb5a908d9e4da0",
+      "text": "Add the amounts in the clue, then fill that many spaces. Use full rows of five to organize your thinking. Check the calculation before you check the frame.",
+      "uses": [
+        {
+          "mode": "ten-frame",
+          "age": 6
+        }
+      ],
+      "file": "85cb5a908d9e4da0.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.7473,
+      "sampleRate": 24000,
+      "rms": 0.12698,
+      "peak": 0.85,
+      "bytes": 84058,
+      "sha256": "43843b97aac2a4c4f57a0196507514d2d765339f8dc43fb8143ca0feae58b941"
+    },
+    {
+      "id": "e4d31d9e6cf261a6",
+      "text": "Work out how many remain after taking away, then show the result. Use full rows of five to organize your thinking. Check the calculation before you check the frame.",
+      "uses": [
+        {
+          "mode": "ten-frame",
+          "age": 7
+        }
+      ],
+      "file": "e4d31d9e6cf261a6.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.3133,
+      "sampleRate": 24000,
+      "rms": 0.13188,
+      "peak": 0.85,
+      "bytes": 88681,
+      "sha256": "4eff28d96d854c38cbeb36a7bd9e35c7fa38217e098a7021fec298f6720a6767"
+    },
+    {
+      "id": "7ba085459e5acfa4",
+      "text": "Read the fraction. Use the frame to show that part of the whole. The bottom number tells how many equal parts make the whole. The top number tells how many of those parts to show.",
+      "uses": [
+        {
+          "mode": "ten-frame",
+          "age": 8
+        }
+      ],
+      "file": "7ba085459e5acfa4.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.6973,
+      "sampleRate": 24000,
+      "rms": 0.11953,
+      "peak": 0.85,
+      "bytes": 91490,
+      "sha256": "5a738ad44ad45718ea4b30dd6466ce374666a1e5539d77785feb61d56e53c7bd"
+    },
+    {
+      "id": "32c08540ac6225cc",
+      "text": "Find an equivalent fraction that uses the twenty spaces in the frame. Scale the numerator and denominator by the same amount. Twenty spaces represent the whole frame.",
+      "uses": [
+        {
+          "mode": "ten-frame",
+          "age": 9
+        }
+      ],
+      "file": "32c08540ac6225cc.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.8353,
+      "sampleRate": 24000,
+      "rms": 0.11327,
+      "peak": 0.85,
+      "bytes": 93380,
+      "sha256": "8e165b813a50aaa3a4147f27882558f16ed4a726bcf7f0d697829b23d7883c61"
+    },
+    {
+      "id": "aa7091dfe909fa4e",
+      "text": "Combine the fractions, then check whether the clue asks for filled or empty spaces. Rename both fractions as twentieths, then add. Filled and empty spaces together make one whole frame.",
+      "uses": [
+        {
+          "mode": "ten-frame",
+          "age": 10
+        }
+      ],
+      "file": "aa7091dfe909fa4e.m4a",
+      "mime": "audio/mp4",
+      "duration": 12.2433,
+      "sampleRate": 24000,
+      "rms": 0.09271,
+      "peak": 0.85,
+      "bytes": 105691,
+      "sha256": "1bb45012b08a7bcce1c5e9b418d781848167b28573034647c690cbfcbe26ceff"
+    },
+    {
+      "id": "94076775ee2fb2ae",
+      "text": "Choose a capital letter, then its little-letter partner. Say the letter name together. Some partners look similar; others have different shapes.",
+      "uses": [
+        {
+          "mode": "letter-match",
+          "age": 2
+        },
+        {
+          "mode": "letter-match",
+          "age": 3
+        },
+        {
+          "mode": "letter-match",
+          "age": 4
+        },
+        {
+          "mode": "letter-match",
+          "age": 5
+        },
+        {
+          "mode": "letter-match",
+          "age": 6
+        }
+      ],
+      "file": "94076775ee2fb2ae.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.0193,
+      "sampleRate": 24000,
+      "rms": 0.09545,
+      "peak": 0.85,
+      "bytes": 68581,
+      "sha256": "1eceb3d8a4b9fcdcf303bb9ac146df9fcaffdf357c9b56598db409904ac58bed"
+    },
+    {
+      "id": "3b660e4a3361f938",
+      "text": "Say each word and listen for its ending. Match the words that rhyme. Focus on the ending sound. Rhyming words can start with different letters.",
+      "uses": [
+        {
+          "mode": "letter-match",
+          "age": 7
+        }
+      ],
+      "file": "3b660e4a3361f938.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.81,
+      "sampleRate": 24000,
+      "rms": 0.10535,
+      "peak": 0.85,
+      "bytes": 74359,
+      "sha256": "d9630a57f616b124aa58d12cba5a05f5a35721cc3a7306e6662b63ea95b852a1"
+    },
+    {
+      "id": "f1dfced528103541",
+      "text": "Match each prefix to what it means. A prefix comes before a word. Try the prefix in a familiar word. Notice how it changes the word\u2019s meaning.",
+      "uses": [
+        {
+          "mode": "letter-match",
+          "age": 8
+        }
+      ],
+      "file": "f1dfced528103541.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.066,
+      "sampleRate": 24000,
+      "rms": 0.13335,
+      "peak": 0.85,
+      "bytes": 78835,
+      "sha256": "7b020b86e1a0afeb747337d9ff4dcb7e23b0b3f12c3378cc0a8f42785d2a53de"
+    },
+    {
+      "id": "9cb724c7c9af6e12",
+      "text": "Match each suffix to what it means. A suffix comes after a word. Look for the base word first, then notice what the ending adds to its meaning.",
+      "uses": [
+        {
+          "mode": "letter-match",
+          "age": 9
+        }
+      ],
+      "file": "9cb724c7c9af6e12.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.0133,
+      "sampleRate": 24000,
+      "rms": 0.10044,
+      "peak": 0.85,
+      "bytes": 76347,
+      "sha256": "89595c3f12193c2feb10241685f4e94d19fdb876aee2bae711202921bbbd9bc4"
+    },
+    {
+      "id": "12dfaeff1dfb8cf7",
+      "text": "Match each word root to its meaning. Roots can help unlock unfamiliar words. Think of a word that uses the root. Use that example to test the meaning before you match.",
+      "uses": [
+        {
+          "mode": "letter-match",
+          "age": 10
+        }
+      ],
+      "file": "12dfaeff1dfb8cf7.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.7927,
+      "sampleRate": 24000,
+      "rms": 0.12046,
+      "peak": 0.85,
+      "bytes": 91932,
+      "sha256": "d40812e1bd647c58a8677a2bbe62e030ec6c04b696983120937d6f3aaa6fd5ab"
+    },
+    {
+      "id": "d4a37ae031e4f768",
+      "text": "Look at the picture and say its name. Tap letters in order. Use the model or hint. Say the word slowly and notice the next letter.",
+      "uses": [
+        {
+          "mode": "word-build",
+          "age": 2
+        },
+        {
+          "mode": "word-build",
+          "age": 3
+        },
+        {
+          "mode": "word-build",
+          "age": 4
+        },
+        {
+          "mode": "word-build",
+          "age": 5
+        },
+        {
+          "mode": "word-build",
+          "age": 6
+        },
+        {
+          "mode": "word-build",
+          "age": 7
+        },
+        {
+          "mode": "word-build",
+          "age": 8
+        }
+      ],
+      "file": "d4a37ae031e4f768.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.3193,
+      "sampleRate": 24000,
+      "rms": 0.12208,
+      "peak": 0.85,
+      "bytes": 72154,
+      "sha256": "03c76df369088fa591851c4a51b1c0bec3da431c86e4dfbc592555dcad03f159"
+    },
+    {
+      "id": "e9190497dd5c602a",
+      "text": "Read the meaning clue. Work out the word, then build it one letter at a time. Look for a familiar base word, prefix, or suffix. Check that your whole word matches the clue.",
+      "uses": [
+        {
+          "mode": "word-build",
+          "age": 9
+        },
+        {
+          "mode": "word-build",
+          "age": 10
+        }
+      ],
+      "file": "e9190497dd5c602a.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.8886,
+      "sampleRate": 24000,
+      "rms": 0.11824,
+      "peak": 0.85,
+      "bytes": 94610,
+      "sha256": "2200f8f4fbb9facf502978dc1a4b9a6a490baaf18b2cbeebf185e2791976ec6d"
+    },
+    {
+      "id": "ecfd8eb4821f2b41",
+      "text": "Look at the sizes. Choose the smallest one first. Compare two flowers, then keep the smaller one in mind as you check the rest.",
+      "uses": [
+        {
+          "mode": "size-order",
+          "age": 2
+        },
+        {
+          "mode": "size-order",
+          "age": 3
+        },
+        {
+          "mode": "size-order",
+          "age": 4
+        },
+        {
+          "mode": "size-order",
+          "age": 5
+        }
+      ],
+      "file": "ecfd8eb4821f2b41.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.9667,
+      "sampleRate": 24000,
+      "rms": 0.12996,
+      "peak": 0.85,
+      "bytes": 67671,
+      "sha256": "9e4393cc95d196d4fa5e84d3c4b13cf7d183a25d44aa99a5c3cf1324aa14a72b"
+    },
+    {
+      "id": "5bd10221dba1559b",
+      "text": "Read the direction and the measurement on each card. Put their values in order. Compare the lengths using their numbers. Start with the end the clue asks for.",
+      "uses": [
+        {
+          "mode": "size-order",
+          "age": 6
+        }
+      ],
+      "file": "5bd10221dba1559b.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.6633,
+      "sampleRate": 24000,
+      "rms": 0.11452,
+      "peak": 0.85,
+      "bytes": 83229,
+      "sha256": "b137386c13b920035018690d9c3bfd1e5068eaa1ca4ae748c5c2c64de1e6014b"
+    },
+    {
+      "id": "3ca284ced06a1f5d",
+      "text": "Read the direction and the measurement on each card. Put their values in order. Add the parts of each length first, then compare the totals.",
+      "uses": [
+        {
+          "mode": "size-order",
+          "age": 7
+        }
+      ],
+      "file": "3ca284ced06a1f5d.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.4147,
+      "sampleRate": 24000,
+      "rms": 0.11822,
+      "peak": 0.85,
+      "bytes": 73102,
+      "sha256": "38c57cb78e0720d2d8c3c6ea567d1e1a0bd678608c996e5c82ad6fbce30afca6"
+    },
+    {
+      "id": "5dcfde84e6b5cc7e",
+      "text": "Read the direction and the measurement on each card. Put their values in order. Use the same unit for every length. One centimeter is ten millimeters.",
+      "uses": [
+        {
+          "mode": "size-order",
+          "age": 8
+        }
+      ],
+      "file": "5dcfde84e6b5cc7e.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.4173,
+      "sampleRate": 24000,
+      "rms": 0.11935,
+      "peak": 0.85,
+      "bytes": 81050,
+      "sha256": "bce7aaef30fb0d7d8fa9ef69c133a61937dbbbf5d862a41e103d42b329eed0c5"
+    },
+    {
+      "id": "ad50565d0370f202",
+      "text": "Read the direction and the measurement on each card. Put their values in order. Multiply length by width to find each area, then put the areas in order.",
+      "uses": [
+        {
+          "mode": "size-order",
+          "age": 9
+        }
+      ],
+      "file": "ad50565d0370f202.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.44,
+      "sampleRate": 24000,
+      "rms": 0.13287,
+      "peak": 0.85,
+      "bytes": 80122,
+      "sha256": "bd0eeca4c0018c9ad0140b375d6ab3c9fed0030805825efa45a3a0cb10e2c01d"
+    },
+    {
+      "id": "29121bb8cd8b8842",
+      "text": "Read the direction and the measurement on each card. Put their values in order. Add all the side lengths to find each perimeter, then put those distances in order.",
+      "uses": [
+        {
+          "mode": "size-order",
+          "age": 10
+        }
+      ],
+      "file": "29121bb8cd8b8842.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.9733,
+      "sampleRate": 24000,
+      "rms": 0.11397,
+      "peak": 0.85,
+      "bytes": 86097,
+      "sha256": "fd3ebfe719ce687f2994391a25dba3009c95b8f97629bb8df75c50cf4b9e68a9"
+    },
+    {
+      "id": "f2eb08298f913149",
+      "text": "Look at the pictures and talk about what is happening. Find what must happen first. Use the story clue to work out the next step.",
+      "uses": [
+        {
+          "mode": "picture-sequence",
+          "age": 2
+        },
+        {
+          "mode": "picture-sequence",
+          "age": 3
+        },
+        {
+          "mode": "picture-sequence",
+          "age": 4
+        },
+        {
+          "mode": "picture-sequence",
+          "age": 5
+        },
+        {
+          "mode": "picture-sequence",
+          "age": 6
+        }
+      ],
+      "file": "f2eb08298f913149.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.614,
+      "sampleRate": 24000,
+      "rms": 0.11394,
+      "peak": 0.85,
+      "bytes": 64624,
+      "sha256": "be461a3d6cf7f257af66fad5276d7810002368323391d2d6df23913a4625392a"
+    },
+    {
+      "id": "e708c60da9b66f5c",
+      "text": "Find the pictures that belong to the story. Leave the unrelated picture out. Think about what must happen before the next event. Use those connections to check the requested order.",
+      "uses": [
+        {
+          "mode": "picture-sequence",
+          "age": 7
+        }
+      ],
+      "file": "e708c60da9b66f5c.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.7313,
+      "sampleRate": 24000,
+      "rms": 0.12434,
+      "peak": 0.85,
+      "bytes": 92563,
+      "sha256": "848a99f5b6ff0fe6adc7fe09e26b38667f7213070c20d1fc3ddeb8ea20f2e931"
+    },
+    {
+      "id": "d0c91315bd65bedd",
+      "text": "Read whether the story should go forwards or backwards. Choose only the pictures that belong. Think about what must happen before the next event. Use those connections to check the requested order.",
+      "uses": [
+        {
+          "mode": "picture-sequence",
+          "age": 8
+        },
+        {
+          "mode": "picture-sequence",
+          "age": 9
+        },
+        {
+          "mode": "picture-sequence",
+          "age": 10
+        }
+      ],
+      "file": "d0c91315bd65bedd.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.6473,
+      "sampleRate": 24000,
+      "rms": 0.12118,
+      "peak": 0.85,
+      "bytes": 99329,
+      "sha256": "c7b5478af5c09ee90cdf5cc2065aaafe447e9f6d6095b7b30b64335208985fd8"
+    },
+    {
+      "id": "6f658407a2d1164e",
+      "text": "Find your character. Read the first arrow and move that way. Follow one arrow at a time. Keep your place in the sequence.",
+      "uses": [
+        {
+          "mode": "directions",
+          "age": 2
+        },
+        {
+          "mode": "directions",
+          "age": 3
+        },
+        {
+          "mode": "directions",
+          "age": 4
+        },
+        {
+          "mode": "directions",
+          "age": 5
+        },
+        {
+          "mode": "directions",
+          "age": 6
+        }
+      ],
+      "file": "6f658407a2d1164e.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.3693,
+      "sampleRate": 24000,
+      "rms": 0.11108,
+      "peak": 0.85,
+      "bytes": 63554,
+      "sha256": "328b93391ff86a7aec74772d7fcc4449896f06dd002946722db1a9e5a8dc2bd2"
+    },
+    {
+      "id": "340a626ad0a9d280",
+      "text": "Read the movement rule before you start. Work out how it changes the arrow sequence. To return along a route, work backwards through its arrows and reverse each direction.",
+      "uses": [
+        {
+          "mode": "directions",
+          "age": 7
+        }
+      ],
+      "file": "340a626ad0a9d280.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.6133,
+      "sampleRate": 24000,
+      "rms": 0.1119,
+      "peak": 0.85,
+      "bytes": 91361,
+      "sha256": "0411524ce1475243d7cbade0d5d50bd24e401dd922e42d6f34d607cef696ee80"
+    },
+    {
+      "id": "cc6f3dafcace98a9",
+      "text": "Read the movement rule before you start. Work out how it changes the arrow sequence. Turn each arrow one quarter turn clockwise. Up becomes right, and right becomes down.",
+      "uses": [
+        {
+          "mode": "directions",
+          "age": 8
+        }
+      ],
+      "file": "cc6f3dafcace98a9.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.1993,
+      "sampleRate": 24000,
+      "rms": 0.11257,
+      "peak": 0.85,
+      "bytes": 95466,
+      "sha256": "150dfd5eaea1eecb124b579a0d5cca8f60aca49393852904fdb42b8ef47d88ca"
+    },
+    {
+      "id": "e566d9eb4b543c23",
+      "text": "Read the movement rule before you start. Work out how it changes the arrow sequence. A left-right mirror swaps left and right. Up and down stay the same.",
+      "uses": [
+        {
+          "mode": "directions",
+          "age": 9
+        }
+      ],
+      "file": "e566d9eb4b543c23.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.642,
+      "sampleRate": 24000,
+      "rms": 0.12186,
+      "peak": 0.85,
+      "bytes": 82713,
+      "sha256": "ff9742e4ce5bff9491125c5dc40e61f602b9e88d10956422cae2d6ceb32b9ba6"
+    },
+    {
+      "id": "0963cbb71be8fb62",
+      "text": "Read the movement rule before you start. Work out how it changes the arrow sequence. First work out the return route by reversing its order and directions. Then turn each new arrow one quarter turn clockwise.",
+      "uses": [
+        {
+          "mode": "directions",
+          "age": 10
+        }
+      ],
+      "file": "0963cbb71be8fb62.m4a",
+      "mime": "audio/mp4",
+      "duration": 13.4707,
+      "sampleRate": 24000,
+      "rms": 0.12449,
+      "peak": 0.85,
+      "bytes": 114620,
+      "sha256": "728bd11ec69717d4d54c6bac9659f16af8c1051b5dfc4d6670e675c2dc9d7707"
+    },
+    {
+      "id": "75059e357c4fc910",
+      "text": "Look at the outline. Join the next corner to build the shape. Follow the edges in order. Count each side as you make it.",
+      "uses": [
+        {
+          "mode": "make-a-shape",
+          "age": 2
+        },
+        {
+          "mode": "make-a-shape",
+          "age": 3
+        },
+        {
+          "mode": "make-a-shape",
+          "age": 4
+        },
+        {
+          "mode": "make-a-shape",
+          "age": 5
+        },
+        {
+          "mode": "make-a-shape",
+          "age": 6
+        },
+        {
+          "mode": "make-a-shape",
+          "age": 7
+        }
+      ],
+      "file": "75059e357c4fc910.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.5187,
+      "sampleRate": 24000,
+      "rms": 0.10149,
+      "peak": 0.85,
+      "bytes": 64695,
+      "sha256": "b45f9650b9d1181ab89ea0128b140842d9470d5ba4db9f97e44f78b186c1ebdd"
+    },
+    {
+      "id": "d28027bc64c452d0",
+      "text": "Read the shape properties. Plan which outside corners will make that shape. Look for four sides and four right angles. Use the guide if you want another look.",
+      "uses": [
+        {
+          "mode": "make-a-shape",
+          "age": 8
+        }
+      ],
+      "file": "d28027bc64c452d0.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.5566,
+      "sampleRate": 24000,
+      "rms": 0.1439,
+      "peak": 0.85,
+      "bytes": 81190,
+      "sha256": "209ce2c5c472d8fbcc341d9874887e69fc69a0565bd675e4d2cacc3667683a29"
+    },
+    {
+      "id": "7cdaaaf70870d466",
+      "text": "Read the shape properties. Plan which outside corners will make that shape. A rhombus has four equal sides. Follow the outside corners and return to your starting point.",
+      "uses": [
+        {
+          "mode": "make-a-shape",
+          "age": 9
+        }
+      ],
+      "file": "7cdaaaf70870d466.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.72,
+      "sampleRate": 24000,
+      "rms": 0.11337,
+      "peak": 0.85,
+      "bytes": 92163,
+      "sha256": "db2f539029171e9e99ec08faac0d2db42ff3ba2e7d933ed08e30a9ef683f9f78"
+    },
+    {
+      "id": "cfed1daa7281a196",
+      "text": "Read the shape properties. Plan which outside corners will make that shape. A rectangle has four right angles. Compare the corners and side lengths, then join a complete outline.",
+      "uses": [
+        {
+          "mode": "make-a-shape",
+          "age": 10
+        }
+      ],
+      "file": "cfed1daa7281a196.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.5406,
+      "sampleRate": 24000,
+      "rms": 0.1108,
+      "peak": 0.85,
+      "bytes": 98235,
+      "sha256": "01ce2541076be16c5853c011f0a43451247b40a3d2f57719b069b8dfb625c61a"
+    },
+    {
+      "id": "5d8cc2b988e3f092",
+      "text": "Look at or listen to the pattern. Tap Clap, Tap, Stomp, or Rest in order. Each action makes a different sound; Rest is quiet. Use your device\u2019s volume buttons for sounds. Tap Hear when you want spoken help. Replay freely; there is no timer.",
+      "uses": [
+        {
+          "mode": "rhythm",
+          "age": 2
+        },
+        {
+          "mode": "rhythm",
+          "age": 3
+        },
+        {
+          "mode": "rhythm",
+          "age": 4
+        },
+        {
+          "mode": "rhythm",
+          "age": 5
+        },
+        {
+          "mode": "rhythm",
+          "age": 6
+        }
+      ],
+      "file": "5d8cc2b988e3f092.m4a",
+      "mime": "audio/mp4",
+      "duration": 16.586,
+      "sampleRate": 24000,
+      "rms": 0.11505,
+      "peak": 0.85,
+      "bytes": 140982,
+      "sha256": "36bc3c95eee9683cd667b0baa0a109b724bd6f37a97c0892471766b8b962b8b2"
+    },
+    {
+      "id": "203da7b4326372a0",
+      "text": "Read the pattern rule. Study the actions before you tap Ready. Remember a small group of actions at a time. Use Hint for another look whenever you need it.",
+      "uses": [
+        {
+          "mode": "rhythm",
+          "age": 7
+        }
+      ],
+      "file": "203da7b4326372a0.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.43,
+      "sampleRate": 24000,
+      "rms": 0.0948,
+      "peak": 0.85,
+      "bytes": 80965,
+      "sha256": "7dc55cd5fbeefaa09dfb90374889b1bf7438b92020f97649056a3db7b9998ea6"
+    },
+    {
+      "id": "ce776b464ce58471",
+      "text": "Read the pattern rule. Study the actions before you tap Ready. Start with the last action and work backwards through the whole pattern. Rest still means a quiet moment.",
+      "uses": [
+        {
+          "mode": "rhythm",
+          "age": 8
+        }
+      ],
+      "file": "ce776b464ce58471.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.3147,
+      "sampleRate": 24000,
+      "rms": 0.08425,
+      "peak": 0.85,
+      "bytes": 88616,
+      "sha256": "35f084aae6b88f477cc4641ff5680434fefad1f7675fa8dbfeeeeb96e29c7e5f"
+    },
+    {
+      "id": "743239c625da062f",
+      "text": "Read the pattern rule. Study the actions before you tap Ready. Keep the pattern in order, but swap every Clap for Tap and every Tap for Clap. Stomp and Rest stay the same.",
+      "uses": [
+        {
+          "mode": "rhythm",
+          "age": 9
+        }
+      ],
+      "file": "743239c625da062f.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.9493,
+      "sampleRate": 24000,
+      "rms": 0.11045,
+      "peak": 0.85,
+      "bytes": 93538,
+      "sha256": "01c2b0a47cd6b67ae91fd9ab881bd01bfc69fb60db12f827044d372601febeef"
+    },
+    {
+      "id": "6c954656e254288e",
+      "text": "Read the pattern rule. Study the actions before you tap Ready. Work backwards through the pattern, then swap Clap and Tap. Stomp and Rest stay the same. Take one step at a time.",
+      "uses": [
+        {
+          "mode": "rhythm",
+          "age": 10
+        }
+      ],
+      "file": "6c954656e254288e.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.4073,
+      "sampleRate": 24000,
+      "rms": 0.08372,
+      "peak": 0.85,
+      "bytes": 98097,
+      "sha256": "1497fa54d95802fb3925c25923f4d4305a4f3a3f46fb6bb776fbc67d41bba874"
+    },
+    {
+      "id": "62791860d0ec9f69",
+      "text": "Give one object to each friend in turn. Keep going around the group so each friend receives the same amount. Older puzzles may have leftovers.",
+      "uses": [
+        {
+          "mode": "sharing",
+          "age": 2
+        },
+        {
+          "mode": "sharing",
+          "age": 3
+        },
+        {
+          "mode": "sharing",
+          "age": 4
+        },
+        {
+          "mode": "sharing",
+          "age": 5
+        },
+        {
+          "mode": "sharing",
+          "age": 6
+        },
+        {
+          "mode": "sharing",
+          "age": 7
+        },
+        {
+          "mode": "sharing",
+          "age": 8
+        }
+      ],
+      "file": "62791860d0ec9f69.m4a",
+      "mime": "audio/mp4",
+      "duration": 8.9806,
+      "sampleRate": 24000,
+      "rms": 0.11973,
+      "peak": 0.85,
+      "bytes": 76323,
+      "sha256": "7b59238696fda625e7140cf2b953d99e41dae197036d36695d582c80e1f71974"
+    },
+    {
+      "id": "1aaf6851a9212b90",
+      "text": "Share the whole cookies fairly, then read the question about the leftovers. One more equal round needs one cookie for every friend. Subtract the leftover cookies from the number of friends.",
+      "uses": [
+        {
+          "mode": "sharing",
+          "age": 9
+        }
+      ],
+      "file": "1aaf6851a9212b90.m4a",
+      "mime": "audio/mp4",
+      "duration": 11.518,
+      "sampleRate": 24000,
+      "rms": 0.12093,
+      "peak": 0.85,
+      "bytes": 98398,
+      "sha256": "a7fadc516177ea20e1b1a7dd1322159cebd9a2407a2377d972ca04aeda2d3d73"
+    },
+    {
+      "id": "0d63d54990d11616",
+      "text": "Share the whole cookies fairly, then read the question about the leftovers. Imagine cutting the leftover cookies equally among all the friends. Each extra share is the number left over divided by the number of friends.",
+      "uses": [
+        {
+          "mode": "sharing",
+          "age": 10
+        }
+      ],
+      "file": "0d63d54990d11616.m4a",
+      "mime": "audio/mp4",
+      "duration": 13.3326,
+      "sampleRate": 24000,
+      "rms": 0.09731,
+      "peak": 0.85,
+      "bytes": 112888,
+      "sha256": "625c2b6ab35ddf8caf1e9eea71631dfcaa20670268165e1b8b11171090df7ba3"
+    },
+    {
+      "id": "7884cb769d493f95",
+      "text": "Tap Listen. Explore each sound with Hear before choosing its partner. Compare the way each sound begins and fades. Replay the clue whenever you need it.",
+      "uses": [
+        {
+          "mode": "sound-match",
+          "age": 2
+        },
+        {
+          "mode": "sound-match",
+          "age": 3
+        },
+        {
+          "mode": "sound-match",
+          "age": 4
+        },
+        {
+          "mode": "sound-match",
+          "age": 5
+        },
+        {
+          "mode": "sound-match",
+          "age": 6
+        },
+        {
+          "mode": "sound-match",
+          "age": 7
+        }
+      ],
+      "file": "7884cb769d493f95.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.6846,
+      "sampleRate": 24000,
+      "rms": 0.11898,
+      "peak": 0.85,
+      "bytes": 83361,
+      "sha256": "63d1b1fc4364d2d0b2f5390149f6a2de21547262d54e88c2c7ee9fd9b862910a"
+    },
+    {
+      "id": "aa6e05bfd1701ff4",
+      "text": "Read which place to remember. Listen to every sound, then find the sound in that place. Keep a finger for each sound as you listen. Replay the whole sequence, then compare the individual sound buttons.",
+      "uses": [
+        {
+          "mode": "sound-match",
+          "age": 8
+        },
+        {
+          "mode": "sound-match",
+          "age": 9
+        },
+        {
+          "mode": "sound-match",
+          "age": 10
+        }
+      ],
+      "file": "aa6e05bfd1701ff4.m4a",
+      "mime": "audio/mp4",
+      "duration": 12.6073,
+      "sampleRate": 24000,
+      "rms": 0.12262,
+      "peak": 0.85,
+      "bytes": 107910,
+      "sha256": "b59adacf5c807fda206a159ac135677f8e7d07cfa892b3453e5e209a55d8c2a0"
+    },
+    {
+      "id": "5eba4662dff5af42",
+      "text": "Tap Listen and follow the notes with your hand. Notice where they move. Listen from beginning to end. Higher sounds move up; lower sounds move down. The volume is not the clue.",
+      "uses": [
+        {
+          "mode": "pitch-path",
+          "age": 2
+        },
+        {
+          "mode": "pitch-path",
+          "age": 3
+        },
+        {
+          "mode": "pitch-path",
+          "age": 4
+        },
+        {
+          "mode": "pitch-path",
+          "age": 5
+        },
+        {
+          "mode": "pitch-path",
+          "age": 6
+        },
+        {
+          "mode": "pitch-path",
+          "age": 7
+        },
+        {
+          "mode": "pitch-path",
+          "age": 8
+        },
+        {
+          "mode": "pitch-path",
+          "age": 9
+        },
+        {
+          "mode": "pitch-path",
+          "age": 10
+        }
+      ],
+      "file": "5eba4662dff5af42.m4a",
+      "mime": "audio/mp4",
+      "duration": 10.922,
+      "sampleRate": 24000,
+      "rms": 0.10728,
+      "peak": 0.85,
+      "bytes": 94950,
+      "sha256": "93cbd6dbab69982b37571824508000f0381b4c59c4f5f6e6e0bcb922ea3dfb04"
+    },
+    {
+      "id": "0875e09f4f5190d8",
+      "text": "Tap Listen, then play the tone pads in the order you heard. Remember a small part at a time. Replay freely or use the picture hint; there is no timing score.",
+      "uses": [
+        {
+          "mode": "melody-echo",
+          "age": 2
+        },
+        {
+          "mode": "melody-echo",
+          "age": 3
+        },
+        {
+          "mode": "melody-echo",
+          "age": 4
+        },
+        {
+          "mode": "melody-echo",
+          "age": 5
+        },
+        {
+          "mode": "melody-echo",
+          "age": 6
+        },
+        {
+          "mode": "melody-echo",
+          "age": 7
+        }
+      ],
+      "file": "0875e09f4f5190d8.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.952,
+      "sampleRate": 24000,
+      "rms": 0.13623,
+      "peak": 0.85,
+      "bytes": 86318,
+      "sha256": "5b47e2619171fb315673ff788a2878818fde5f6c165426c718ab70176f8edc1b"
+    },
+    {
+      "id": "63df1e3dd4c56a60",
+      "text": "Tap Listen, then play the tone pads in the order you heard. Remember two or three notes as a small group. Notice when a note repeats or the tune changes direction. Replay freely, then join the groups.",
+      "uses": [
+        {
+          "mode": "melody-echo",
+          "age": 8
+        },
+        {
+          "mode": "melody-echo",
+          "age": 9
+        },
+        {
+          "mode": "melody-echo",
+          "age": 10
+        }
+      ],
+      "file": "63df1e3dd4c56a60.m4a",
+      "mime": "audio/mp4",
+      "duration": 12.7813,
+      "sampleRate": 24000,
+      "rms": 0.1121,
+      "peak": 0.85,
+      "bytes": 106650,
+      "sha256": "680617085f58e48a116e3b3e45d5c62508fc86dd11f9492ebd05192b87915221"
+    },
+    {
+      "id": "599aeb3a506dd2be",
+      "text": "Listen and count the drum taps together. Then tap the same number at any speed. Count one tap at a time. There is no timing check at this starting age.",
+      "uses": [
+        {
+          "mode": "beat-studio",
+          "age": 2
+        },
+        {
+          "mode": "beat-studio",
+          "age": 3
+        }
+      ],
+      "file": "599aeb3a506dd2be.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.6846,
+      "sampleRate": 24000,
+      "rms": 0.13288,
+      "peak": 0.85,
+      "bytes": 83714,
+      "sha256": "aff64da19bc76c509cac649c3bd1c7d80d6f756c1feda453e187a0ceaca59755"
+    },
+    {
+      "id": "a5875d16c8d2cf37",
+      "text": "Listen to the drum. When it finishes, tap your version and check it. Notice the spaces: some are short and some are longer. Your own steady speed is welcome.",
+      "uses": [
+        {
+          "mode": "beat-studio",
+          "age": 4
+        },
+        {
+          "mode": "beat-studio",
+          "age": 5
+        },
+        {
+          "mode": "beat-studio",
+          "age": 6
+        },
+        {
+          "mode": "beat-studio",
+          "age": 7
+        }
+      ],
+      "file": "a5875d16c8d2cf37.m4a",
+      "mime": "audio/mp4",
+      "duration": 9.7873,
+      "sampleRate": 24000,
+      "rms": 0.12577,
+      "peak": 0.85,
+      "bytes": 84496,
+      "sha256": "4f88231cf92636779238788bb60114690c64bd3e021705547e503b3fe1859618"
+    },
+    {
+      "id": "b7b2513456a3390d",
+      "text": "Listen to the drum. When it finishes, tap your version and check it. Listen for small groups of taps and the pauses between them. Remember the short and long spaces, then play them at your own steady speed.",
+      "uses": [
+        {
+          "mode": "beat-studio",
+          "age": 8
+        },
+        {
+          "mode": "beat-studio",
+          "age": 9
+        },
+        {
+          "mode": "beat-studio",
+          "age": 10
+        }
+      ],
+      "file": "b7b2513456a3390d.m4a",
+      "mime": "audio/mp4",
+      "duration": 12.4366,
+      "sampleRate": 24000,
+      "rms": 0.1288,
+      "peak": 0.85,
+      "bytes": 106375,
+      "sha256": "68ff79a1adf08af61b320dcc9504f463b0b3c7285cf61efe4828e8be9ba3e679"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {LISTENING_IDS,LISTENING_INFO,soundProfile,buildListeningRound,evaluateBeat} from '../listening.js';
 import {getProfile} from '../core.js';
-import {TIMBRES,MAX_MASTER_GAIN,createSoundEngine} from '../audio.js';
+import {TIMBRES,createSoundEngine} from '../audio.js';
 
 test('four sound activities and all nine effective-age profiles have distinct, bounded challenges',()=>{
   assert.equal(new Set(LISTENING_IDS).size,4);
@@ -11,8 +11,7 @@ test('four sound activities and all nine effective-age profiles have distinct, b
   assert.equal(soundProfile(getProfile({age:10,challengeOffset:-2})).age,8);
   assert.equal(soundProfile(getProfile({age:2,level:'maker'})).age,9);
   assert.equal(soundProfile(-5).age,2);assert.equal(soundProfile(900).age,10);
-  assert.ok(MAX_MASTER_GAIN<=.2);
-  profiles.forEach(p=>{assert.ok(p.padCount<=5);assert.ok(p.melodyLength<=6);assert.ok(p.beatCount<=7);assert.ok(p.timbreChoices<=4);});
+  profiles.forEach(p=>{assert.ok(p.padCount<=5);assert.ok(p.melodyLength<=7);assert.ok(p.beatCount<=8);assert.ok(p.timbreChoices<=4);});
 });
 test('every generated sound, pitch, melody and rhythm is internally correct across ages and rounds',()=>{
   for(let age=2;age<=10;age++)for(let round=0;round<24;round++)for(const id of LISTENING_IDS) {
@@ -28,11 +27,29 @@ test('every generated sound, pitch, melody and rhythm is internally correct acro
     if(id==='beat-studio'){assert.equal(q.times.length,q.profile.beatCount);q.gaps.forEach((gap,i)=>assert.ok(Math.abs(q.times[i+1]-q.times[i]-gap)<1e-9));if(age>3)assert.equal(new Set(q.gapUnits).size,2);}
   }
 });
-test('pitch challenge narrows intervals, expands contours and never reveals a default older-child melody model',()=>{
+test('pitch challenge narrows intervals, expands contours and every answer model is initially hidden',()=>{
   assert.ok(soundProfile(2).pitchSemitones>soundProfile(10).pitchSemitones);
   assert.equal(soundProfile(2).contourChoices.length,2);assert.equal(soundProfile(10).contourChoices.length,5);
-  assert.equal(soundProfile(2).modelByDefault,true);for(let age=3;age<=10;age++)assert.equal(soundProfile(age).modelByDefault,false);
+  for(let age=2;age<=10;age++)assert.equal(soundProfile(age).modelByDefault,false);
   for(const age of [2,5,8,10]){const seen=new Set(Array.from({length:25},(_,round)=>buildListeningRound('pitch-path',age,round).answer));assert.deepEqual(seen,new Set(soundProfile(age).contourChoices));}
+});
+test('older listening requires varied ordered recall rather than a repeating staircase or three-pattern beat',()=>{
+  for(const age of [9,10]){
+    const melodies=Array.from({length:48},(_,round)=>buildListeningRound('melody-echo',age,round));
+    const beats=Array.from({length:48},(_,round)=>buildListeningRound('beat-studio',age,round));
+    assert.ok(new Set(melodies.map(round=>round.sequence.join())).size>=40);
+    assert.ok(new Set(beats.map(round=>round.gapUnits.join())).size>=20);
+    assert.ok(melodies.some(round=>round.sequence.some((value,i)=>i>0&&value===round.sequence[i-1])),'include repeated tones');
+    assert.ok(melodies.some(round=>round.sequence.some((value,i)=>i>0&&value<round.sequence[i-1])),'include changes of direction');
+    assert.deepEqual(buildListeningRound('melody-echo',age,7),buildListeningRound('melody-echo',age,7),'rounds stay reproducible');
+    const length=soundProfile(age).soundLength,rounds=Array.from({length},(_,round)=>buildListeningRound('sound-match',age,round));
+    assert.deepEqual(rounds.map(round=>round.position),Array.from({length},(_,i)=>i));
+    assert.match(rounds[1].prompt,/second/);assert.match(rounds[2].prompt,/third/);
+    for(const round of rounds)assert.equal(round.sounds[round.position],round.answer);
+  }
+  assert.ok(soundProfile(10).soundLength>soundProfile(9).soundLength);
+  assert.ok(soundProfile(10).melodyLength>soundProfile(9).melodyLength);
+  assert.ok(soundProfile(10).beatCount>soundProfile(9).beatCount);
 });
 test('beat evaluator accepts matching relative gaps at different tempos and unlimited first-tap delay',()=>{
   for(let age=2;age<=10;age++) {
@@ -72,6 +89,7 @@ function audioLifecycle(t,plans=[]) {
     removeEventListener(type,fn){assert.equal(type,'statechange');this.listeners.delete(fn);}
     emit(){for(const listener of this.listeners)listener();}
     createGain(){return {gain:parameter(),connect(){},disconnect(){}};}
+    createWaveShaper(){return {connect(){},disconnect(){}};}
     createOscillator(){const source={frequency:parameter(),connect(){},disconnect(){},start(){},stopCalls:0,stop(){this.stopCalls++;}};this.sources.push(source);return source;}
     resume(){if(this.plan.resume==='reject')return Promise.reject(new Error('Output unavailable'));if(this.plan.resume==='pending')return new Promise(resolve=>{this.finishResume=()=>{this.state='running';this.emit();resolve();};});this.state='running';return Promise.resolve();}
     suspend(){this.suspendCalls++;return new Promise(resolve=>setTimeout(()=>{this.state='suspended';this.emit();resolve();},80));}
@@ -103,7 +121,7 @@ function nativePreparation(t) {
 for(const firstReady of ['native','context'])test(`native preparation and context resume both finish before scheduling, ${firstReady} first`,async t=>{
   const clock=audioLifecycle(t,[{resume:'pending'}]),requests=nativePreparation(t);
   const engine=createSoundEngine();let settled=false,pulses=0;
-  engine.setVolume(.6);
+  assert.equal('setVolume' in engine,false,'device media volume is the only level control');
   assert.equal(requests.length,0,'creating or configuring an engine must not activate native audio');
   assert.equal(clock.contexts.length,0,'opening a game must not create an audio context');
   const result=engine.play(shortTone,{onEvent:()=>pulses++});result.then(()=>{settled=true;});

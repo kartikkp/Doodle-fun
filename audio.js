@@ -5,45 +5,88 @@ export const TIMBRES = Object.freeze({
   shaker:{name:'Shaker',symbol:'▥',description:'A soft, sandy shh.'},
   wood:{name:'Wood block',symbol:'▰',description:'A short, hollow knock.'},
 });
-export const MAX_MASTER_GAIN = .18;
+// Device media volume is the only user volume control. Keep the game signal
+// present at ordinary media levels, then bound the mixed waveform below full
+// scale even when several scheduled notes overlap. These are digital values,
+// not a claim about speaker sound pressure or a physical listening level.
+export const FIXED_OUTPUT_GAIN = 1.15;
+export const OUTPUT_CEILING = .92;
+const mixCurve=Float32Array.from({length:4097},(_,i)=>{
+  const input=i/2048-1;
+  return OUTPUT_CEILING*Math.tanh(input*4*FIXED_OUTPUT_GAIN/OUTPUT_CEILING);
+});
+export function createSoundOutput(context,destination=context.destination) {
+  const input=context.createGain(),limiter=context.createWaveShaper(),output=context.createGain();
+  // Reserve four voices of input range for the curve. Its center has fixed
+  // gain 1.15; its smooth shoulders protect headroom instead of hard clipping.
+  input.gain.value=.25;limiter.curve=mixCurve;limiter.oversample='none';output.gain.value=1;
+  input.connect(limiter);limiter.connect(output);output.connect(destination);
+  return {input,nodes:[input,limiter,output]};
+}
 const clamp = (n,min,max) => Math.max(min,Math.min(max,n));
 
 /** Shared by live playback and OfflineAudioContext signal tests. Returns every
- * source and node so an interrupted route can cancel even future notes. */
+ * source and node so an interrupted route can cancel even future notes.
+ * Picture-practice actions can use stomp/clap/tap; rest deliberately has no sound. */
 export function scheduleSound(context, destination, event, at=context.currentTime) {
   const kind=event.kind||'tone',duration=clamp(Number(event.duration)||.28,.08,.65);
   const frequency=clamp(Number(event.frequency)||392,100,1600);
   const sources=[],nodes=[];
-  const voice=(type,freq,peak,decay=duration,ending=null)=>{
+  if(kind==='rest')return {sources,nodes,end:at+duration};
+  const envelope=(gain,peak,decay,hold=.12)=>{
+    gain.setValueAtTime(0,at);
+    gain.linearRampToValueAtTime(peak,at+.006);
+    gain.setValueAtTime(peak,at+Math.max(.006,decay*hold));
+    // Preserve a useful body and ring; the old peak-to-.0001 ramp spent most of
+    // each note nearly silent. The short final release still avoids a click.
+    gain.exponentialRampToValueAtTime(peak*.08,at+decay);
+    gain.linearRampToValueAtTime(0,at+decay+.012);
+  };
+  const voice=(type,freq,peak,decay=duration,ending=null,hold=.12)=>{
     const oscillator=context.createOscillator(),gain=context.createGain();
     oscillator.type=type;oscillator.frequency.setValueAtTime(freq,at);
     if(ending)oscillator.frequency.exponentialRampToValueAtTime(ending,at+decay*.8);
-    gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(peak,at+.008);
-    gain.gain.exponentialRampToValueAtTime(.0001,at+decay);
-    gain.gain.linearRampToValueAtTime(0,at+decay+.012);
+    envelope(gain.gain,peak,decay,hold);
     oscillator.connect(gain);gain.connect(destination);
     oscillator.start(at);oscillator.stop(at+decay+.02);
     sources.push(oscillator);nodes.push(oscillator,gain);
   };
-  if(kind==='shaker') {
-    const buffer=context.createBuffer(1,Math.ceil(context.sampleRate*duration),context.sampleRate);
-    const samples=buffer.getChannelData(0);let seed=4711;
-    for(let i=0;i<samples.length;i++){seed=(seed*1664525+1013904223)>>>0;samples[i]=(seed/4294967296*2-1)*.62;}
+  const noise=(peak,decay,frequency,seed=4711)=>{
+    const buffer=context.createBuffer(1,Math.ceil(context.sampleRate*(decay+.02)),context.sampleRate);
+    const samples=buffer.getChannelData(0);
+    for(let i=0;i<samples.length;i++){seed=(seed*1664525+1013904223)>>>0;samples[i]=seed/4294967296*2-1;}
     const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
-    source.buffer=buffer;filter.type='bandpass';filter.frequency.value=2200;filter.Q.value=.7;
-    gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.7,at+.012);
-    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
-    source.connect(filter);filter.connect(gain);gain.connect(destination);source.start(at);source.stop(at+duration+.02);
+    source.buffer=buffer;filter.type='bandpass';filter.frequency.value=frequency;filter.Q.value=.6;
+    envelope(gain.gain,peak,decay,.18);
+    source.connect(filter);filter.connect(gain);gain.connect(destination);source.start(at);source.stop(at+decay+.02);
     sources.push(source);nodes.push(source,filter,gain);
-  } else if(kind==='drum')voice('sine',150,.85,duration,55);
-  else if(kind==='bell'){voice('sine',740,.48,duration);voice('sine',1110,.15,duration*.7);}
-  else if(kind==='wood'){voice('sine',450,.7,Math.min(duration,.16));voice('triangle',680,.12,Math.min(duration,.11));}
-  else voice('sine',frequency,.7,duration);
+  };
+  if(kind==='shaker')noise(1.5,duration,2600);
+  else if(kind==='clap')noise(1.5,Math.min(duration,.18),1400,8123);
+  else if(kind==='drum'||kind==='stomp') {
+    // A harmonic body and a brief midrange strike survive small speakers much
+    // better than the old pure sine sweep ending at 55 Hz.
+    voice('triangle',380,.64,duration,230,.35);
+    voice('sine',620,.28,Math.min(duration,.12),340,.3);
+    noise(.4,Math.min(duration,.09),1600,9137);
+  } else if(kind==='bell') {
+    voice('sine',740,.6,duration,null,.28);
+    voice('sine',1110,.24,duration*.85,null,.2);
+    voice('sine',1850,.1,duration*.65);
+  } else if(kind==='wood'||kind==='tap') {
+    voice('sine',450,.78,Math.min(duration,.18),null,.3);
+    voice('triangle',920,.2,Math.min(duration,.11),null,.25);
+  } else {
+    voice('sine',frequency,.67,duration,null,.5);
+    // A quiet octave keeps lower notes recognizable on a phone while the
+    // requested fundamental still determines the heard melody and pitch.
+    voice('sine',frequency*2,.12,duration,null,.4);
+  }
   return {sources,nodes,end:at+duration+.03};
 }
 
 export function createSoundEngine({onInterrupt=()=>{}}={}) {
-  let context=null,master=null,stateHandler=null,volume=.55,generation=0,active=null;
+  let context=null,master=null,outputNodes=[],stateHandler=null,generation=0,active=null;
   const release=(job)=>{
     for(const timer of job.timers)clearTimeout(timer);
     for(const source of job.sources){try{source.stop();}catch{/* Already ended. */}}
@@ -57,10 +100,10 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     if(!expected||expected!==context)return;
     // Clear ownership before close: its state event or pending resume may arrive
     // after a later user gesture has already created a replacement context.
-    const oldMaster=master,oldHandler=stateHandler;
-    context=null;master=null;stateHandler=null;
+    const oldOutputNodes=outputNodes,oldHandler=stateHandler;
+    context=null;master=null;outputNodes=[];stateHandler=null;
     if(oldHandler)expected.removeEventListener('statechange',oldHandler);
-    try{oldMaster?.disconnect();}catch{/* Already detached. */}
+    for(const node of oldOutputNodes){try{node.disconnect();}catch{/* Already detached. */}}
     // WebKit can deliver a delayed output-start event even after close resolves.
     // Keep this guard on the retired context alone so that event re-closes it,
     // without interrupting a replacement context or retaining a global timer.
@@ -79,7 +122,7 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     if(!context||context.state==='closed') {
       const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;
       if(!Audio)throw new Error('Audio is not available in this browser.');
-      const created=new Audio();context=created;master=created.createGain();master.gain.value=MAX_MASTER_GAIN*volume;master.connect(created.destination);
+      const created=new Audio();context=created;const output=createSoundOutput(created);master=output.input;outputNodes=output.nodes;
       stateHandler=()=>{
         if(context!==created||created.state==='running')return;
         const job=active;
@@ -144,5 +187,5 @@ export function createSoundEngine({onInterrupt=()=>{}}={}) {
     // create a fresh context only on the next explicit Listen or pad gesture.
     stop();retireContext();
   }
-  return {play,stop,suspend,setVolume(value){volume=clamp(Number(value)||.55,.15,.8);if(master)master.gain.setValueAtTime(MAX_MASTER_GAIN*volume,context.currentTime);},get state(){return context?.state||'uninitialized';}};
+  return {play,stop,suspend,get state(){return context?.state||'uninitialized';}};
 }

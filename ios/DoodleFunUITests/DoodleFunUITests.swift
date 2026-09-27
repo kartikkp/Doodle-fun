@@ -198,14 +198,17 @@ final class DoodleFunUITests: XCTestCase {
     }
 
     func testProgressSettingsSurviveAppRelaunch() {
-        let sound = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Turn on read aloud'")).firstMatch
-        XCTAssertTrue(sound.waitForExistence(timeout: 30))
-        sound.tap()
-        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Turn off read aloud'")).firstMatch.exists)
+        let age = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Age 7'")).firstMatch
+        XCTAssertTrue(age.waitForExistence(timeout: 30))
+        age.tap()
+        XCTAssertEqual(age.value as? String, "1")
+        let retiredSoundSwitch = app.descendants(matching: .any).matching(NSPredicate(format: "label IN %@", ["Turn on read aloud", "Turn off read aloud"])).firstMatch
+        XCTAssertFalse(retiredSoundSwitch.exists, "Spoken help is requested per clue, without a persistent sound switch.")
         app.terminate()
         app.launchArguments = []
         app.launch()
-        XCTAssertTrue(app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Turn off read aloud'")).firstMatch.waitForExistence(timeout: 30))
-        app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Turn off read aloud'")).firstMatch.tap()
+        XCTAssertTrue(age.waitForExistence(timeout: 30))
+        XCTAssertEqual(age.value as? String, "1", "Starting difficulty still persists after relaunch.")
+        XCTAssertFalse(retiredSoundSwitch.exists, "Relaunch cannot restore the retired opt-in control.")
     }
 }

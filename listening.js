@@ -1,6 +1,7 @@
 import {getProfile,readStore,writeStore} from './core.js';
 import {createSoundEngine,TIMBRES} from './audio.js';
 import {stopSpeaking} from './speech.js';
+import {objectArt} from './activity-art.js';
 
 export const LISTENING_INFO = Object.freeze({
   'sound-match':{title:'Sound detective',symbol:'◉',skill:'SOUND EXPLORATION'},
@@ -16,18 +17,22 @@ const PAD_COLORS=['#8266c7','#32869c','#bd684e','#977120','#468563'];
 const boundedAge=value=>Math.max(2,Math.min(10,Math.round(Number(value)||6)));
 export function soundProfile(value=6) {
   const age=boundedAge(value&&typeof value==='object'?(value.challengeAge??value.age):value),i=age-2;
-  return {age,timbreChoices:[2,2,3,3,4,4,4,4,4][i],soundLength:[1,2,2,2,2,3,3,4,4][i],
-    pitchSteps:[2,2,2,3,3,4,3,4,5][i],pitchSemitones:[12,9,7,5,4,3,3,2,1][i],
+  return {age,timbreChoices:[2,2,3,3,4,4,4,4,4][i],soundLength:[1,2,2,2,2,3,4,5,6][i],
+    pitchSteps:[2,2,2,3,3,4,3,5,6][i],pitchSemitones:[12,9,7,5,4,3,3,2,1][i],
     contourChoices:age<=3?['up','down']:age<=7?['up','down','same']:['up','down','same','hill','valley'],
-    padCount:[2,3,3,4,4,4,5,5,5][i],melodyLength:[2,2,3,3,4,4,5,5,6][i],
+    padCount:[2,3,3,4,4,4,5,5,5][i],melodyLength:[2,2,3,3,4,4,5,6,7][i],
     melodyStep:[12,7,5,5,4,3,3,2,2][i],noteSpacing:[.68,.64,.61,.58,.55,.52,.50,.47,.44][i],
-    beatCount:[2,3,3,4,4,5,5,6,7][i],beatUnit:[.65,.65,.58,.56,.54,.52,.50,.48,.46][i],
-    beatTolerance:[1,1,.50,.46,.42,.38,.35,.32,.30][i],countOnly:age<=3,modelByDefault:age===2};
+    beatCount:[2,3,3,4,4,5,5,7,8][i],beatUnit:[.65,.65,.58,.56,.54,.52,.50,.48,.46][i],
+    beatTolerance:[1,1,.50,.46,.42,.38,.35,.32,.30][i],countOnly:age<=3,modelByDefault:false};
 }
 function shuffle(values,seed) {
   const list=[...values];let n=(seed+31)>>>0;
   for(let i=list.length-1;i>0;i--){n=(n*1664525+1013904223)>>>0;const j=n%(i+1);[list[i],list[j]]=[list[j],list[i]];}
   return list;
+}
+function variedSequence(length,choices,seed) {
+  let value=(Math.imul(seed+1,2654435761)+12345)>>>0;
+  return Array.from({length},()=>{value=(Math.imul(value,1664525)+1013904223)>>>0;return (value>>>8)%choices;});
 }
 export function buildListeningRound(id,profile=6,round=0) {
   if(!LISTENING_IDS.includes(id))throw new Error(`Unknown listening activity: ${id}`);
@@ -35,11 +40,12 @@ export function buildListeningRound(id,profile=6,round=0) {
   if(id==='sound-match') {
     const bank=['drum','bell','shaker','wood'];
     const choices=shuffle(bank.slice(0,p.timbreChoices),n+p.age),answer=choices[n%choices.length];
-    const sounds=Array.from({length:p.soundLength},(_,i)=>p.age<=4?answer:choices[(i+n+1)%choices.length]);
-    const position=p.age>=8&&n%2===1?0:sounds.length-1;sounds[position]=answer;
+    const sounds=p.age>=8?variedSequence(p.soundLength,choices.length,n+p.age*71).map(index=>choices[index]):Array.from({length:p.soundLength},(_,i)=>p.age<=4?answer:choices[(i+n+1)%choices.length]);
+    const position=p.age>=9?n%sounds.length:p.age===8&&n%2===1?0:sounds.length-1;sounds[position]=answer;
+    const place=position===0?'first':position===sounds.length-1?'last':['first','second','third','fourth','fifth','sixth'][position];
     return {...common,choices,answer,sounds,position,events:sounds.map((kind,i)=>({kind,time:i*.58,duration:.30})),
-      prompt:p.age<=4?'Which sound did you hear?':`Which sound came ${position===0?'first':'last'}?`,
-      intro:p.age<=4?'Listen. Try each sound, then choose its partner.':`Remember the ${position===0?'first':'last'} sound. Explore the choices before you choose.`,
+      prompt:p.age<=4?'Which sound did you hear?':`Which sound came ${place}?`,
+      intro:p.age<=4?'Listen. Try each sound, then choose its partner.':`Remember the ${place} sound. Explore the choices before you choose.`,
       help:`${TIMBRES[answer].description} Listen again, then compare the sound buttons. The hint model names it ${TIMBRES[answer].name}.`};
   }
   if(id==='pitch-path') {
@@ -52,13 +58,15 @@ export function buildListeningRound(id,profile=6,round=0) {
   }
   if(id==='melody-echo') {
     const frequencies=Array.from({length:p.padCount},(_,i)=>220*2**(i*p.melodyStep/12));
-    const sequence=Array.from({length:p.melodyLength},(_,i)=>(n+i+(i>1&&i%3===2?1:0))%p.padCount);
+    const sequence=p.age>=5?variedSequence(p.melodyLength,p.padCount,n+p.age*97):Array.from({length:p.melodyLength},(_,i)=>(n+i+(i>1&&i%3===2?1:0))%p.padCount);
+    if(new Set(sequence).size===1)sequence[sequence.length-1]=(sequence[0]+1)%p.padCount;
     return {...common,frequencies,sequence,events:sequence.map((pad,i)=>({kind:'tone',frequency:frequencies[pad],time:i*p.noteSpacing,duration:.28})),
       prompt:'Listen, then play it back',intro:p.modelByDefault?'Explore together. Match the sounds and the little picture model.':'Listen first. Remember the order, then play the tone pads. You can replay as often as you like.',
       help:'Listen to one tone at a time. The picture model shows the pad order. Play slowly; matching the timing is not needed.'};
   }
-  const gapUnits=Array.from({length:p.beatCount-1},(_,i)=>p.countOnly?1:((i+n)%3===1?2:1));
+  const gapUnits=p.age>=6?variedSequence(p.beatCount-1,2,n+p.age*113).map(value=>value+1):Array.from({length:p.beatCount-1},(_,i)=>p.countOnly?1:((i+n)%3===1?2:1));
   if(!p.countOnly&&!gapUnits.includes(2))gapUnits[gapUnits.length-1]=2;
+  if(!p.countOnly&&!gapUnits.includes(1))gapUnits[0]=1;
   const gaps=gapUnits.map(unit=>unit*p.beatUnit),times=[0];gaps.forEach(gap=>times.push(times.at(-1)+gap));
   return {...common,gapUnits,gaps,times,events:times.map(time=>({kind:'drum',time,duration:.16})),
     prompt:p.countOnly?'Copy the drum taps':'Copy the spaces between taps',
@@ -91,26 +99,22 @@ function safeProgress() {
 }
 export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}={}) {
   let id=null,profile=null,question=null,round=0,epoch=0,heard=false,busy=false,previewBusy=false,complete=false,model=false,sequence=[],taps=[],activePulse=-1;
-  const savedAudio=readStore('listening-audio-v1',{});
-  const audioPreferences=savedAudio&&typeof savedAudio==='object'&&!Array.isArray(savedAudio)?savedAudio:{};
-  let feedback='Tap Listen when you are ready.',helpText='',soundOn=audioPreferences.enabled!==false;
-  let volume=Math.max(.15,Math.min(.8,Number(audioPreferences.volume)||.55));
+  let feedback='Tap Listen when you are ready.',helpText='';
   const progress=safeProgress();
-  const engine=createSoundEngine({onInterrupt:()=>{if(id)suspendAudio();}});engine.setVolume(volume);
-  function settingsAudio(){writeStore('listening-audio-v1',{enabled:soundOn,volume});}
+  const engine=createSoundEngine({onInterrupt:()=>{if(id)suspendAudio();}});
   function cancel(){epoch++;engine.stop();busy=false;previewBusy=false;activePulse=-1;}
-  function reset(message='Tap Listen when you are ready.') {cancel();heard=false;complete=false;sequence=[];taps=[];feedback=message;}
-  function suspendAudio(){if(!id)return;cancel();engine.suspend();if(!complete){heard=false;sequence=[];taps=[];feedback='Sound paused. Tap Listen when you are ready to continue.';}render();}
-  function failAudio(reason){heard=false;busy=false;previewBusy=false;sequence=[];taps=[];feedback=reason||'Sound paused. Tap Listen to try again.';render();}
+  function hideModel(){model=false;helpText='';}
+  function reset(message='Tap Listen when you are ready.') {cancel();hideModel();heard=false;complete=false;sequence=[];taps=[];feedback=message;}
+  function suspendAudio(){if(!id)return;cancel();hideModel();engine.suspend();if(!complete){heard=false;sequence=[];taps=[];feedback='Sound paused. Tap Listen when you are ready to continue.';}render();}
+  function failAudio(reason){hideModel();heard=false;busy=false;previewBusy=false;sequence=[];taps=[];feedback=reason||'Sound paused. Tap Listen to try again.';render();}
   function win() {
-    if(complete||!heard||!soundOn)return;
+    if(complete||!heard)return;
     complete=true;feedback=id==='beat-studio'?(profile.countOnly?'You matched every drum tap!':'You copied the short and long spaces!'):id==='melody-echo'?'You played the whole melody in order!':'You listened and found the sound!';
     const key=`${id}:${profile.age}:${round}`;
     if(!progress.stars[key]){progress.stars[key]=true;writeStore('listening-progress-v1',progress);onProgress({source:'listening',completedCount:Object.keys(progress.stars).length});}
     render();
   }
   function listen() {
-    if(!soundOn){feedback='Turn game sound on, then tap Listen.';render();return;}
     stopSpeaking();
     reset();const token=epoch;busy=true;feedback='Listening…';render();
     engine.play(question.events,{onEvent:index=>{if(token!==epoch)return;activePulse=index;paintPulse();}}).then(result=>{
@@ -121,7 +125,6 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   }
   function paintPulse(){container.querySelectorAll('[data-listening-pulse]').forEach((node,i)=>node.classList.toggle('is-active',busy&&i===activePulse));}
   function preview(event,after=()=>{}) {
-    if(!soundOn){feedback='Turn game sound on to explore the sounds.';render();return;}
     if(busy||complete)return;
     stopSpeaking();
     const token=epoch;previewBusy=true;render();
@@ -132,27 +135,28 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     });
   }
   function choose(value) {
-    if(!heard||busy||previewBusy||complete||!soundOn)return;
+    if(!heard||busy||previewBusy||complete)return;
     if(value===question.answer){win();return;}
+    hideModel();
     feedback=id==='pitch-path'?'Try listening again. Follow each sound up or down with your hand.':'Try comparing the sounds again. Use Hear on a choice before choosing it.';render();
   }
   function melodyPad(pad) {
     if(previewBusy)return;
     preview({kind:'tone',frequency:question.frequencies[pad],duration:.18},()=>{
       if(!heard){feedback='That is this pad’s sound. Tap Listen to hear the melody.';return;}
-      if(pad!==question.sequence[sequence.length]){sequence=[];feedback='Let’s try that melody again. Replay it, or use the picture hint. Start with its first sound.';return;}
+      if(pad!==question.sequence[sequence.length]){hideModel();sequence=[];feedback='Let’s try that melody again. Replay it, or use the picture hint. Start with its first sound.';return;}
       sequence.push(pad);feedback=`${sequence.length} of ${question.sequence.length} tones played.`;
       if(sequence.length===question.sequence.length)win();
     });
   }
   function drumTap() {
-    if(!heard||busy||complete||!soundOn)return;
+    if(!heard||busy||complete)return;
     const time=performance.now();if(taps.length&&time-taps.at(-1)<95)return;
     if(taps.length>=question.times.length+2){feedback='Try again to start a fresh beat.';render();return;}
     taps.push(time);feedback=`${taps.length} drum ${taps.length===1?'tap':'taps'}. Check when you are finished.`;
-    preview({kind:'drum',duration:.13});render();
+    preview({kind:'drum',duration:.16});render();
   }
-  function checkBeat(){if(!heard||busy||previewBusy||complete||!soundOn)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
+  function checkBeat(){if(!heard||busy||previewBusy||complete)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}hideModel();feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
   function hint(){if(!id)return;cancel();model=true;helpText=question.help;feedback=heard?'The hint is here. Replay whenever you want.':'The hint is here. Tap Listen to hear it before your turn.';render();}
   function next(){round=(round+1)%10000;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();}
 
@@ -173,26 +177,26 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     if(id==='sound-match') {
       const choices=el('div','listening-sound-choices');
       question.choices.forEach(kind=>{
-        const card=el('div','listening-sound-card');card.append(el('span','listening-instrument',TIMBRES[kind].symbol),el('strong','',TIMBRES[kind].name));
-        const hear=btn(`Hear ${TIMBRES[kind].name}`,()=>preview({kind,duration:.30}));hear.dataset.listeningPreview=kind;hear.disabled=busy||previewBusy||complete||!soundOn;
-        const chooseButton=btn(`Choose ${TIMBRES[kind].name}`,()=>choose(kind),'listening-choice');chooseButton.dataset.listeningAnswer=kind;chooseButton.disabled=!heard||busy||previewBusy||complete||!soundOn;
+        const card=el('div','listening-sound-card'),instrument=el('span','listening-instrument');instrument.innerHTML=objectArt(kind,{age:profile.age});card.append(instrument,el('strong','',TIMBRES[kind].name));
+        const hear=btn(`Hear ${TIMBRES[kind].name}`,()=>preview({kind,duration:.30}));hear.dataset.listeningPreview=kind;hear.disabled=busy||previewBusy||complete;
+        const chooseButton=btn(`Choose ${TIMBRES[kind].name}`,()=>choose(kind),'listening-choice');chooseButton.dataset.listeningAnswer=kind;chooseButton.disabled=!heard||busy||previewBusy||complete;
         card.append(hear,chooseButton);choices.append(card);
       });parent.append(choices);
     } else if(id==='pitch-path') {
       const choices=el('div','listening-path-choices');question.choices.forEach(value=>{
-        const choice=btn('',()=>choose(value),'listening-path');choice.append(el('span','listening-path-icon',CONTOURS[value].symbol),el('span','',CONTOURS[value].label));choice.dataset.listeningAnswer=value;choice.disabled=!heard||busy||complete||!soundOn;choices.append(choice);
+        const choice=btn('',()=>choose(value),'listening-path');choice.append(el('span','listening-path-icon',CONTOURS[value].symbol),el('span','',CONTOURS[value].label));choice.dataset.listeningAnswer=value;choice.disabled=!heard||busy||complete;choices.append(choice);
       });parent.append(choices);
     } else if(id==='melody-echo') {
       const slots=el('div','listening-echo-slots');slots.setAttribute('aria-label',`${sequence.length} of ${question.sequence.length} tones played`);
       question.sequence.forEach((_,i)=>slots.append(el('span',`listening-echo-slot ${i<sequence.length?'is-filled':''}`,i<sequence.length?PAD_SYMBOLS[sequence[i]]:'·')));parent.append(slots);
       const pads=el('div','listening-pads');question.frequencies.forEach((_,pad)=>{
-        const button=btn('',()=>melodyPad(pad),'listening-pad');button.setAttribute('aria-label',`Tone ${pad+1}`);button.dataset.listeningPad=pad;button.style.setProperty('--pad-color',PAD_COLORS[pad]);button.append(el('span','',PAD_SYMBOLS[pad]),el('small','',`Tone ${pad+1}`));button.disabled=busy||previewBusy||complete||!soundOn;pads.append(button);
+        const button=btn('',()=>melodyPad(pad),'listening-pad');button.setAttribute('aria-label',`Tone ${pad+1}`);button.dataset.listeningPad=pad;button.style.setProperty('--pad-color',PAD_COLORS[pad]);button.append(el('span','',PAD_SYMBOLS[pad]),el('small','',`Tone ${pad+1}`));button.disabled=busy||previewBusy||complete;pads.append(button);
       });parent.append(pads);
     } else {
-      const drum=btn('',event=>{if(event.detail===0)drumTap();},'listening-drum');drum.setAttribute('aria-label','Tap drum');drum.dataset.listeningDrum='';drum.append(el('span','','●'),el('strong','','Tap drum'));drum.disabled=!heard||busy||complete||!soundOn;
+      const drum=btn('',event=>{if(event.detail===0)drumTap();},'listening-drum'),art=el('span','listening-drum-art');art.innerHTML=objectArt('drum',{age:profile.age});drum.setAttribute('aria-label','Tap drum');drum.dataset.listeningDrum='';drum.append(art,el('strong','','Tap drum'));drum.disabled=!heard||busy||complete;
       drum.addEventListener('pointerdown',event=>{if(event.isPrimary!==false&&event.button===0){event.preventDefault();drumTap();}});
       const beats=el('div','listening-taps',`${taps.length} ${taps.length===1?'tap':'taps'}`);beats.dataset.listeningTapCount='';
-      const check=btn('Check my beat',checkBeat,'listening-primary');check.dataset.listeningCheck='';check.disabled=!heard||busy||previewBusy||complete||!soundOn;parent.append(drum,beats,check);
+      const check=btn('Check my beat',checkBeat,'listening-primary');check.dataset.listeningCheck='';check.disabled=!heard||busy||previewBusy||complete;parent.append(drum,beats,check);
     }
   }
   function render() {
@@ -201,16 +205,14 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     const header=el('header','activity-header listening-header'),back=btn('←',onBack);back.setAttribute('aria-label','Back to activities');
     const heading=el('div','listening-heading');heading.append(el('p','listening-eyebrow',LISTENING_INFO[id].skill),el('h1','',LISTENING_INFO[id].title));header.append(back,heading);screen.append(header);
     const body=el('div','listening-body'),main=el('div','listening-main'),side=el('aside','listening-side');
-    const audioControls=el('div','listening-audio-controls');
-    const toggle=btn(`Game sound ${soundOn?'on':'off'}`,()=>{soundOn=!soundOn;settingsAudio();suspendAudio();feedback=soundOn?'Game sound is on. Tap Listen.':'Game sound is off. Turn it on when you want to listen.';render();});toggle.dataset.listeningSound='';toggle.setAttribute('aria-pressed',String(soundOn));audioControls.append(toggle);
-    const volumeLabel=el('label','listening-volume','Gentle volume'),slider=el('input');slider.type='range';slider.min='.15';slider.max='.8';slider.step='.05';slider.value=String(volume);slider.setAttribute('aria-label','Game volume');slider.addEventListener('input',()=>{volume=Number(slider.value);engine.setVolume(volume);settingsAudio();});volumeLabel.append(slider);audioControls.append(volumeLabel);main.append(audioControls);
     main.append(el('p','listening-age',`Age ${profile.age} · Your pace`),el('h2','listening-prompt',question.prompt),el('p','listening-intro',question.intro));
-    const listenButton=btn(busy?'Listening…':previewBusy?'Hearing a sound…':'Listen',listen,'listening-listen listening-primary');listenButton.dataset.listeningListen='';listenButton.disabled=busy||previewBusy||!soundOn;main.append(listenButton);
+    const listenButton=btn(busy?'Listening…':previewBusy?'Hearing a sound…':'Listen',listen,'listening-listen listening-primary');listenButton.dataset.listeningListen='';listenButton.disabled=busy||previewBusy;main.append(listenButton);
     const pulses=el('div','listening-pulses');pulses.setAttribute('aria-hidden','true');question.events.forEach((_,i)=>{const pulse=el('span',`listening-pulse ${i===activePulse?'is-active':''}`);pulse.dataset.listeningPulse='';pulses.append(pulse);});main.append(pulses);
     const status=el('p',`listening-feedback ${complete?'is-complete':''}`,feedback);status.dataset.testid='listening-feedback';status.setAttribute('role','status');status.setAttribute('aria-live','polite');main.append(status);renderModel(main);renderPlay(main);
     const actions=el('div','listening-actions');actions.append(btn('Try again',()=>{reset();render();}),btn('New round',next));main.append(actions);
-    side.append(el('div','listening-side-icon',LISTENING_INFO[id].symbol),el('h2','','A little listening help'),el('p','',helpText||'Listen as often as you like. Explore each sound, then have a go. There is no timer.'));
-    const hintButton=btn('Show a hint',hint);hintButton.dataset.listeningHint='';side.append(hintButton,el('p','listening-small',profile.age<=3?'Explore together with a grown-up. Picture help is welcome; reading alone is not needed.':'Need a different challenge? Your Coach can make this activity easier or harder.'),el('p','listening-small','Game sound is separate from Read aloud. Nothing records your voice.'));
+    const hintButton=btn('Show a hint',hint);hintButton.dataset.listeningHint='';side.append(hintButton);
+    if(model)side.append(el('p','listening-help',helpText),el('p','listening-small',profile.age<=3?'Explore together. Replay freely and follow the picture hint.':'Remember a small part at a time. Replay freely; there is no timer.'));
+    side.append(el('p','listening-small','Use your device’s volume buttons for sounds.'));
     body.append(main,side);screen.append(body);container.replaceChildren(screen);
   }
   const onVisibility=()=>{if(document.hidden)suspendAudio();};document.addEventListener('visibilitychange',onVisibility);globalThis.addEventListener?.('pagehide',suspendAudio);

@@ -14,7 +14,7 @@ test('320px phones keep twenty-frame and dense word, case and subtraction contro
   await page.setViewportSize({width:320,height:568});
   for(const id of ['ten-frame','subtraction','word-build','letter-match']) {
     await start(page,id,10);
-    if(id==='ten-frame')await expect(page.locator('.challenge-intro')).toContainText('Leave the number of empty spaces shown');
+    if(id==='ten-frame')await expect(page.locator('.challenge-intro')).toContainText('Work it out');
     if(id==='subtraction')await expect(page.locator('.challenge-intro')).toContainText('how many were taken away');
     if(id==='word-build') {
       const tops=await page.locator('.challenge-word-slots .challenge-slot').evaluateAll(slots=>slots.map(slot=>slot.getBoundingClientRect().top));
@@ -55,15 +55,24 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
       await expect(page.locator('.challenge-slot.is-filled')).toHaveCount(q.sequence.length);
     });
     test('subtraction models the groups and accepts the requested unknown',async({page})=>{
-      const q=await start(page,'subtraction',age);await expect(page.locator('.challenge-dot.is-crossed')).toHaveCount(q.removed);
+      const q=await start(page,'subtraction',age);await expect(page.locator('.challenge-dot.is-crossed')).toHaveCount(q.model==='place-value'?0:q.removed);
       await page.locator(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`).click();await expect(page.getByTestId('challenge-feedback')).not.toHaveClass(/is-complete/);
       await page.locator(`[data-answer="${q.answer}"]`).click();await passed(page);
     });
     test('missing parts give an optional counting picture and verify the complete whole',async({page})=>{
       const q=await start(page,'number-bonds',age);
       await page.locator(`[data-answer="${q.choices.find(value=>value!==q.answer)}"]`).click();
-      await expect(page.locator('.challenge-bond-support')).toBeVisible();
-      await expect(page.locator('.challenge-bond-support .challenge-dot.is-empty')).toHaveCount(q.answer);
+      if(q.model==='place-value') {
+        await expect(page.getByTestId('place-value-strategy')).toBeHidden();
+        await page.getByRole('button',{name:'Show a place-value strategy',exact:true}).click();
+        await expect(page.getByTestId('place-value-strategy')).toBeVisible();
+        await expect(page.locator('.challenge-dot')).toHaveCount(0);
+      } else {
+        await expect(page.locator('.challenge-bond-support')).toBeHidden();
+        await page.getByRole('button',{name:'Show a picture hint',exact:true}).click();
+        await expect(page.locator('.challenge-bond-support')).toBeVisible();
+        await expect(page.locator('.challenge-bond-support .challenge-dot.is-empty')).toHaveCount(q.answer);
+      }
       await page.locator(`[data-answer="${q.answer}"]`).click();await passed(page);
     });
     test('frames allow changing a dot and require the exact target',async({page})=>{
@@ -76,16 +85,17 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
     });
     test('letter partners recover from a mismatch and require every case pair',async({page})=>{
       const q=await start(page,'letter-match',age);
-      if(q.pairs.length>1){await page.locator(`[data-letter="${q.pairs[0].toUpperCase()}"]`).click();await page.locator(`[data-letter="${q.pairs[1]}"]`).click();}
+      if(q.pairs.length>1){await page.locator(`[data-side="upper"][data-letter="${q.relationships?.[0].upper??q.pairs[0].toUpperCase()}"]`).click();await page.locator(`[data-side="lower"][data-letter="${q.relationships?.[1].lower??q.pairs[1]}"]`).click();}
       else await page.getByRole('button',{name:'Show partners',exact:true}).click();
       await expect(page.locator('.challenge-letter.is-matched')).toHaveCount(0);
-      for(const letter of q.pairs){await page.locator(`[data-letter="${letter.toUpperCase()}"]`).click();await page.locator(`[data-letter="${letter}"]`).click();}
+      for(const [i,letter] of q.pairs.entries()){await page.locator(`[data-side="upper"][data-letter="${q.relationships?.[i].upper??letter.toUpperCase()}"]`).click();await page.locator(`[data-side="lower"][data-letter="${q.relationships?.[i].lower??letter}"]`).click();}
       await passed(page);await expect(page.locator('.challenge-letter.is-matched')).toHaveCount(q.pairs.length*2);
     });
     test('word building handles hints and repeated letter tiles without reusing a tile',async({page})=>{
       const q=await start(page,'word-build',age);
-      if(age<=4)await expect(page.locator('.challenge-word-model')).toBeVisible();else await expect(page.locator('.challenge-word-model')).toBeHidden();
-      const wrong=q.tiles.find(tile=>tile.letter!==q.word[0]);await page.locator(`[data-tile="${wrong.index}"]`).click();await expect(page.locator('.challenge-word-model')).toBeVisible();
+      await expect(page.locator('.challenge-word-model')).toBeHidden();
+      const wrong=q.tiles.find(tile=>tile.letter!==q.word[0]);await page.locator(`[data-tile="${wrong.index}"]`).click();await expect(page.locator('.challenge-word-model')).toBeHidden();
+      await page.getByRole('button',{name:'Show the word hint',exact:true}).click();await expect(page.locator('.challenge-word-model')).toBeVisible();
       for(const letter of q.word)await page.locator(`[data-character="${letter}"]:not(:disabled)`).first().click();
       await passed(page);await expect(page.locator('.challenge-slot.is-filled')).toHaveCount(q.word.length);
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -93,13 +103,13 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
   });
 }
 
-test('read-aloud toggles preserve an in-progress sequence and frame',async({page})=>{
+test('requested coaching preserves an in-progress sequence and frame',async({page})=>{
   await start(page,'number-order',6);const q=generateChallenge('number-order',getProfile({age:6}));
   await page.locator(`[data-tile="${q.sequence[0]}"]`).click();
-  await page.locator('#coach-sound').click();
+  await page.locator('#coach-open').click();await page.locator('#coach-done').click();
   await expect(page.locator('.challenge-slot.is-filled')).toHaveCount(1);
-  await expect(page.locator('[data-challenge-speech]')).toBeVisible();
+  await page.locator('.challenge-help summary').click();await expect(page.locator('[data-challenge-speech]')).toBeVisible();
   for(const number of q.sequence.slice(1))await page.locator(`[data-tile="${number}"]`).click();await passed(page);
   await page.goto('/#ten-frame');await page.locator('[data-cell="0"]').click();
-  await page.locator('#coach-sound').click();await expect(page.locator('[data-cell="0"]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('#coach-open').click();await page.locator('#coach-done').click();await expect(page.locator('[data-cell="0"]')).toHaveAttribute('aria-pressed','true');
 });

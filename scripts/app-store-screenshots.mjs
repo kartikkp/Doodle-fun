@@ -156,7 +156,7 @@ final class AppStoreScreenshots: XCTestCase {
 
         XCTAssertTrue(named("Turn on read aloud").exists)
         open("Sound detective")
-        XCTAssertTrue(named("Game sound on").waitForExistence(timeout:10))
+        XCTAssertTrue(named("Listen").waitForExistence(timeout:10))
         if ${listeningState==='ready'?'true':'false'} {
             let ready = named("Your turn. Explore the sounds or choose your answer.")
             for _ in 0..<2 {

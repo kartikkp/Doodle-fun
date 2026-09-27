@@ -6,8 +6,9 @@ import {createChallenges} from './challenges.js';
 import {createAdventures} from './adventures.js';
 import {createListening} from './listening.js';
 import {ACTIVITIES,ACTIVITY_MODES,CATEGORIES,getActivity,getFamily} from './catalog.js';
-import {coachingFor,normalizeAdjustments} from './coaching.js';
-import {canSpeak,speak,stopSpeaking} from './speech.js';
+import {coachingFor,coachingText,normalizeAdjustments} from './coaching.js';
+import {activityArt,appearanceBand} from './activity-art.js';
+import {canSpeak,requestSpeech,stopSpeaking} from './speech.js';
 import {openExternalURL} from './parental-gate.js';
 
 let settings = normalizeSettings(readStore('settings', null));
@@ -19,10 +20,9 @@ const discoveryView = $('discovery-view'), challengesView = $('challenges-view')
 const adventuresView = $('adventures-view'), listeningView = $('listening-view');
 const modeBar = $('activity-mode-bar');
 const settingsDialog = $('grownups-dialog');
-let informationReturn = null;
+let informationReturn = null, coachSpeechToken=0, coachSpeaking=false;
 const getSettings = () => ({...settings,challengeOffset:adjustments[activeRoute] || 0});
 const getTitle = () => ['letters','numbers'].includes(location.hash.slice(1)) ? null : getFamily(activeRoute)?.title || null;
-const soundIcon = enabled => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4V5Z"/>${enabled?'<path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/>':'<path d="m16 9 5 6m0-6-5 6"/>'}</svg>`;
 function notice(message) {
   if (!message) return;
   $('app-notice').textContent = message;
@@ -41,16 +41,61 @@ function renderProgress(value) {
   $('home-progress').textContent = count ? `${count} little ${count === 1 ? 'win' : 'wins'}` : 'Every try counts';
   $('home-progress-sub').textContent = count ? 'Look what you’re learning!' : 'Play at your own pace';
 }
+function familyCopy(activity,age) {
+  const revised={};
+  const copy=(id,description,skill)=>revised[id]={description,skill};
+  if(age>=4)copy('beat-studio','Copy short and long gaps at your tempo.','Rhythm & relative timing');
+  if(age>=5)copy('sound-match','Remember a sound’s place in a sequence.','Listening & sound order');
+  if(age>=6) {
+    copy('counting','Combine place-value units. Build an amount.','Place value & number structure');
+    copy('ordering','Use measurements and order number steps.','Measurement & number order');
+    copy('shape-match','Use shape clues and explore color changes.','Geometry & color relationships');
+    copy('patterns','Find the missing picture in a pattern.','Pattern rules & prediction');
+    copy('sorting','Sort by the rule on each round.','Classification & number rules');
+    copy('memory','Remember cards and match their meanings.','Memory & relationships');
+  }
+  if(age>=7) {
+    copy('letter-match',({7:'Connect words with rhyming sounds.',8:'Connect prefixes with their meanings.',9:'Connect suffixes with their meanings.',10:'Connect word roots with their meanings.'})[age],'Word sounds & meanings');
+    copy('picture-sequence','Sequence events and spot the extra picture.','Causal order & relevance');
+    copy('maze','Plan checkpoint paths and changed routes.','Route planning & transformations');
+    copy('melody-echo','Remember melodies and action patterns.','Listening & sequence memory');
+  }
+  if(age>=8) {
+    copy('draw','Plan a picture, palette, or visual story.','Art & visual communication');
+    copy('trails','Practice longer labels, words, and numerals.','Handwriting & spacing');
+    copy('word-build','Solve word clues and choose the letters.','Vocabulary & spelling');
+    copy('number-stories','Combine numbers and find missing amounts.','Place value & missing operands');
+    copy('compare','Compare place values and reason about amounts.','Number comparison');
+    copy('shape-match','Investigate shape properties and color relations.','Geometry & color relationships');
+    copy('odd-one-out','Find the value that breaks the number rule.','Number properties');
+    copy('make-a-shape','Build shapes from their defining properties.','Geometric construction');
+    copy('melody-echo','Remember melodies and transform action patterns.','Listening & transformations');
+  }
+  if(age>=9) {
+    copy('counting',age===10?'Regroup decimal units. Build fraction amounts.':'Count fractional units. Build equivalent fractions.','Units & fractions');
+    copy('sharing','Multiply groups and reason about fair shares.','Multiplication & division');
+    copy('patterns','Find missing numbers using changing rules.','Arithmetic patterns');
+    copy('compare',age===10?'Compare decimals, then find the difference.':'Compare numbers, then find the difference.','Comparison & difference');
+    copy('ordering',age===10?'Compare perimeters and order decimals.':'Compare areas and order number steps.','Measurement & number order');
+    copy('memory',age===10?'Remember and match equivalent fractions.':'Match multiplication expressions and products.','Memory & number relationships');
+  }
+  if(age===10) {
+    copy('number-stories','Combine decimals and find missing amounts.','Decimal relationships');
+    copy('sorting','Sort fractions by their value compared with half.','Fraction benchmarks');
+    copy('odd-one-out','Find the fraction that breaks the value rule.','Fraction equivalence');
+  }
+  return revised[activity.id] || activity;
+}
 function renderCatalog() {
-  const tier=getProfile(settings).tier;
-  $('activity-filters').innerHTML=CATEGORIES.map(category=>`<button class="activity-filter" type="button" data-filter="${category.id}" aria-pressed="${filter===category.id}"><span aria-hidden="true">${category.icon}</span>${category.label}</button>`).join('');
-  const homeOrder=settings.age<=4 ? ['draw','sound-match','shape-match','counting','ordering','memory','trails','sorting','picture-sequence','melody-echo'] : settings.age<=7 ? ['draw','melody-echo','patterns','word-build','sharing','make-a-shape','pitch-path','number-stories','beat-studio','maze'] : ['draw','beat-studio','maze','melody-echo','pitch-path','word-build','sharing','number-stories','patterns','picture-sequence'];
+  const profile=getProfile(settings),tier=profile.tier;
+  $('activity-filters').innerHTML=CATEGORIES.map(category=>`<button class="activity-filter" type="button" data-filter="${category.id}" aria-pressed="${filter===category.id}"><span aria-hidden="true">${({all:'✦',create:'✎',letters:'Aa',numbers:'123',discover:'◇',listen:'♪'})[category.id]}</span>${category.label}</button>`).join('');
+  const homeOrder=settings.age<=4 ? ['draw','sound-match','shape-match','counting','ordering','memory','trails','sorting','picture-sequence','melody-echo'] : settings.age<=7 ? ['draw','melody-echo','patterns','word-build','sharing','make-a-shape','pitch-path','number-stories','beat-studio','maze'] : ['number-stories','patterns','memory','compare','maze','melody-echo','pitch-path','beat-studio','sharing','draw'];
   const visible=ACTIVITIES.filter(activity=>filter==='all'||activity.category===filter);
   if(filter==='all')visible.sort((a,b)=>(homeOrder.includes(a.id)?homeOrder.indexOf(a.id):99)-(homeOrder.includes(b.id)?homeOrder.indexOf(b.id):99));
   $('activity-count').textContent=`${visible.length} activities`;
-  $('activity-guidance').textContent=tier==='little'?'Big targets, small steps. Explore words and number puzzles together.':tier==='explorer'?'Try a new idea. Hints and practice are always here.':'More to think about. Take your time and try a new challenge.';
+  $('activity-guidance').textContent=tier==='little'?'Big targets, small steps. Explore words and number puzzles together.':tier==='explorer'?'Try a new idea. Hints and practice are always here.':'Try number reasoning, word relationships, rule puzzles and memory challenges. Tracing remains here for handwriting practice.';
   const classes={create:'card-draw',letters:'card-letters',numbers:'card-numbers',discover:'card-color',listen:'card-listen'};
-  $('activity-grid').innerHTML=visible.map(activity=>`<a class="activity-card ${classes[activity.category]}" id="card-${activity.id}" href="#${activity.id}" data-engine="${activity.engine}"><div class="card-topline"><span class="skill-tag">${CATEGORIES.find(c=>c.id===activity.category).label}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-picture" aria-hidden="true"><span class="catalog-icon${activity.icon.length>3?' catalog-word':''}">${activity.icon}</span></div><div class="card-bottom"><div><h3>${activity.title}</h3><p>${activity.description}</p></div></div><div class="card-footnote">${activity.skill}${activity.modes.length>1?`<span class="card-mode-count">${activity.modes.length} ways to play</span>`:''}</div></a>`).join('');
+  $('activity-grid').innerHTML=visible.map(activity=>{const copy=familyCopy(activity,profile.challengeAge);return `<a class="activity-card ${classes[activity.category]}" id="card-${activity.id}" href="#${activity.id}" data-engine="${activity.engine}" data-family="${activity.id}"><div class="card-topline"><span class="skill-tag">${CATEGORIES.find(c=>c.id===activity.category).label}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-picture" aria-hidden="true">${activityArt(activity.id,{age:settings.age})}</div><div class="card-bottom"><div><h3>${activity.title}</h3><p>${copy.description}</p></div></div><div class="card-footnote">${copy.skill}${activity.modes.length>1?`<span class="card-mode-count">${activity.modes.length} ways to play</span>`:''}</div></a>`;}).join('');
 }
 function learningModeChanged({set,mode,pageMode}) {
   const next=pageMode==='trace' ? {shapes:'prewriting',upper:'uppercase',lower:'lowercase',words:'word-tracing',nums:'number-tracing'}[set] : {count:'counting',add:'addition',groups:'equal-groups'}[mode];
@@ -77,12 +122,13 @@ function renderModeBar() {
   requestAnimationFrame(()=>{const selected=modeBar.querySelector('[aria-pressed="true"]');if(selected)modeBar.scrollLeft=Math.max(0,selected.offsetLeft-modeBar.offsetLeft-12);});
 }
 // Include responsive and safe-area padding in both observation and measurement.
-new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-coach-bar').getBoundingClientRect().height+modeBar.getBoundingClientRect().height}px`)).observe(modeBar,{box:'border-box'});
-new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-coach-bar').getBoundingClientRect().height+modeBar.getBoundingClientRect().height}px`)).observe($('activity-coach-bar'),{box:'border-box'});
-new MutationObserver(()=>{if(document.querySelector('dialog[open]'))listening?.suspendAudio();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
+new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-navigation').getBoundingClientRect().height}px`)).observe($('activity-navigation'),{box:'border-box'});
+new MutationObserver(()=>{if(document.querySelector('dialog[open]')){stopCoachSpeech();listening?.suspendAudio();adventures?.suspendAudio();}}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
 
 function renderSettings() {
   const profile = getProfile(settings);
+  document.body.dataset.appearanceAge=String(settings.age);
+  document.body.dataset.appearanceBand=appearanceBand(settings.age);
   document.querySelectorAll('.age-option').forEach(button => {
     const age = Number(button.dataset.age);
     const selected = settings.age === age;
@@ -94,10 +140,6 @@ function renderSettings() {
   $('age-minus').disabled = settings.age <= 2;
   $('age-plus').disabled = settings.age >= 10;
   $('support-level').value = settings.level;
-  $('settings-sound').checked = settings.sound;
-  $('sound-toggle').innerHTML = soundIcon(settings.sound);
-  $('sound-toggle').setAttribute('aria-pressed',String(settings.sound));
-  $('sound-toggle').setAttribute('aria-label',settings.sound ? 'Turn off read aloud' : 'Turn on read aloud');
   $('parent-guidance').textContent = {
     little:'Explore marks, colors, shapes, and small groups together. Words and arithmetic are optional shared practice. A model, demonstration, or your voice can help.',
     explorer:'Connect letters with familiar words. Count objects together and ask how your child found an answer. Use Show me in tracing activities whenever it helps.',
@@ -107,6 +149,7 @@ function renderSettings() {
   renderCoach();
 }
 function updateSettings(patch) {
+  stopCoachSpeech();
   settings = normalizeSettings({...settings,...patch});
   writeStore('settings',settings);
   renderSettings();
@@ -116,7 +159,6 @@ function updateSettings(patch) {
   challenges?.settingsChanged();
   adventures?.settingsChanged();
   listening?.settingsChanged();
-  if (!settings.sound) stopSpeaking();
 }
 function activeController() {
   return {drawing,learning,discovery,challenges,adventures,listening}[getActivity(activeRoute)?.engine];
@@ -124,11 +166,13 @@ function activeController() {
 function renderCoach() {
   const activity=getActivity(activeRoute), profile=getProfile(getSettings());
   $('activity-coach-bar').hidden=!activity;
+  $('activity-navigation').hidden=!activity;
   if(!activity) return;
   const tips=coachingFor(activeRoute,profile.challengeAge);
-  $('coach-summary').textContent=`Age ${settings.age} · ${tips.together?'Play together': 'Your pace'}`;
+  $('coach-summary').textContent=`Age ${settings.age}${profile.challengeAge!==settings.age?` · practice step ${profile.challengeAge}`:''} · ${tips.together?'Play together': 'Your pace'}`;
   $('coach-title').textContent=getTitle() || activity.title;
-  $('coach-together').textContent=tips.together?'Try this together. A grown-up can read the clues and model the first step.':'Take your time. Use a hint whenever it helps.';
+  const foundations=['prewriting','uppercase','lowercase','word-tracing','number-tracing'];
+  $('coach-together').textContent=tips.together?'Try this together. A grown-up can read the clues and model the first step.':settings.age>=9&&foundations.includes(activeRoute)?'This is foundation practice at any age. For a bigger thinking challenge, try Number stories, Pattern parade, or Memory garden.':'Take your time. Use a hint whenever it helps.';
   for(const key of ['start','strategy','reflect','offline']) $(`coach-${key}`).textContent=tips[key];
   const offset=adjustments[activeRoute] || 0;
   $('coach-level').textContent=`Starting age ${settings.age} · practice step ${profile.challengeAge}${offset?' · adjusted for this game':''}`;
@@ -136,13 +180,11 @@ function renderCoach() {
   $('coach-harder').disabled=offset>=2 || profile.challengeAge>=10;
   $('coach-reset').hidden=!offset;
   $('coach-hear').disabled=!canSpeak();
-  $('coach-hear').textContent=settings.sound?'Hear these tips':'Read these tips to me';
-  $('coach-sound').innerHTML=soundIcon(settings.sound);
-  $('coach-sound').setAttribute('aria-pressed',String(settings.sound));
-  $('coach-sound').setAttribute('aria-label',settings.sound?'Turn off read aloud':'Turn on read aloud');
+  if(!coachSpeaking)$('coach-hear').textContent='Hear these tips';
   $('coach-hint').hidden=!activeController()?.hint && !['drawing','learning'].includes(activity.engine);
 }
 function changeChallenge(offset) {
+  stopCoachSpeech();
   adjustments[activeRoute]=offset;
   writeStore('activity-support-v1',adjustments);
   activeController()?.settingsChanged();
@@ -151,17 +193,21 @@ function changeChallenge(offset) {
 function goHome() { location.hash='home'; }
 function route() {
   const nav = ++navigationId;
+  clearTimeout(noticeTimer);
+  $('app-notice').hidden = true;
+  $('app-notice').textContent = '';
   const requested = location.hash.slice(1) || 'home';
   const activity = getActivity(requested,settings.age);
   const previous=activeRoute;
   const next=activity?.id || 'home';
-  stopSpeaking();
+  stopCoachSpeech();
   $('coach-dialog').close();
   drawing?.close(); learning?.close(); discovery?.close(); challenges?.close(); adventures?.close(); listening?.close();
   activeRoute=next;
   home.hidden=next!=='home';
   for(const view of [drawView,learnView,discoveryView,challengesView,adventuresView,listeningView]) view.hidden=true;
   document.body.dataset.activity=next;
+  document.body.dataset.family=getFamily(next)?.id || '';
   try {
     if(activity?.engine==='drawing') {
       drawing ||= createDrawing(drawView,{getSettings,getTitle,onBack:goHome,onNotice:notice});
@@ -207,14 +253,12 @@ $('activity-filters').addEventListener('click',event=>{
 });
 
 document.querySelectorAll('.age-option').forEach(button => button.addEventListener('click',() => updateSettings({age:Number(button.dataset.age),level:'auto'})));
-$('sound-toggle').addEventListener('click',() => { updateSettings({sound:!settings.sound}); notice(settings.sound ? 'Read aloud is on. Tap “Hear it” in an activity.' : 'Read aloud is off.'); });
 $('grownups-open').addEventListener('click',() => {renderSettings();settingsDialog.showModal();});
 $('settings-done').addEventListener('click',() => settingsDialog.close());
 settingsDialog.addEventListener('click',e => {if(e.target===settingsDialog){const r=settingsDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)settingsDialog.close();}});
 $('age-minus').addEventListener('click',()=>updateSettings({age:settings.age-1}));
 $('age-plus').addEventListener('click',()=>updateSettings({age:settings.age+1}));
 $('support-level').addEventListener('change',e=>updateSettings({level:e.target.value}));
-$('settings-sound').addEventListener('change',e=>updateSettings({sound:e.target.checked}));
 document.querySelectorAll('[data-open-info]').forEach(button => button.addEventListener('click', () => {
   informationReturn = button;
   $(button.dataset.openInfo + '-dialog').showModal();
@@ -238,8 +282,22 @@ for(const id of ['coach-close','coach-done']) $(id).addEventListener('click',()=
 $('coach-easier').addEventListener('click',()=>changeChallenge((adjustments[activeRoute] || 0)-1));
 $('coach-harder').addEventListener('click',()=>changeChallenge((adjustments[activeRoute] || 0)+1));
 $('coach-reset').addEventListener('click',()=>changeChallenge(0));
-$('coach-sound').addEventListener('click',()=>updateSettings({sound:!settings.sound}));
-$('coach-hear').addEventListener('click',()=>{listening?.suspendAudio();if(!settings.sound)updateSettings({sound:true});const tips=coachingFor(activeRoute,getProfile(getSettings()).challengeAge);speak(`${tips.start} ${tips.strategy} ${tips.reflect}`);});
+function stopCoachSpeech(message='') {
+  coachSpeechToken++;coachSpeaking=false;stopSpeaking();
+  $('coach-hear').textContent='Hear these tips';$('coach-speech-status').textContent=message;
+}
+$('coach-dialog').addEventListener('close',()=>stopCoachSpeech());
+$('coach-hear').addEventListener('click',()=>{
+  if(coachSpeaking){stopCoachSpeech('Spoken help stopped.');return;}
+  listening?.suspendAudio();adventures?.suspendAudio();
+  const token=++coachSpeechToken;coachSpeaking=true;
+  $('coach-hear').textContent='Stop spoken help';$('coach-speech-status').textContent='Playing spoken help…';
+  requestSpeech(coachingText(activeRoute,getProfile(getSettings()).challengeAge)).then(result=>{
+    if(token!==coachSpeechToken)return;
+    coachSpeaking=false;$('coach-hear').textContent='Hear these tips';
+    $('coach-speech-status').textContent=result.status==='played'&&result.source==='clip'?'Spoken help finished.':result.status==='requested'?'Spoken help requested.':result.status==='cancelled'?'Spoken help stopped.':'Spoken help could not play. Try Hear again.';
+  });
+});
 $('coach-hint').addEventListener('click',()=>{
   $('coach-dialog').close();
   const controller=activeController();

@@ -242,7 +242,13 @@ final class NativeBridgeTests: XCTestCase {
 final class NativeParentGateTests: XCTestCase {
     private func loadedController() async throws -> (DoodleViewController, UIWindow) {
         let controller = DoodleViewController()
-        let window = UIWindow(frame: UIScreen.main.bounds)
+        let window: UIWindow
+        if let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first {
+            window = UIWindow(windowScene: scene)
+            window.frame = scene.coordinateSpace.bounds
+        } else {
+            window = UIWindow(frame: UIScreen.main.bounds)
+        }
         let loaded = expectation(description: "Parental gate test bundled page loaded")
         controller.onContentReady = { [weak controller] in controller?.onContentReady = nil; loaded.fulfill() }
         window.rootViewController = controller
@@ -259,10 +265,12 @@ final class NativeParentGateTests: XCTestCase {
         return (controller, window)
     }
 
-    private func waitFor(_ predicate: () -> Bool) async throws {
-        let deadline = Date().addingTimeInterval(5)
+    private func waitFor(file: StaticString = #filePath, line: UInt = #line, _ predicate: () -> Bool) async throws {
+        // Share-sheet discovery can take longer on a cold CI simulator. Keep
+        // the real UIKit presentation predicate and report its exact call site.
+        let deadline = Date().addingTimeInterval(10)
         while !predicate() && Date() < deadline { try await Task.sleep(nanoseconds: 20_000_000) }
-        XCTAssertTrue(predicate(), "Expected native presentation state was not reached.")
+        XCTAssertTrue(predicate(), "Expected native presentation state was not reached.", file: file, line: line)
     }
 
     private func gateIsReady(_ controller: DoodleViewController) -> Bool {

@@ -1,14 +1,22 @@
-# Doodle Fun — App Store submission draft
+# Doodle Fun — App Store Connect and TestFlight worksheet
 
-Prepared September 8, 2026; product copy updated September 13, 2026 for the consolidated catalog and listening games. Release choices updated September 20, 2026 after the owner authorized preparation and purchased an individual Apple Developer membership. **Membership activation pending; not submitted.** This document records the selected release settings and prepares questionnaire answers. It does not establish that an App Store Connect record, signing entitlement, legal seller identity, or submitted build has been verified. Reconcile the final answers with the release archive and the owner's actual practices before submission.
+Updated September 26, 2026. **The current target is TestFlight, not a public App Store submission or release.** Individual membership is active, App Store Connect access is confirmed, and its Terms of Service were accepted with the owner's explicit approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) has been created. A signed Release archive for 2.1.0 (1) was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Exported signing and provisioning passed verification. Upload succeeded on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. The authorized internal tester is Invited. The external group's beta-review submission succeeded and is Waiting for Review; automatic notification is enabled. External approval and physical testing remain pending. The store copy below is prepared for a later public listing; unentered fields remain marked as such.
 
 ## Listing settings
 
 | Field | Prepared value | Status |
 | --- | --- | --- |
-| Enrollment | Individual | Purchased by the owner; activation pending |
-| Primary language | English (U.S.) | Selected for preparation; not entered in App Store Connect |
-| App name | Doodle Fun: Draw & Discover | Selected; 27 characters; availability in the owner's account unverified |
+| Enrollment | Individual | Active; App Store Connect access confirmed September 26 |
+| Primary language | English (U.S.) | Set in the created app record |
+| App name | Doodle Fun: Draw & Discover | Created in App Store Connect; 27 characters |
+| Apple ID / SKU | `6816519633` / `doodlefun-ios` | Created in the active account |
+| Bundle identifier | `com.minoli.DoodleFun` | Matches the app record and current archive |
+| Immediate target | TestFlight | Upload/processing and group assignments complete; internal tester invited; external beta review and physical checks pending |
+| TestFlight build | 2.1.0 (1), `d1297f42-0e32-43a6-87cc-a3e7c358629f` | Build Uploads: Complete; external TestFlight beta-review status: Waiting for Review |
+| TestFlight information | Description, feedback contact, marketing/privacy URLs, private review contact and notes; no sign-in | Saved and verified in App Store Connect |
+| Internal testing group | Doodle Fun Internal | 1 tester / 1 build; authorized tester Invited; build 2.1.0 (1) assigned; automatic distribution off |
+| External testing group | Doodle Fun Beta | 1 tester / 1 build; authorized tester added, no public link; build 2.1.0 (1) submitted for beta review and Waiting for Review; automatic notification on approval enabled |
+| What to Test | Four sound games; ages, modes and coaching; drawing; offline behavior and layout | Saved on the processed build |
 | Subtitle | Create, explore & listen | 24 characters |
 | Primary category | Education | Selected; not entered in App Store Connect |
 | Secondary category | None | Prepared; no second category needed |
@@ -19,11 +27,11 @@ Prepared September 8, 2026; product copy updated September 13, 2026 for the cons
 | Advertising | None | Selected; current app has no advertising implementation |
 | Availability | United States only | Selected; no territories have been configured by this document |
 | Release option | Manual release after approval | Selected; public release still requires the owner's launch authorization |
-| Platforms | iPhone and iPad; iOS/iPadOS 17 or later | Match the final archive's deployment target |
-| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 on September 20, 2026; published September 8 content is stale. Merge PR #6, wait for the automatic GitHub Pages deployment, and verify the current policy against the release bundle before submission. |
-| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 on September 20, 2026; published September 8 content still describes the earlier catalog. After PR #6 is merged and GitHub Pages deploys it, verify the current page and the owner's supplied support email. |
-| Public support email | pishahrodi+support@gmail.com | Supplied by the owner; prepared on the support page and in offline help/policy; not yet published |
-| Marketing URL | https://kartikkp.github.io/Doodle-fun/ | Existing project website; verify before entering |
+| Platforms | iPhone and iPad; iOS/iPadOS 17 or later | iOS app record created; match the distribution archive |
+| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 September 26; bytes match current local policy, including September 20 revision and voluntary email support |
+| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 September 26; bytes match current local page, including 21 families/34 modes, sound guidance and email link |
+| Public support email | pishahrodi+support@gmail.com | Published address and email link verified September 26; plain text remains available offline |
+| Marketing URL | https://kartikkp.github.io/Doodle-fun/ | HTTP 200 September 26; bytes match current runtime `1668feee4dc43ee0` |
 | Privacy Choices URL | Leave blank | Optional; deletion and backup choices are in the privacy policy |
 | Sign-in required | No | No demo account is needed |
 | Custom EULA | None proposed | Use Apple's standard EULA unless the owner supplies another |
@@ -69,14 +77,14 @@ NOTICE, PLAN, AND PLAY
 Match shapes and colors, finish patterns, sort objects, find memory pairs, and guide Bunny through a maze. Arrange sizes, numbers, and story steps; follow arrows and build shape outlines.
 
 LISTEN AND MAKE MUSIC
-Find sound partners, follow notes higher or lower, play back a melody, and copy drum taps. Replay whenever you want and use picture hints for support. Beat studio begins with tap counting for the youngest starting ages, then adds short and long spaces at your own pace. The sounds are generated on the device without a microphone or downloaded recordings. Game sound and volume are separate from Read aloud.
+Find sound partners, follow notes higher or lower, play back a melody, and copy drum taps. Replay whenever you want and use picture hints for support. Beat studio begins with tap counting for the youngest starting ages, then adds short and long spaces at your own pace. The sounds are generated on the device without a microphone or downloaded recordings. Device media volume controls game sounds. Tap Hear for optional spoken help.
 
 FIND THE RIGHT STARTING POINT
 The chosen age sets a starting difficulty; it never locks away activities. Open Coach for a first step, a strategy, or something to talk about together. Make each game's practice step easier or harder when it helps. Younger children can explore alongside a grown-up, especially with words and number puzzles.
 
 SMALL DETAILS FOR EVERYDAY PLAY
 • All 21 activities, their modes, and generated game sounds work offline in the iPhone and iPad app.
-• Optional read-aloud uses the device's system voices.
+• Spoken help plays only when requested, with bundled coaching recordings and local device speech for changing questions.
 • Settings, practice progress, and the current picture draft stay on the device.
 • No account, ads, subscriptions, or in-app purchases.
 • A grown-up check comes before sharing pictures or opening external websites.
@@ -92,7 +100,7 @@ For a first App Store version, this field is not available. If an existing listi
 
 ## App privacy questionnaire recommendations
 
-**Expected label: Data Not Collected. Owner confirmation required.** The native app packages the activities and policy locally. It has no app account, developer backend, advertising SDK, analytics SDK, or cloud-sync integration. Local preferences, including game-sound and volume choices, chosen difficulty age, progress, and the current PNG draft are not sent to the developer. Game sounds are generated locally without microphone input or audio downloads. Speech uses system voices; PNG export uses the user's chosen system-sharing destination.
+**Expected label: Data Not Collected. Owner confirmation required.** The native app packages the activities and policy locally. It has no app account, developer backend, advertising SDK, analytics SDK, or cloud-sync integration. Local preferences, including the chosen difficulty age, progress, and the current PNG draft are not sent to the developer. Game sounds are generated locally without microphone input or audio downloads. Spoken help uses bundled synthetic coaching recordings and local device voices after an explicit request; PNG export uses the user's chosen system-sharing destination.
 
 Apple's collection test concerns off-device transmission accessible to the developer or integrated partners beyond servicing a real-time request. Its guidance distinguishes local handling and data collected by Apple itself. These recommendations concern this native build, not all processing by a separately opened website. [Apple: App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/)
 
@@ -156,36 +164,36 @@ PRIVACY AND SUPPORT
 The home footer's Privacy button and Grown-ups > Privacy policy open the same policy, included in the app and readable offline without a gate. Grown-ups > Help & support opens help. Visit support website, and external links in the policy, require the same grown-up check before opening the system browser. Native external destinations are restricted to the project's public privacy/support pages, GitHub issues, and GitHub's privacy statement. The support website offers email contact for grown-ups; sending a message is voluntary and attaches no app data automatically. The email address is also readable as plain text in offline help and the policy. GitHub is an optional public bug tracker. Both channels ask grown-ups to avoid children's identifying information.
 
 LISTENING GAMES
-Choose Listen, then a game. Game sound and Game volume are separate from Read aloud. Tap Listen for a clue. Sound detective provides separate Hear and Choose buttons; Melody echo has tone pads. Generated tones and percussion work offline with no microphone, recordings, or audio downloads. Check media volume, Silent mode, and connected audio devices if needed. Opening Coach or leaving the activity pauses the turn; return and tap Listen again. Picture practice inside Melody echo preserves the earlier visual sequence game.
+Choose Listen, then a game. Use device media volume for game sounds; tap Hear for spoken help. Tap Listen for a clue. Sound detective provides separate Hear and Choose buttons; Melody echo has tone pads. Generated tones and percussion work offline with no microphone, recordings, or audio downloads. Check media volume and connected audio devices if needed. Opening Coach or leaving the activity pauses the turn; return and tap Listen again. Picture practice inside Melody echo preserves the earlier visual sequence game.
 
 DATA AND SPEECH
-The native app does not collect personal data or use ads, analytics, tracking SDKs, or a developer backend. Settings, including game sound and volume, the chosen difficulty age, practice progress, and the current drawing draft are stored locally. The app has no account-based sync; operating-system backup settings may include local app data. PNG sharing is user-directed. Optional read-aloud uses Apple's system speech voices and does not use the microphone.
+The native app does not collect personal data or use ads, analytics, tracking SDKs, or a developer backend. Settings, including the chosen difficulty age, practice progress, and the current drawing draft are stored locally. The app has no account-based sync; operating-system backup settings may include local app data. PNG sharing is user-directed. Optional spoken help uses bundled synthetic coaching clips and local device speech for changing questions. It requires an explicit Hear request and does not use the microphone.
 
 The app is designed for touch in portrait and landscape on iPhone and iPad. Saving a PNG can use Photos, Files, or another destination available in the system share sheet. The app does not import photos or use the camera.
 ```
 
 ## Owner and account handoff
 
-These are submission prerequisites, not values to guess. No account or external submission was changed by preparing this document.
+The app record and account access below are verified; unknown legal and questionnaire values must not be guessed. TestFlight upload and Apple processing are complete. Both groups have the build assigned; the internal tester is Invited and the external beta submission is Waiting for Review. Tester emails remain outside repository documentation. PR #6 and audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) are merged; PR #7 merged as `97cd87f`. Source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`.
 
 | Field / action | Required owner input or verification |
 | --- | --- |
-| Apple Developer membership / account holder | Individual membership purchased; wait for activation, then verify the correct account/team and required agreements. Existing project signing settings do not establish active membership or ownership. |
+| Apple Developer membership / account holder | Membership active; App Store Connect access confirmed and Terms of Service accepted with explicit approval. App Store distribution signing/provisioning is now verified. |
 | Legal seller / developer name | Verify the exact legal name shown by the individual membership in App Store Connect. No name is inferred from local paths, repository ownership, or this worksheet. |
 | Copyright | Supply the correct year and rights-holder name; do not use a placeholder in the submitted record. |
-| Public support contact | The owner supplied pishahrodi+support@gmail.com. Publish the prepared support page and verify the email link/address before submission. GitHub issues remains an optional public developer bug tracker. |
-| App Review contact | Supplied and stored separately from the repository. Enter the private first/last name, email, and telephone in App Store Connect and verify them there; do not add private values to public documentation. |
-| App record / Apple ID / SKU | Confirm or create in the correct account. These values are not known or reserved by this draft. |
-| Bundle ID and signing | Verify the release archive matches the registered app identifier and distribution team. |
-| Version/build and selected archive | Confirm the final marketing version, unique build number, uploaded archive, and processing status. |
-| App name availability | Check the prepared 27-character name in the owner's App Store Connect account. |
+| Public support contact | pishahrodi+support@gmail.com is published and verified. GitHub issues remains an optional public developer bug tracker. |
+| Review contact | Supplied and stored separately from the repository; TestFlight review contact saved and verified. Keep private values out of public documentation and recheck them for any later App Review submission. |
+| App record / Apple ID / SKU | Created: [Doodle Fun: Draw & Discover](https://appstoreconnect.apple.com/apps/6816519633/distribution), Apple ID `6816519633`, SKU `doodlefun-ios`, English (U.S.), iOS. |
+| Bundle ID and signing | Record/export identifier is `com.minoli.DoodleFun`. Export re-signed with its App Store distribution profile: `LocalProvision=false`, no provisioned devices and `get-task-allow=false`. Code-signature verification passed; the cached archive profile is no longer a blocker. |
+| Version/build and selected archive | Release 2.1.0 (1) built and payload audited with Xcode 27 (27A266a), runtime `1668feee4dc43ee0`, HTML SHA-256 `bc7741c687505bfebbd503e01f506b75f80e41a251cef214355d34f37a907e8d`. App Store distribution export and signature verification passed. Upload succeeded at September 26 21:15:20 UTC with exit code 0; Apple processing is Complete; build UUID `d1297f42-0e32-43a6-87cc-a3e7c358629f` is assigned to Doodle Fun Internal and Doodle Fun Beta. The internal tester is Invited; external access awaits beta-review approval. |
+| App name availability | Name accepted when creating the current app record; no public listing or release is established. |
 | Kids category and age band | Enter the selected Made for Kids, ages 6–8 positioning; verify the final parental gates and Kids-category requirements before submission. |
 | Privacy and content rights | Confirm the questionnaire against the final build and actual collection practices; confirm rights to all app content and store assets. |
 | Price and territory | Enter the selected free price, no IAP, and U.S.-only availability. Broader distribution requires a separate owner review of regional account/compliance fields. |
-| Live policy/support pages | Both URLs were reachable with HTTP 200 on September 20, 2026, but still serve September 8 content for the earlier 30-activity app. Merge PR #6 and wait for the automatic GitHub Pages deployment from `main`, then verify the current 21-family/34-mode pages, game-sound and volume information, and links over HTTPS. The same policy body must be present offline in the submitted app. |
-| Screenshots / preview | Supply actual screenshots of the submitted app for required device sizes. Do not use a mock screen or claim untested accessibility support. An app preview is optional. |
-| Release authorization | Confirm final content and account fields, then submit for review; release manually only when the owner authorizes it. |
+| Live policy/support pages | Both returned HTTP 200 on September 26 and exactly matched local source. The earlier stale-page preflight is historical; keep the published policy and offline release policy synchronized. |
+| Screenshots / preview | Ten native PNGs remain usable for the unchanged pictured UI: five 1320×2868 iPhone and five 2064×2752 iPad images, hashes matching their manifests. Their actual capture runtime remains `0f22199625622369`; do not rewrite provenance. Store screenshots and an optional preview concern the later public listing. |
+| Current testing / later release | Internal tester accepts the invitation; external tester notification is automatic after beta-review approval. Complete physical checks when installed. Public App Store submission/release remains outside the current target; retain the selected manual-release setting for a later store submission. |
 
-The public support page offers the owner's supplied email address. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements. The separate private App Review contact has been supplied and still needs to be entered and verified in the publishing account. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
+The public support page offers the owner's supplied email address. Apple's support-URL reference describes actual contact information, qualified by applicable local requirements. The separate private review contact has been saved and verified in TestFlight information; later App Review fields remain a separate check. [Apple: support URL and review information](https://developer.apple.com/help/app-store-connect/reference/app-information/platform-version-information)
 
 The prepared public pages use local system fonts and no scripts, tracking, or remote assets. `privacy.html` is the policy source of truth: the build embeds the contents of its single `privacy-policy-content` article into the offline app. Keep that article and the published page synchronized through the normal build and native-sync process.

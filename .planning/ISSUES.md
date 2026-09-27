@@ -1,5 +1,13 @@
-# Deferred improvements
+# Deferred improvements and direct acceptance
 
-- **Small-phone activity height:** native screenshot review shows that tracing/math headers consume much of the compact landscape opening viewport; exercises and lower choices require initial scrolling. Missing number answer choices and Follow the arrows’ lower direction control also require scrolling. Full native reachability and gameplay checks cover these controls. Consider a shorter activity header or a visible scroll cue, then assess discoverability with young children. This is a usability enhancement, not a blocked game.
-- **Observed child playtesting:** verify independent comprehension, enjoyment, and challenge with children across the intended ages. Current software playthroughs and age profiles do not measure developmental outcomes.
-- **Active horizontal tab visibility:** on the compact phone, entering Number trails can leave the selected 123 tab partly outside the horizontal tab strip. The requested number activity and its controls load correctly; automatically revealing the active tab would improve orientation.
+- **Observed child playtesting:** verify independent comprehension, enjoyment and challenge with children across the intended ages. The educator-role review and software playthroughs do not measure developmental outcomes.
+- **Physical listening and access:** confirm speaker/headphone audibility and coaching-voice preference on the actual TestFlight build. VoiceOver, color-vision usability and Apple Pencil need their relevant direct checks.
+- **Compact-screen discoverability:** phase 7 reduces navigation/header repetition and preserves reachable 48px controls. Some boards still require scrolling in compact landscape; observe whether children discover the lower controls without adult help.
+- **Content breadth:** phase 7 adds roots/affixes, academic words, causal banks, geometric rules and varied sharing quantities. The banks remain finite, and tracing measures motor practice. Deeper independent composition, explanations and free musical construction remain extensions.
+- **Native test action isolation:** run public UIKit geometry checks and trusted landscape UI sweeps in separate xcodebuild actions. Combining them produced a simulator rotation timeout before interaction; the separate actions preserve their real geometry/gesture assertions. The CI workflow already separates integration and trusted UI actions. Investigate simulator orientation-state handoff before using one monolithic native action.
+
+## Addressed in phase 7
+
+- Selected activity tabs scroll into view.
+- Older literacy includes age-specific vocabulary, rhymes, affixes and roots; foundational tracing is labeled honestly.
+- Shape/color/classification modes use properties, relationships and fraction/number rules; sharing varies totals and requires older-child remainder interpretation.

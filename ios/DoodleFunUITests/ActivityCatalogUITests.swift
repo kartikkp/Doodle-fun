@@ -212,18 +212,34 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func checkPracticeSelection(_ activity: Activity, age: Int) {
-        let practiceHeadings = ["trails": age <= 4 ? "Down" : age >= 8 ? "Write “cat”" : "Trace A"]
-        if let heading = practiceHeadings[activity.id] {
-            XCTAssertTrue(text(heading).waitForExistence(timeout: 10), "The requested practice opened: \(activity.id)")
+        // Exact opening items from catalog.js routing and getLearningItems.
+        // Older word practice must not silently fall back to the preschool bank.
+        if activity.id == "trails" {
+            let headings = [2: "Down", 3: "Down", 4: "Down", 5: "Trace A", 6: "Trace A",
+                            7: "Trace SUN", 8: "Write “replay”", 9: "Write “hopeful”", 10: "Write “evidence”"]
+            guard let heading = headings[age] else {
+                XCTFail("No expected opening tracing item for age \(age)")
+                return
+            }
+            XCTAssertTrue(text(heading).waitForExistence(timeout: 10), "Age \(age) opened its tracing practice: \(heading)")
         }
-        let prompt: NSPredicate?
+        let prompt: String?
         switch activity.id {
-        case "counting": prompt = NSPredicate(format: "label BEGINSWITH %@", "How many dots")
-        case "number-stories": prompt = NSPredicate(format: "label CONTAINS %@ AND label ENDSWITH %@", " + ", " = ?")
+        case "counting":
+            prompt = age <= 3 ? "How many dots in the empty frame?"
+                : age <= 5 ? "How many dots can you count?"
+                : age <= 9 ? "How many altogether in these bundles?"
+                : "What decimal amount do these units make?"
+        case "number-stories":
+            let openingSums = [2: "0 + 0 = ?", 3: "0 + 0 = ?", 4: "1 + 1 = ?", 5: "1 + 2 = ?",
+                               6: "2 + 2 = ?", 7: "17 + 8 = ?", 8: "27 + 18 = ?", 9: "126 + 57 = ?",
+                               10: "1.26 + 0.57 + 0.38 = ?"]
+            prompt = openingSums[age]
+            XCTAssertNotNil(prompt, "No expected opening addition question for age \(age)")
         default: prompt = nil
         }
         if let prompt {
-            XCTAssertTrue(web.staticTexts.matching(prompt).firstMatch.waitForExistence(timeout: 10), "The requested number question opened: \(activity.id)")
+            XCTAssertTrue(text(prompt).waitForExistence(timeout: 10), "Age \(age) opened its \(activity.id) question: \(prompt)")
         }
     }
 
@@ -287,7 +303,7 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func openListening(_ id: String) {
-        XCTAssertTrue(control(["Turn on read aloud"]).exists, "Game audio is tested with read-aloud off.")
+        XCTAssertFalse(control(["Turn on read aloud", "Turn off read aloud"]).exists, "Spoken help has no persistent opt-in switch.")
         let ageChoice = reveal(control(["Age 2"]), toward: .down)
         ageChoice.tap()
         XCTAssertEqual(ageChoice.value as? String, "1", "The native age-two switch is selected.")
@@ -299,7 +315,17 @@ final class ActivityCatalogUITests: XCTestCase {
         XCTAssertTrue(text(activity.title).waitForExistence(timeout: 10))
         // Compact phones intentionally hide the redundant age caption. The
         // selected native age control and each game's age-two round verify it.
-        XCTAssertTrue(control(["Game sound on"]).exists)
+        XCTAssertTrue(control(["Listen"]).waitForExistence(timeout: 10))
+        assertSystemVolumeControls()
+    }
+
+    private func assertSystemVolumeControls() {
+        XCTAssertFalse(control(["Game sound on", "Game sound off"]).exists,
+                       "There is no separate game mute; the device controls sound level.")
+        XCTAssertFalse(web.sliders.matching(NSPredicate(format: "label == %@", "Game volume")).firstMatch.exists,
+                       "There is no additional in-app attenuation slider.")
+        XCTAssertFalse(control(["Turn on read aloud", "Turn off read aloud"]).exists,
+                       "Spoken help starts from an explicit Hear button.")
     }
 
     private func listeningStatus(begins prefix: String) -> XCUIElement {
@@ -316,29 +342,27 @@ final class ActivityCatalogUITests: XCTestCase {
 
     private func leaveListening() {
         reveal(control(["Back to activities"]), toward: .down).tap()
-        XCTAssertTrue(control(["Turn on read aloud"]).waitForExistence(timeout: 10),
-                      "Playing game audio must not enable read-aloud.")
-        XCTAssertFalse(control(["Turn off read aloud"]).exists)
+        XCTAssertTrue(control(["Grown-ups"]).waitForExistence(timeout: 10))
+        XCTAssertFalse(control(["Turn on read aloud", "Turn off read aloud"]).exists)
     }
 
-    func testTrustedSoundDetectiveRequiresAudioAndRespectsItsOwnMute() {
+    func testTrustedSoundDetectiveRequiresAudioWithSystemVolume() {
         openListening("sound-match")
         let chooseBell = control(["Choose Bell"])
-        XCTAssertFalse(chooseBell.isEnabled, "The visible model alone cannot bypass listening.")
-        reveal(control(["Game sound on"]), toward: .down).tap()
-        XCTAssertTrue(control(["Game sound off"]).exists)
-        XCTAssertFalse(control(["Listen"]).isEnabled)
-        XCTAssertFalse(chooseBell.isEnabled)
-        reveal(control(["Game sound off"]), toward: .down).tap()
-        XCTAssertTrue(text("Game sound is on. Tap Listen.").exists, "Enabling sound does not start playback.")
-        listenUntilReady()
+        XCTAssertFalse(text("Listen for Bell: A clear, ringing sound.").exists, "The answer model starts hidden.")
+        reveal(control(["Show a hint"])).tap()
         XCTAssertTrue(text("Listen for Bell: A clear, ringing sound.").exists)
+        XCTAssertFalse(chooseBell.isEnabled, "Requesting a visual hint cannot bypass listening.")
+        assertSystemVolumeControls()
+        XCTAssertTrue(control(["Listen"]).isEnabled, "Playback is available without an in-app sound switch.")
+        listenUntilReady()
+        XCTAssertFalse(text("Listen for Bell: A clear, ringing sound.").exists, "Replay hides the previous answer model.")
         reveal(control(["Hear Bell"])).tap()
         let previewFinished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true"), object: chooseBell)
         XCTAssertEqual(XCTWaiter.wait(for: [previewFinished], timeout: 10), .completed)
         reveal(chooseBell).tap()
         XCTAssertTrue(text("You listened and found the sound!").waitForExistence(timeout: 10))
-        capture("Sound detective completed using native taps with read-aloud off")
+        capture("Sound detective completed using native taps and device volume")
         reveal(control(["Try again"])).tap()
         XCTAssertFalse(chooseBell.isEnabled, "A fresh attempt requires listening again.")
         leaveListening()
@@ -378,6 +402,56 @@ final class ActivityCatalogUITests: XCTestCase {
         leaveListening()
     }
 
+    func testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes() {
+        openListening("melody-echo")
+        reveal(control(["Picture practice"]), toward: .down).tap()
+        XCTAssertTrue(text("Copy the picture pattern.").waitForExistence(timeout: 10))
+        XCTAssertTrue(control(["Listen to pattern"]).exists, "Opening picture practice does not autoplay.")
+        XCTAssertFalse(control(["Stop pattern"]).exists)
+        XCTAssertTrue(control(["Hear the instructions"]).isEnabled, "Spoken instructions are available on demand without an opt-in switch.")
+
+        // Read the visible age-two model through native accessibility. Its
+        // clap/tap order is randomized; do not assume a hidden test sequence.
+        let firstStep = control(["1: Clap", "1: Tap"])
+        let secondStep = control(["2: Clap", "2: Tap"])
+        XCTAssertTrue(firstStep.waitForExistence(timeout: 10))
+        XCTAssertTrue(secondStep.exists)
+        let sequence = [firstStep.label, secondStep.label].map {
+            String($0.dropFirst(3)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        XCTAssertEqual(Set(sequence), Set(["Clap", "Tap"]))
+        let success = text("✓ You played the whole pattern at your own pace!")
+        XCTAssertFalse(success.exists)
+
+        reveal(control(["Listen to pattern"])).tap()
+        XCTAssertTrue(text("Your turn. Follow the pictures or try remembering the pattern.").waitForExistence(timeout: 12),
+                      "A trusted native tap must finish real WKWebView playback before the model reports success.")
+        XCTAssertFalse(success.exists, "Listening to the model must not complete the visual activity.")
+        for label in sequence { XCTAssertTrue(control([label]).isEnabled, "Model playback has not already answered either step.") }
+
+        reveal(control([sequence[0]])).tap()
+        XCTAssertTrue(text("Keep your pattern going.").waitForExistence(timeout: 10))
+        XCTAssertFalse(success.exists, "One action cannot finish a two-step pattern.")
+        reveal(control([sequence[1]])).tap()
+        XCTAssertTrue(success.waitForExistence(timeout: 10))
+        capture("Picture practice completed through native clap and tap gestures")
+
+        reveal(control(["↶ Try again", "Try again"])).tap()
+        XCTAssertFalse(success.exists)
+        assertSystemVolumeControls()
+        XCTAssertTrue(control(["Listen to pattern"]).isEnabled)
+        for label in sequence { reveal(control([label])).tap() }
+        XCTAssertTrue(success.waitForExistence(timeout: 10), "Retry preserves playable picture practice and feedback.")
+
+        reveal(control(["Listen & echo"]), toward: .down).tap()
+        XCTAssertTrue(control(["Listen"]).waitForExistence(timeout: 10))
+        assertSystemVolumeControls()
+        XCTAssertTrue(control(["Listen"]).isEnabled)
+        XCTAssertFalse(text("You played the whole melody in order!").exists)
+        listenUntilReady()
+        leaveListening()
+    }
+
     func testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps() {
         openListening("beat-studio")
         let drum = control(["Tap drum"])
@@ -407,6 +481,39 @@ final class ActivityCatalogUITests: XCTestCase {
         reveal(control(["Check my beat"])).tap()
         XCTAssertTrue(text("You matched every drum tap!").waitForExistence(timeout: 10))
         capture("Beat studio completed with native taps after background recovery")
+        leaveListening()
+    }
+
+    func testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground() {
+        openListening("melody-echo")
+        reveal(control(["Coach"], identifier: "coach-open"), toward: .down).tap()
+        XCTAssertTrue(control(["Close coach"]).waitForExistence(timeout: 10))
+        XCTAssertFalse(control(["Stop spoken help"]).exists, "Opening Coach must not start narration.")
+        XCTAssertFalse(text("Spoken help finished.").exists)
+        let hear = reveal(control(["Hear these tips"]), inCoach: true)
+        XCTAssertTrue(hear.isEnabled, "Hear needs no persistent read-aloud preference.")
+        hear.tap()
+        XCTAssertTrue(control(["Stop spoken help"]).waitForExistence(timeout: 10))
+        XCTAssertTrue(text("Spoken help finished.").waitForExistence(timeout: 40),
+                      "This status requires a decoded bundled clip to finish actual WKWebView playback; a native TTS fallback does not satisfy it.")
+        XCTAssertTrue(control(["Hear these tips"]).exists)
+        capture("Bundled coaching clip completed after a trusted native Hear tap")
+
+        reveal(control(["Hear these tips"]), inCoach: true).tap()
+        XCTAssertTrue(control(["Stop spoken help"]).waitForExistence(timeout: 10))
+        XCUIDevice.shared.press(.home)
+        let backgrounded = NSPredicate { _, _ in
+            let state = self.app.state
+            return state == .runningBackground || state == .runningBackgroundSuspended
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: backgrounded, object: app)], timeout: 10), .completed)
+        app.activate()
+        XCTAssertTrue(control(["Hear these tips"]).waitForExistence(timeout: 10))
+        XCTAssertTrue(text("Spoken help stopped.").waitForExistence(timeout: 10))
+        XCTAssertFalse(control(["Stop spoken help"]).exists, "Returning never resumes a coaching clip automatically.")
+        reveal(control(["Close coach"]), toward: .down, inCoach: true).tap()
+        XCTAssertTrue(control(["Listen"]).waitForExistence(timeout: 10))
+        XCTAssertFalse(listeningStatus(begins: "Your turn.").exists, "Hearing coaching does not count as hearing the game clue.")
         leaveListening()
     }
 

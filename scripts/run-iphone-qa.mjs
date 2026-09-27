@@ -73,6 +73,9 @@ const command = [
   '-derivedDataPath',path.join(output,'DerivedData'),
   '-resultBundlePath',path.join(output,`run-${stamp}.xcresult`),
   '-parallel-testing-enabled','NO',
+  // Keep XCTest logs, failures and explicit screenshot/AX attachments. Broad
+  // simulator sysdiagnoses add minutes and gigabytes after ordinary assertions.
+  '-collect-test-diagnostics','never',
   'CODE_SIGNING_ALLOWED=NO', action,
 ];
 for (const {flag, selection} of selections) {

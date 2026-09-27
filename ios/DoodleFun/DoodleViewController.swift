@@ -442,6 +442,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
             guard let url = NativeBridgePolicy.externalURL(body["url"]) else { externalResult("failed"); return }
             requestParentAction(.external(url))
         case "speak":
+            guard UIApplication.shared.applicationState == .active, !pendingListeningPause else { return }
             guard let text = body["text"] as? String, !text.isEmpty, text.count <= 4000 else { return }
             stopNarration()
             let utterance = AVSpeechUtterance(string: text)

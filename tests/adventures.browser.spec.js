@@ -7,7 +7,7 @@ async function solve(page,id){
     if(await page.locator('.adventure-next.is-ready').count())return;
     if(id==='sharing'){
       const remaining=await page.locator('.adventure-cookie-pool').getAttribute('aria-label');
-      if(remaining==='0 cookies to share'){await page.locator('.adventure-check').tap();continue;}
+      if(remaining==='0 cookies to share'&&!(await page.locator('.adventure-reasoning-choice').count())){await page.locator('.adventure-check').tap();continue;}
     }
     await hint(page);
     const selector={'size-order':'data-piece','picture-sequence':'data-piece',directions:'data-direction','make-a-shape':'data-vertex',rhythm:'data-beat',sharing:'data-basket'}[id];
@@ -19,16 +19,15 @@ for(let age=2;age<=10;age++)for(const id of ADVENTURE_IDS){
   test(`age ${age}: ${id} wrong attempt, hint, completion, replay, and next`,async({page})=>{
     await page.addInitScript(value=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:value,level:'auto',sound:false})),age);
     await page.goto(`/#${id}`);await expect(page.locator('.adventure-title')).toBeVisible();
-    if(await page.locator('.adventure-ready').count())await page.locator('.adventure-ready').tap();
-    await hint(page);
-    // Read-aloud changes must preserve both the board and the contextual hint.
-    if(age===6){
-      const before=await page.locator('.adventure-play').innerHTML();
-      await page.locator('#coach-sound').tap();
-      await expect(page.locator('.adventure-status')).toHaveClass(/is-hint/);
-      expect(await page.locator('.adventure-play').innerHTML()).toBe(before);
-      await page.locator('#coach-sound').tap();
+    if(id==='size-order'&&age===6){
+      await expect(page.locator('.adventure-instructions')).toContainText('the diagrams are the same size');
+      await expect(page.locator('.adventure-instructions')).not.toContainText('flower');
+      expect(await page.locator('.adventure-pieces .adventure-measure-art svg').count()).toBeGreaterThan(1);
+      await expect(page.locator('.adventure-pieces .adventure-flower')).toHaveCount(0);
     }
+    if(await page.locator('.adventure-ready').count())await page.locator('.adventure-ready').tap();
+    await expect(page.locator('.adventure-model, .adventure-cookie-guide, .adventure-shape-guide')).toHaveCount(0);
+    await hint(page);
     if(id==='sharing')await page.locator('.adventure-check').tap();
     else{
       const selector={'size-order':'data-piece','picture-sequence':'data-piece',directions:'data-direction','make-a-shape':'data-vertex',rhythm:'data-beat'}[id];

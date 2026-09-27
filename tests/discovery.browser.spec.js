@@ -12,7 +12,7 @@ async function expectSuccess(page) {
   await expect(page.locator('.discover-round-count')).toHaveText('1 discovery made');
 }
 
-for (const [id, answer] of [['shape-match', 'circle'], ['color-match', 'red']]) {
+for (const [id, answer] of [['shape-match', 'square'], ['color-match', 'red-tint']]) {
   test(`${id}: retry, solve, restart without double-credit, and advance`, async ({ page }) => {
     await open(page, id);
     await page.locator(`[data-choice]:not([data-choice="${answer}"])`).first().tap();
@@ -26,48 +26,21 @@ for (const [id, answer] of [['shape-match', 'circle'], ['color-match', 'red']]) 
     await page.locator('.discover-next').tap();
     await expect(page.locator('.discover-level')).toContainText('round 2');
     await expect(page.locator('.discover-next')).not.toHaveClass(/is-ready/);
-    await expect(page.locator('.discover-hear')).toBeDisabled();
+    await expect(page.locator('.discover-hear')).toHaveAttribute('aria-label','Hear the instructions');
   });
 }
 
 for (const age of [2, 10]) {
-  test(`age ${age}: shape model uses a neutral clue until a hint reveals the correct shape`, async ({ page }) => {
-    await open(page, 'shape-match', age);
-    const model = page.locator('.discover-model');
-    const marker = model.locator('.discover-model-spark');
-    const picture = model.locator('.discover-shape');
-    await expect(model.locator('strong')).toHaveText('Circle');
-    await expect(model.locator('p')).toHaveText('It is round, with no corners.');
-    await expect(page.locator('[data-choice]')).toHaveCount(age === 2 ? 2 : 6);
-    if (age === 2) {
-      await expect(marker).toHaveCount(0);
-      await expect(picture.locator('svg circle')).toHaveCount(1);
-    } else {
-      await expect(picture).toHaveCount(0);
-      await expect(marker).toHaveText('?');
-      await expect(marker).toHaveAttribute('aria-hidden', 'true');
-    }
-
-    await page.locator('.discover-hint').tap();
-    await expect(marker).toHaveCount(0);
-    await expect(picture).toHaveCount(1);
-    await expect(picture.locator('svg circle')).toHaveCount(1);
-    await expect(page.locator('.discover-status')).toContainText('It is round, with no corners.');
-    await page.locator('.discover-hint').tap();
-    await expect(picture).toHaveCount(1);
-    await expect(marker).toHaveCount(0);
-    await page.locator('[data-choice="circle"]').tap();
-    await expectSuccess(page);
-
-    await page.locator('.discover-next').tap();
-    await expect(model.locator('strong')).toHaveText('Square');
-    await expect(picture).toHaveCount(age === 2 ? 1 : 0);
-    await expect(marker).toHaveCount(age === 2 ? 0 : 1);
-    await page.locator('.discover-hint').tap();
-    await expect(marker).toHaveCount(0);
-    await expect(picture).toHaveCount(1);
-    await expect(picture.locator('svg rect')).toHaveCount(1);
-    await expect(picture.locator('svg circle')).toHaveCount(0);
+  test(`age ${age}: shape solution stays hidden until explicitly requested, including after mistakes`,async({page})=>{
+    await open(page,'shape-match',age);
+    const model=page.locator('.discover-model'),marker=model.locator('.discover-model-spark'),picture=model.locator('.discover-shape');
+    await expect(marker).toHaveText('?');await expect(marker).toHaveAttribute('aria-hidden','true');await expect(picture).toHaveCount(0);
+    const answer=age===2?'circle':'square';
+    await page.locator(`[data-choice]:not([data-choice="${answer}"])`).first().tap();await expect(picture).toHaveCount(0);await expect(marker).toHaveCount(1);
+    await page.locator('.discover-hint').tap();await expect(marker).toHaveCount(0);await expect(picture).toHaveCount(1);await expect(picture.locator(age===2?'svg circle':'svg polygon')).toHaveCount(1);
+    await page.locator('.discover-hint').tap();await expect(picture).toHaveCount(1);await page.locator(`[data-choice="${answer}"]`).tap();await expectSuccess(page);
+    await page.locator('.discover-next').tap();await expect(picture).toHaveCount(0);await expect(marker).toHaveCount(1);
+    await page.locator('.discover-hint').tap();await expect(picture).toHaveCount(1);await expect(marker).toHaveCount(0);
   });
 }
 
@@ -85,33 +58,84 @@ test('pattern parade explains retry and accepts the next repeating picture', asy
 
 test('odd-one-out states the property and has a unique different picture', async ({ page }) => {
   await open(page, 'odd-one-out');
-  await expect(page.locator('.discover-objective')).toContainText('different color');
+  await expect(page.locator('.discover-objective')).toContainText('four corners');
   await page.locator('[data-choice]:not([data-choice="0"])').first().tap();
   await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);
   await page.locator('[data-choice="0"]').tap();
   await expectSuccess(page);
   await page.locator('.discover-next').tap();
-  await expect(page.locator('.discover-objective')).toContainText('different shape');
+  await expect(page.locator('.discover-objective')).toContainText('four corners');
 });
 
 test('sort every item, recover from a wrong basket, and keep work after navigation', async ({ page }) => {
   await open(page, 'sorting');
-  await page.locator('[data-item="cat"]').tap();
-  await page.locator('[data-category="fruit"]').tap();
-  await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);
-  await page.locator('[data-item="cat"]').getAttribute('aria-pressed').then(value => expect(value).toBe('true'));
-  await page.locator('[data-category="animals"]').tap();
-  await page.getByRole('button', { name: 'Back to activities', exact: true }).tap();
-  await page.evaluate(() => { location.hash = 'sorting'; });
-  await expect(page.locator('[data-item="cat"]')).toBeDisabled();
-  for (const [category, items] of [['animals', ['dog', 'fish']], ['fruit', ['apple', 'banana', 'pear']], ['vehicles', ['car', 'bus', 'bike']]]) {
-    for (const item of items) { await page.locator(`[data-item="${item}"]`).tap(); await page.locator(`[data-category="${category}"]`).tap(); }
-  }
-  await expectSuccess(page);
-  await expect(page.locator('.discover-sort-item:disabled')).toHaveCount(9);
-  await page.locator('.discover-next').tap();
-  await expect(page.locator('.discover-sort-item:enabled')).toHaveCount(9);
+  await page.locator('[data-item="value-2"]').tap();await page.locator('[data-category="no"]').tap();
+  await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);await expect(page.locator('.discover-status')).not.toContainText('yes');
+  await expect(page.locator('[data-item="value-2"]')).toHaveAttribute('aria-pressed','true');await page.locator('[data-category="yes"]').tap();
+  await page.getByRole('button',{name:'Back to activities',exact:true}).tap();await page.evaluate(()=>{location.hash='sorting';});await expect(page.locator('[data-item="value-2"]')).toBeDisabled();
+  for(let value=3;value<=9;value++){await page.locator(`[data-item="value-${value}"]`).tap();await page.locator(`[data-category="${value%2?'no':'yes'}"]`).tap();}
+  await expectSuccess(page);await expect(page.locator('.discover-sort-item:disabled')).toHaveCount(8);
+  await page.locator('.discover-next').tap();await expect(page.locator('.discover-sort-item:enabled')).toHaveCount(8);
 });
+
+for (const age of [2, 4, 6, 9, 10]) for (const viewport of [{ width: 375, height: 812 }, { width: 874, height: 402 }]) {
+  test(`sorting age ${age} at ${viewport.width}: one clear value, accessible labels, retry and completion`, async ({ page }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await open(page, 'sorting', age);
+    await expect(page.getByRole('group', { name: 'Items to sort', exact: true })).toBeVisible();
+    await expect(page.locator('.discover-play > .discover-tip').first()).toHaveText('1. Tap an item. 2. Tap its basket.');
+    const items = await page.locator('[data-item]').evaluateAll(nodes => nodes.map(node => ({ id: node.dataset.item, name: node.getAttribute('aria-label') })));
+    expect(items.length).toBeGreaterThan(1);
+    await expect(page.locator('.discover-play > .discover-tip').last()).toHaveText(`0 of ${items.length} items sorted`);
+    for (const { id, name } of items) {
+      const card = page.locator(`[data-item="${id}"]`);
+      await expect(card).toHaveAccessibleName(name);
+      if (age >= 6) {
+        await expect(card.locator('.discover-number')).toHaveText(name);
+        await expect(card).toHaveText(name); // No second numeral/fraction beside the stimulus.
+      } else {
+        await expect(card.locator('svg')).toHaveCount(1);
+        await expect(card).toContainText(name); // Picture and shape descriptions remain visible.
+      }
+      const rect = await card.boundingBox();
+      expect(rect.width).toBeGreaterThanOrEqual(48); expect(rect.height).toBeGreaterThanOrEqual(48);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(viewport.width);
+    await testInfo.attach('sorting-opening', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+    // Derive basket membership from the printed value/description, never a
+    // generator answer or hidden category on the item.
+    const category = name => {
+      if (age === 2) return /cat|dog|fish/i.test(name) ? 'animals' : /apple|banana|pear/i.test(name) ? 'fruit' : 'vehicles';
+      if (age === 4) return /circle|oval/i.test(name) ? 'curved' : 'straight';
+      if (age === 6) return Number(name) % 2 === 0 ? 'yes' : 'no';
+      if (age === 9) { const n = Number(name); return n % 3 === 0 ? (n % 4 === 0 ? 'both' : 'first') : (n % 4 === 0 ? 'second' : 'neither'); }
+      const [n, d] = name.split('/').map(Number); return n * 2 < d ? 'both' : n * 2 === d ? 'first' : 'second';
+    };
+    const first = items[0], firstCard = page.locator(`[data-item="${first.id}"]`);
+    await firstCard.tap();
+    await page.locator(`[data-category]:not([data-category="${category(first.name)}"])`).first().tap();
+    await expect(page.locator('.discover-status')).toHaveClass(/is-retry/);
+    await expect(firstCard).toBeEnabled(); await expect(firstCard).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.discover-round-count')).toHaveText('0 discoveries made');
+    await expect(page.locator('.discover-next')).not.toHaveClass(/is-ready/);
+    for (const { id, name } of items) {
+      const card = page.locator(`[data-item="${id}"]`);
+      await card.tap(); await page.locator(`[data-category="${category(name)}"]`).tap();
+      await expect(card).toBeDisabled(); await expect(card).toHaveAccessibleName(`${name}, sorted`);
+      await expect(card.locator('.discover-tick')).toHaveText('✓');
+      if (age >= 6) await expect(card).toHaveText(`${name}✓`);
+    }
+    await expectSuccess(page);
+    await expect(page.locator('.discover-play > .discover-tip').last()).toHaveText(`${items.length} of ${items.length} items sorted`);
+    await expect(page.locator('.discover-sort-item:disabled')).toHaveCount(items.length);
+    await page.locator('.discover-restart').tap();
+    await expect(page.locator('.discover-sort-item:enabled')).toHaveCount(items.length);
+    await expect(page.locator('.discover-round-count')).toHaveText('1 discovery made');
+    await expect(page.locator('.discover-next')).not.toHaveClass(/is-ready/);
+    await page.locator('.discover-next').tap();
+    await expect(page.locator('.discover-level')).toContainText('round 2');
+  });
+}
 
 test('memory mismatch waits for the child and every pair can be completed', async ({ page }) => {
   await open(page, 'memory', 3);
@@ -177,7 +201,7 @@ test('maze blocks teleporting, supports undo and keyboard, and reaches its carro
   await expect(page.locator('.discover-level')).toContainText('round 2');
 });
 
-for (const [age, choices, pairs, cells, items] of [[3, 2, 2, 9, 6], [6, 4, 4, 25, 9], [9, 6, 6, 36, 9]]) {
+for (const [age, choices, pairs, cells, items] of [[3, 2, 2, 9, 6], [6, 4, 4, 25, 8], [9, 6, 6, 36, 8]]) {
   test(`age ${age}: meaningful board sizes and phone-safe controls`, async ({ page }) => {
     await open(page, 'shape-match', age);
     await expect(page.locator('[data-choice]')).toHaveCount(choices);

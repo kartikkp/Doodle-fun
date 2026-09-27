@@ -2,10 +2,11 @@ import {test,expect} from '@playwright/test';
 import {readFile} from 'node:fs/promises';
 import {LISTENING_IDS,LISTENING_INFO,buildListeningRound} from '../listening.js';
 import {getProfile} from '../core.js';
+import {OUTPUT_CEILING} from '../audio.js';
 
 const backendByBrowser=new Map();
 test.beforeEach(async({page,browserName},info)=>{
-  const needsLive=/hears real audio|game sound is independent|preview cannot earn|native inactivity|playback session preference/.test(info.title);
+  const needsLive=/hears real audio|game sound is independent|legacy disabled|preview cannot earn|native inactivity|playback session preference/.test(info.title);
   if(!needsLive)return;
   if(!backendByBrowser.has(browserName)) {
     await page.goto('/');
@@ -42,10 +43,12 @@ test.afterEach(async({page},info)=>{
 
 // Test-only instrumentation observes the real output graph. It neither mocks
 // playback nor grants microphone/recording permissions or changes autoplay policy.
-async function observeAudio(page,age) {
-  await page.addInitScript(age=>{
+async function observeAudio(page,age,legacyAudio={enabled:true,volume:.55}) {
+  await page.addInitScript(({age,legacyAudio})=>{
     localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age,level:'auto',sound:false}));
-    localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify({enabled:true,volume:.55}));
+    localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify(legacyAudio));
+    const getItem=Storage.prototype.getItem;window.__legacyAudioReads=0;
+    Storage.prototype.getItem=function(key){if(key==='doodle-fun:v2:listening-audio-v1')window.__legacyAudioReads++;return getItem.call(this,key);};
     window.__listeningAudio=[];
     const Native=window.AudioContext||window.webkitAudioContext;
     if(!Native)return;
@@ -77,12 +80,12 @@ async function observeAudio(page,age) {
     }
     ObservedAudio.prototype=Native.prototype;Object.setPrototypeOf(ObservedAudio,Native);
     window.AudioContext=ObservedAudio;if(window.webkitAudioContext)window.webkitAudioContext=ObservedAudio;
-  },age);
+  },{age,legacyAudio});
 }
-async function start(page,id,age) {
+async function start(page,id,age,legacyAudio) {
   // The capability probe already visited /. A query change forces a fresh
   // document so init scripts run instead of making only a hash navigation.
-  await observeAudio(page,age);await page.goto(`/?listening-qa=${age}#${id}`);
+  await observeAudio(page,age,legacyAudio);await page.goto(`/?listening-qa=${age}#${id}`);
   await expect(page.getByRole('heading',{name:LISTENING_INFO[id].title,exact:true})).toBeVisible();
   await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
   expect(await page.evaluate(()=>window.__listeningAudio.length),'opening never autoplays').toBe(0);
@@ -112,9 +115,10 @@ for(const age of [2,3,4,5,6,7,8,9,10])for(const id of LISTENING_IDS) {
   test(`${id}: age ${age} hears real audio, retries, uses a hint and completes`,async({page})=>{
     await page.setViewportSize(age%3===0?{width:667,height:375}:{width:375,height:667});
     const q=await start(page,id,age);
-    if(age>2)await expect(page.locator('[data-listening-model]')).toBeHidden();
+    await expect(page.locator('[data-listening-model]')).toBeHidden();
     if(id==='sound-match'||id==='pitch-path')for(const choice of await page.locator('[data-listening-answer]').all())await expect(choice).toBeDisabled();
     await listen(page);
+    await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
     if(id==='sound-match') {
       const wrong=q.choices.find(value=>value!==q.answer);
       await page.locator(`[data-listening-preview="${q.answer}"]`).click();
@@ -125,10 +129,11 @@ for(const age of [2,3,4,5,6,7,8,9,10])for(const id of LISTENING_IDS) {
     else if(id==='melody-echo'){await page.locator(`[data-listening-pad="${(q.sequence[0]+1)%q.frequencies.length}"]`).click();await previewDone(page);await expect(page.locator('.listening-echo-slot.is-filled')).toHaveCount(0);}
     else {await page.locator('[data-listening-drum]').click();await previewDone(page);await page.locator('[data-listening-check]').click();}
     await expect(page.getByTestId('listening-feedback')).not.toHaveClass(/is-complete/);
+    await expect(page.locator('[data-listening-model]')).toBeHidden();
     await page.getByRole('button',{name:'Try again',exact:true}).click();
     await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
     await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
-    await listen(page);await playCorrect(page,id,q);
+    await listen(page);await expect(page.locator('[data-listening-model]')).toBeHidden();await playCorrect(page,id,q);
     const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('doodle-fun:v2:listening-progress-v1')));
     expect(stored.stars[`${id}:${age}:0`]).toBe(true);expect(Object.keys(stored.stars)).toHaveLength(1);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -137,22 +142,30 @@ for(const age of [2,3,4,5,6,7,8,9,10])for(const id of LISTENING_IDS) {
   });
 }
 
-test('game sound is independent of narration; off, modal and route cancel unheard playback',async({page})=>{
+test('game sound is independent of narration; modal and route cancel unheard playback',async({page})=>{
   await start(page,'melody-echo',10);
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
   await page.locator('[data-listening-listen]').click();
   await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','playing');
-  await page.locator('[data-listening-sound]').click();
-  await expect(page.locator('[data-listening-listen]')).toBeDisabled();
-  await page.waitForTimeout(2600);await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
-  expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-progress-v1'))).toBeNull();
-  await page.locator('[data-listening-sound]').click();await listen(page);
   await page.locator('#coach-open').click();await expect(page.locator('#coach-dialog')).toBeVisible();
   await page.getByRole('button',{name:'Close coach',exact:true}).click();
-  await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
+  await page.waitForTimeout(2600);await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
+  expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-progress-v1'))).toBeNull();
+  await listen(page);
   await page.locator('[data-listening-listen]').click();await page.getByRole('button',{name:'Back to activities',exact:true}).click();
   await expect(page.locator('.listening-screen')).toHaveCount(0);await page.waitForTimeout(100);
   expect(await page.evaluate(()=>window.__listeningAudio.every(record=>record.context.state!=='running'))).toBe(true);
+});
+
+for(const id of LISTENING_IDS)test(`legacy disabled low-volume settings do not suppress actual ${id} playback`,async({page})=>{
+  const q=await start(page,id,2,{enabled:false,volume:.15});
+  await expect(page.locator('[data-listening-sound],.listening-volume,input[type="range"]')).toHaveCount(0);
+  await expect(page.locator('[data-listening-listen]')).toBeEnabled();
+  await expect(page.locator('.listening-side')).toContainText('device’s volume buttons');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
+  await listen(page);await playCorrect(page,id,q);
+  expect(await page.evaluate(()=>window.__legacyAudioReads),'retired preferences are never read to set playback or gain').toBe(0);
+  expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-audio-v1'))).toBe(JSON.stringify({enabled:false,volume:.15}));
 });
 
 test('native inactivity while the document stays visible cancels heard input and scheduled audio, then recovers on a trusted Listen',async({page})=>{
@@ -187,7 +200,7 @@ test('native inactivity while the document stays visible cancels heard input and
   await expect.poll(()=>page.evaluate(()=>window.__listeningAudio.at(-1).peak),'replacement context produces real nonzero audio').toBeGreaterThan(.0001);
   await playCorrect(page,'beat-studio',q);
   expect(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('doodle-fun:v2:listening-progress-v1')).stars))).toEqual(['beat-studio:2:0']);
-  await expect(page.locator('#coach-sound')).toHaveAttribute('aria-pressed','false');
+  await expect(page.locator('#coach-sound,#sound-toggle,#settings-sound')).toHaveCount(0);
 });
 
 test('preview cannot earn progress, a melody pad before Listen only explores, completed retry is idempotent',async({page})=>{
@@ -233,6 +246,7 @@ for(const outcome of ['false','rejected','timeout'])test(`native audio preparati
       constructor(){this.state='running';this.destination={};this.listeners=new Set();window.__failedAudioContexts.push(this);}
       get currentTime(){return performance.now()/1000;}
       createGain(){return {gain:{value:0,setValueAtTime(){}},connect(){},disconnect(){}};}
+      createWaveShaper(){return {curve:null,oversample:'none',connect(){},disconnect(){}};}
       createOscillator(){window.__scheduledVoices++;throw new Error('A denied native output must not schedule a voice');}
       createBuffer(){window.__scheduledVoices++;throw new Error('A denied native output must not schedule a sample');}
       resume(){return Promise.resolve();}
@@ -252,11 +266,13 @@ for(const outcome of ['false','rejected','timeout'])test(`native audio preparati
     await page.goto(`/?native-audio-failure=${outcome}-${id}#${id}`);
     expect(await page.evaluate(()=>window.__nativePreparation)).toEqual([]);
     expect(await page.evaluate(()=>window.__failedAudioContexts.length)).toBe(0);
+    await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
     await page.locator('[data-listening-listen]').click();
     await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
     await expect(page.locator('[data-listening-listen]')).toBeEnabled();
     await expect(page.getByTestId('listening-feedback')).not.toHaveText('Tap Listen when you are ready.');
     await expect(page.getByTestId('listening-feedback')).not.toHaveClass(/is-complete/);
+    await expect(page.locator('[data-listening-model]')).toBeHidden();
     for(const answer of await page.locator('[data-listening-answer],[data-listening-drum],[data-listening-check]').all())await expect(answer).toBeDisabled();
     await expect(page.locator('.listening-echo-slot.is-filled')).toHaveCount(0);
     expect(await page.evaluate(()=>window.__nativePreparation)).toEqual([{type:'prepareGameAudio'}]);
@@ -288,10 +304,10 @@ test('a stalled audio clock exits Listening with retry feedback and never enable
   expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:listening-progress-v1'))).toBeNull();
 });
 
-test('null, array, primitive and malformed audio preferences cannot prevent any sound game from opening',async({page})=>{
-  for(const [index,raw] of ['null','[]','"oops"','{broken'].entries()) {
+test('legacy muted, low, null, array, primitive and malformed audio preferences cannot block opening or restore removed controls',async({page})=>{
+  for(const [index,raw] of ['{"enabled":false,"volume":0.15}','{"enabled":true,"volume":0.001}','null','[]','"oops"','{broken'].entries()) {
     await page.goto(`/?prefs-setup=${index}`);await page.evaluate(raw=>localStorage.setItem('doodle-fun:v2:listening-audio-v1',raw),raw);
-    for(const id of LISTENING_IDS){await page.goto(`/?prefs-case=${index}-${id}#${id}`);await expect(page.getByRole('heading',{name:LISTENING_INFO[id].title,exact:true})).toBeVisible();await expect(page.locator('[data-listening-sound]')).toHaveAttribute('aria-pressed','true');await expect(page.locator('[data-listening-listen]')).toBeEnabled();}
+    for(const id of LISTENING_IDS){await page.goto(`/?prefs-case=${index}-${id}#${id}`);await expect(page.getByRole('heading',{name:LISTENING_INFO[id].title,exact:true})).toBeVisible();await expect(page.locator('[data-listening-sound],.listening-volume,input[type="range"]')).toHaveCount(0);await expect(page.locator('[data-listening-listen]')).toBeEnabled();}
   }
 });
 
@@ -301,16 +317,16 @@ test('actual OfflineAudioContext rendering has bounded nonzero, distinct voices 
   const moduleURL=`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
   const cases=[...['drum','bell','shaker','wood'].map(kind=>({name:kind,events:[{kind,time:0,duration:.3}]})),...LISTENING_IDS.flatMap(id=>[2,10].map(age=>({name:`${id}-${age}`,events:buildListeningRound(id,age).events})))];
   const results=await page.evaluate(async({moduleURL,cases})=>{
-    const {scheduleSound,MAX_MASTER_GAIN}=await import(moduleURL),Audio=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    const {scheduleSound,createSoundOutput}=await import(moduleURL),Audio=window.OfflineAudioContext||window.webkitOfflineAudioContext;
     const rows=[];
     for(const entry of cases){
-      const duration=Math.max(...entry.events.map(e=>e.time+e.duration))+.2,context=new Audio(1,Math.ceil(duration*44100),44100),master=context.createGain();master.gain.value=MAX_MASTER_GAIN*.55;master.connect(context.destination);
-      entry.events.forEach(event=>scheduleSound(context,master,event,event.time+.02));
+      const duration=Math.max(...entry.events.map(e=>e.time+e.duration))+.2,context=new Audio(1,Math.ceil(duration*44100),44100),output=createSoundOutput(context);
+      entry.events.forEach(event=>scheduleSound(context,output.input,event,event.time+.02));
       const buffer=await context.startRendering(),data=buffer.getChannelData(0);let sum=0,peak=0,hash=0;
       for(let i=0;i<data.length;i++){sum+=data[i]*data[i];peak=Math.max(peak,Math.abs(data[i]));if(i%37===0)hash=(hash+Math.round(data[i]*100000)*(i+1))|0;}
       rows.push({name:entry.name,rms:Math.sqrt(sum/data.length),peak,hash});
     }return rows;
   },{moduleURL,cases});
-  for(const row of results){expect(row.rms,`${row.name}: nonzero output`).toBeGreaterThan(.00005);expect(row.peak,`${row.name}: bounded peak`).toBeLessThan(.2);}
+  for(const row of results){expect(row.rms,`${row.name}: nonzero output`).toBeGreaterThan(.00005);expect(row.peak,`${row.name}: actual mixer ceiling`).toBeLessThanOrEqual(OUTPUT_CEILING+1e-6);}
   expect(new Set(results.slice(0,4).map(row=>row.hash)).size,'four distinct rendered percussion waveforms').toBe(4);
 });

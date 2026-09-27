@@ -600,6 +600,15 @@ final class NativeLayoutTests: NativeGameplayCase {
                   const buttons = [...document.querySelectorAll(route.controls)].filter(shown);
                   if (buttons.length < 2) throw new Error(`Missing lower controls for ${route.id}`);
                   const activity = {id:route.id,cssInsets:cssInsets(),viewportWidth:innerWidth,pageScrollWidth:document.documentElement.scrollWidth,controls:[]};
+                  const navigation = document.querySelector('#activity-navigation');
+                  const coach = document.querySelector('#coach-open');
+                  if (!shown(navigation) || !shown(coach)) throw new Error(`Missing activity Coach for ${route.id}`);
+                  const navigationStyle = getComputedStyle(navigation);
+                  activity.navigation = {rect:navigation.getBoundingClientRect().toJSON(),coach:coach.getBoundingClientRect().toJSON(),
+                    paddingLeft:parseFloat(navigationStyle.paddingLeft),paddingRight:parseFloat(navigationStyle.paddingRight)};
+                  // Include the global Coach as well as each engine's lower
+                  // controls. Native AX can round its fractional width outward.
+                  buttons.unshift(coach);
                   if (route.id === 'draw') {
                     // Measure before any control scrolling can conceal overflow.
                     activity.drawingScreen = document.querySelector('.drawing-screen').getBoundingClientRect().toJSON();
@@ -608,7 +617,7 @@ final class NativeLayoutTests: NativeGameplayCase {
                   }
                   for (const button of buttons) {
                     const rect = await scrollToStableVisibleRect(button, `${route.id} / ${button.textContent.trim()}`);
-                    activity.controls.push({label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
+                    activity.controls.push({id:button.id,label:button.getAttribute('aria-label')||button.textContent.trim(),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,visible:shown(button)&&rect.top>=0&&rect.bottom<=innerHeight});
                   }
                   if (route.id === 'draw') {
                     const prompt = document.querySelector('.draw-challenge');
@@ -650,6 +659,7 @@ final class NativeLayoutTests: NativeGameplayCase {
             for activity in activities {
                 let id = activity["id"] as? String ?? "unknown"
                 guard let controls = activity["controls"] as? [[String: Any]], let routeInsets = activity["cssInsets"] as? [String: Double] else { throw LayoutError(message: "Missing control measurements for \(id)") }
+                XCTAssertEqual(controls.filter { $0["id"] as? String == "coach-open" }.count, 1, "\(id): measure the global Coach target")
                 XCTAssertLessThanOrEqual(activity["pageScrollWidth"] as? Double ?? .infinity, nativeWidth + 1, "\(id) has no horizontal page overflow")
                 for edge in ["left","right","top","bottom"] { XCTAssertEqual(routeInsets[edge] ?? -1, nativeInsets[edge]!, accuracy: 0.5, "\(id): CSS safe area stays aligned") }
                 for control in controls {
@@ -659,6 +669,11 @@ final class NativeLayoutTests: NativeGameplayCase {
                     XCTAssertGreaterThanOrEqual(control["height"] as? Double ?? 0, 44, "\(id) / \(label) keeps its touch height")
                     XCTAssertGreaterThanOrEqual(control["left"] as? Double ?? -.infinity, nativeInsets["left"]! - 0.5, "\(id) / \(label) stays right of the actual left unsafe edge")
                     XCTAssertLessThanOrEqual(control["right"] as? Double ?? .infinity, nativeWidth - nativeInsets["right"]! + 0.5, "\(id) / \(label) stays left of the actual right unsafe edge")
+                    if control["id"] as? String == "coach-open" {
+                        XCTAssertGreaterThanOrEqual(control["height"] as? Double ?? 0, 48, "\(id): Coach retains a full touch target")
+                        XCTAssertGreaterThanOrEqual(control["left"] as? Double ?? -.infinity, nativeInsets["left"]!, "\(id): Coach clears the left safe edge without rounding tolerance")
+                        XCTAssertLessThanOrEqual(control["right"] as? Double ?? .infinity, nativeWidth - nativeInsets["right"]!, "\(id): Coach clears the right safe edge without rounding tolerance")
+                    }
                 }
                 if id == "draw" {
                     guard let screen = activity["drawingScreen"] as? [String: Double], let paper = activity["paper"] as? [String: Double] else { throw LayoutError(message: "Missing drawing screen and paper measurements") }

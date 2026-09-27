@@ -1,6 +1,5 @@
 // Test-bundle-only native WKWebView gameplay. These handlers operate the same
 // visible DOM controls a child sees; they do not read engine state or storage.
-import { getProfile } from '../../../core.js';
 
 const discoveryIDs = ['shape-match', 'color-match', 'patterns', 'sorting', 'odd-one-out', 'memory', 'maze'];
 const adventureIDs = ['size-order', 'picture-sequence', 'directions', 'make-a-shape', 'rhythm', 'sharing'];
@@ -34,18 +33,25 @@ function discoveryAnswer(qa) {
   const choices = qa.all('.discover-play [data-choice]');
   const choiceName = node => node.querySelector('.discover-choice-label').textContent.replace(/^\d+\.\s*/, '');
   let name;
-  if (qa.id === 'shape-match') name = qa.text('.discover-model strong');
-  else if (qa.id === 'color-match') name = qa.text('.discover-objective').replace(/^Find this color:\s*/i, '').replace(/\.$/, '');
+  if (qa.id === 'shape-match') name = qa.text('.discover-status').split(':')[0];
+  else if (qa.id === 'color-match') name = qa.text('.discover-status').match(/^Choose (.+?)\./)?.[1];
   else if (qa.id === 'patterns') {
-    const unit = qa.all('.discover-pattern-token.is-hint');
-    const shown = qa.all('.discover-pattern-token:not(.discover-pattern-blank)');
-    assert(qa, unit.length >= 2 && unit.length < shown.length, 'Hint highlights a repeating unit');
-    name = unit[shown.length % unit.length].getAttribute('aria-label').replace(/^\d+: /, '');
+    if(qa.age>=9) {
+      const clue=qa.text('.discover-status').match(/Rule: (.+) The missing number is (\d+)\./);
+      assert(qa,Boolean(clue),'Older hint explains a number rule and the missing value');
+      name=clue[2];
+      assert(qa,qa.all('.discover-pattern-token').length===7&&qa.all('.discover-pattern-blank').length===1,'The whole seven-position numerical puzzle has one missing value');
+    }else{
+      const unit = qa.all('.discover-pattern-token.is-hint');
+      const shown = qa.all('.discover-pattern-token:not(.discover-pattern-blank)');
+      assert(qa, unit.length >= 2 && unit.length < shown.length, 'Hint highlights a repeating unit');
+      const tokens=qa.all('.discover-pattern-token'),position=tokens.findIndex(node=>node.classList.contains('discover-pattern-blank'));
+      name = unit[position % unit.length].getAttribute('aria-label').replace(/^\d+: /, '');
+    }
   } else {
-    const names = choices.map(choiceName);
-    const unique = names.filter(value => names.filter(other => other === value).length === 1);
-    assert(qa, unique.length === 1, 'exactly one picture differs on the stated property');
-    name = unique[0];
+    const clue=qa.text('.discover-status').match(/Look for (.+?) instead\./);
+    assert(qa,Boolean(clue),'The requested hint identifies the exception to the stated rule');
+    name=clue[1];
   }
   const answer = choices.find(node => choiceName(node).toLowerCase() === name.toLowerCase());
   assert(qa, Boolean(answer), 'the answer described by the visible model is an available choice');
@@ -56,19 +62,16 @@ function assertShapeModel(qa, { hinted = false } = {}) {
   const model = qa.el('.discover-model');
   const markers = qa.all('.discover-model-spark', model);
   const pictures = qa.all('.discover-shape', model);
-  const little = getProfile({ age: qa.age }).tier === 'little';
-  assert(qa, model.classList.contains('discover-model-clue') === !little, 'model mode matches the selected age profile');
-  if (little || hinted) {
-    assert(qa, markers.length === 0, 'a real shape replaces the mystery marker completely');
-    assert(qa, pictures.length === 1, 'exactly one actual shape model is shown');
-    const modelSVG = qa.el('svg', pictures[0]);
-    const answerSVG = qa.el('.discover-shape svg', discoveryAnswer(qa));
-    assert(qa, modelSVG.innerHTML === answerSVG.innerHTML, 'the revealed geometry matches the choice with the requested shape name');
-    assert(qa, modelSVG.getAttribute('aria-hidden') === 'true', 'the decorative SVG does not duplicate the spoken shape name');
-  } else {
-    assert(qa, pictures.length === 0, 'older children begin with the written clue before asking for the shape model');
-    assert(qa, markers.length === 1 && markers[0].textContent === '?', 'the initial clue uses a neutral question mark instead of a misleading shape');
-    assert(qa, markers[0].getAttribute('aria-hidden') === 'true', 'the mystery marker is excluded from the accessibility label');
+  assert(qa,model.classList.contains('discover-model-clue'),'recognition starts with a question, not a worked model');
+  if(hinted){
+    assert(qa,markers.length===0&&pictures.length===1,'an explicit hint replaces the mystery marker with one real shape');
+    const answer=discoveryAnswer(qa),modelSVG=qa.el('svg',pictures[0]),answerSVG=qa.el('.discover-shape svg',answer);
+    const geometry=svg=>Array.from(svg.querySelectorAll('path,rect,circle,ellipse,polygon')).map(node=>node.outerHTML).join('');
+    assert(qa,geometry(modelSVG).length>0&&geometry(modelSVG)===geometry(answerSVG),'hint geometry matches the answer, allowing a changed orientation');
+    assert(qa,modelSVG.getAttribute('aria-hidden')==='true','decorative geometry does not duplicate its accessible name');
+  }else{
+    assert(qa,pictures.length===0&&markers.length===1&&markers[0].textContent==='?','every age starts without an exact answer model');
+    assert(qa,markers[0].getAttribute('aria-hidden')==='true','mystery marker is decorative');
   }
 }
 
@@ -78,7 +81,7 @@ async function solveDiscovery(qa) {
     await qa.click(discoveryAnswer(qa));
     return;
   }
-  const limit = qa.id === 'maze' ? 37 : qa.id === 'sorting' ? 14 : 7;
+  const limit = qa.id === 'maze' ? (qa.age>=7?120:37) : qa.id === 'sorting' ? 14 : 7;
   for (let step = 0; step < limit && !ready(qa, 'discover'); step++) {
     await hint(qa, 'discover');
     if (qa.id === 'sorting') {
@@ -115,16 +118,11 @@ async function discovery(qa) {
     const side = [3, 3, 4, 4, 5, 5, 6, 6, 6][qa.age - 2];
     assert(qa, qa.all('.discover-play [data-cell]').length === side ** 2, 'maze dimensions match the selected exact age');
   }
-  if (qa.id === 'shape-match') {
-    assert(qa, qa.text('.discover-model strong') === 'Circle', 'the first round clearly names the circle');
-    assert(qa, qa.text('.discover-model p') === 'It is round, with no corners.', 'the initial clue describes the requested circle');
-    assertShapeModel(qa);
-  }
+  if(qa.id==='shape-match')assertShapeModel(qa);
 
   await hint(qa, 'discover');
   if (qa.id === 'shape-match') {
     assertShapeModel(qa, { hinted: true });
-    assert(qa, qa.all('.discover-model .discover-shape svg circle').length === 1, 'the first hint shows an actual circle');
     await hint(qa, 'discover');
     assertShapeModel(qa, { hinted: true });
     qa.check('Age-appropriate neutral clue and correct, nonduplicated shape hint');
@@ -156,8 +154,18 @@ async function discovery(qa) {
   assert(qa, ready(qa, 'discover'), 'success makes the next round ready');
   assert(qa, Number.parseInt(qa.text('.discover-round-count'), 10) === beforeCount + 1, 'completion is recorded once');
   if (qa.id === 'sorting') assert(qa, qa.all('.discover-play [data-item]').every(node => node.classList.contains('is-sorted')), 'every picture was sorted');
-  if (qa.id === 'memory') assert(qa, qa.all('.discover-play [data-card]').every(node => node.dataset.matched === 'true'), 'every pair was matched');
-  if (qa.id === 'maze') assert(qa, qa.el('.discover-play [data-current="true"]').dataset.goal === 'true', 'Bunny physically reaches the carrot square');
+  if (qa.id === 'memory') {
+    assert(qa, qa.all('.discover-play [data-card]').every(node => node.dataset.matched === 'true'), 'every pair was matched');
+    if(qa.age>=9){
+      const faces=qa.all('.discover-memory-card .discover-number').map(node=>node.textContent),values=faces.map(text=>text.includes('×')?text.split('×').map(Number).reduce((a,b)=>a*b):text.includes('/')?text.split('/').map(Number).reduce((a,b)=>a/b):Number(text));
+      assert(qa,faces.length===12&&new Set(faces).size===12,'Older memory uses distinct expressions rather than identical pictures');
+      assert(qa,new Set(values).size===6&&values.every(v=>values.filter(other=>other===v).length===2),'Exactly two cards represent each mathematical value');
+    }
+  }
+  if (qa.id === 'maze') {
+    assert(qa, qa.el('.discover-play [data-current="true"]').dataset.goal === 'true', 'Bunny reaches the carrot square');
+    if(qa.age>=7)assert(qa,qa.all('.discover-checkpoint.is-visited').length===(qa.age===7||qa.age===9?1:2),'All ordered checkpoints are visited before finishing');
+  }
   qa.check('Hint-assisted full round completed');
 
   await qa.click('.discover-restart');
@@ -173,7 +181,7 @@ async function discovery(qa) {
 
 async function solveAdventure(qa) {
   for (let step = 0; step < 32 && !ready(qa, 'adventure'); step++) {
-    if (qa.id === 'sharing' && qa.el('.adventure-cookie-pool').getAttribute('aria-label') === '0 cookies to share') {
+    if (qa.id === 'sharing' && qa.el('.adventure-cookie-pool').getAttribute('aria-label') === '0 cookies to share' && !qa.all('.adventure-reasoning-choice').length) {
       await qa.click('.adventure-check');
       continue;
     }
@@ -199,7 +207,7 @@ async function adventure(qa) {
   assert(qa, qa.text('.adventure-title').trim().length > 0, 'activity title is visible');
   const beforeRound = roundNumber(qa, '.adventure-round');
   if (qa.id === 'sharing') {
-    const totals = [2, 4, 6, 6, 9, 12, 12, 14, 19];
+    const totals = [2, 2, 4, 4, 6, 4, 9, 10, 10];
     const count = Number.parseInt(qa.el('.adventure-cookie-pool').getAttribute('aria-label'), 10);
     assert(qa, Number.isFinite(count) && count === totals[qa.age - 2], 'a finite cookie total matches the exact age');
     assert(qa, !qa.text('.adventure-objective').includes('NaN'), 'the sharing objective never contains NaN');

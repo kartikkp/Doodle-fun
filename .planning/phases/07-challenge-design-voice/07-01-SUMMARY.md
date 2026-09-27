@@ -1,0 +1,9 @@
+# Meaningful challenge and requested hints — summary
+
+Implemented on September 26, 2026, retaining 21 families / 34 modes and starting ages 2–10. An educator-role agent reviewed every mode and individual-year progression; this is an AI curriculum review, not supervised child validation.
+
+Task 1 replaces solution previews and revealing retries with requested hints. Older tasks require geometric conjunctions, number/fraction rules, equivalent values, measured units/area/perimeter, causal order, command transformations, rhythm memory, remainder interpretation and language relationships. Numbers use grouped units, regrouping, missing values, two-digit products, decimal arithmetic and unlike-denominator fractions. Literacy adds age-specific words, affixes and roots. Tracing remains explicitly motor practice.
+
+Task 2 adds independent mathematical/geometry checks and age-by-age wrong-answer, hint, solution, next-round and replay checks. QA caught and corrected shape shortcuts, reversed-arrow marking, cramped longer words and Safari rounding of tiny trace strokes. Native integration tests now scope answers to the active game and mathematically validate unit-model hints, including legitimate short expressions.
+
+Evidence and precise build identities are in [the QA report](../../../docs/challenge-design-voice-qa.md) and [educational review](../../../docs/educator-activity-review.md). The main frozen CI passes 750 browser, 284 native integration and six native audio cases. Final sorting display checks add 20 new browser cases, with all nine native sorting ages passing on the final bundle. Full versioned coverage is 770 browser and 297 native cases, rather than one claimed final-head run. Difficulty defaults are adjustable starting points; no actual child's challenge or enjoyment has been measured.

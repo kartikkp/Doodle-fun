@@ -1,4 +1,4 @@
-.drawing-screen { height: 100dvh; min-height: 500px; display: flex; flex-direction: column; background: var(--bg, #f6f8fc); overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
+.drawing-screen { height: 100dvh; min-height: 0; display: flex; flex-direction: column; background: var(--bg, #f6f8fc); overflow: hidden; padding-bottom: env(safe-area-inset-bottom); }
 .drawing-screen[hidden] { display: none; }
 .draw-header { flex: 0 0 auto; gap: 14px; }
 .draw-heading { flex: 1; min-width: 0; }
@@ -115,3 +115,11 @@
   #activity-coach-bar:not([hidden]) ~ .drawing-screen .draw-header { padding-top: 4px; padding-bottom: 4px; }
   .draw-workspace { padding-bottom: 4px; }
 }
+
+/* Art supplies retain their full touch area in every orientation. */
+.draw-prompt{background:#fbf1e3;border-color:#ead8c2}.draw-prompt-icon{background:#f1d7a5;color:#765931}.draw-prompt-label{color:#836b48}.draw-header{background:transparent}.draw-paper{border-radius:10px;box-shadow:0 5px 22px #3f544719}.draw-controls{background:#fffefa;border-color:#dce4df;border-radius:18px 18px 0 0;box-shadow:none}.draw-tool{background:#f2f4ed;border-radius:11px}.draw-tool[aria-pressed=true]{background:#e4eee3;color:#245d53;border-color:#9db89c}.draw-color,.draw-size{width:48px;height:48px;min-width:48px;min-height:48px;flex:0 0 48px}.draw-size[aria-pressed=true]{border-color:#649373;background:#edf4e8}.draw-actions .button{min-width:48px;min-height:48px}.draw-prompt .draw-shuffle{min-width:48px;min-height:48px;height:48px}.draw-stamp-choice{background:#faf6ea;border-color:#dcd5c3}.draw-stamp-choice .object-art{width:75%;height:75%;margin:auto}.draw-template-card{background:#fffefa;border-color:#d5ded2}.draw-dialog-description{margin:12px 0 18px}.draw-creative-label{font-size:11px;font-weight:750;letter-spacing:.5px;text-transform:uppercase;color:#76603e}.draw-challenge{line-height:1.4}
+body[data-appearance-band="studio"] .draw-controls{border-radius:12px}body[data-appearance-band="studio"] .draw-tool{border-radius:8px}body[data-appearance-band="studio"] .draw-prompt{background:#edf1e8}body[data-appearance-band="studio"] .draw-prompt-label{color:#53674c}body[data-appearance-band="studio"] .draw-paper{border-radius:4px}
+@media(max-width:650px){.draw-controls{gap:4px 6px;padding:7px 8px}.draw-size-row{gap:2px}.draw-control-label{min-width:25px}.draw-sizes{gap:1px}.draw-actions{gap:0}.draw-actions .button{padding:4px}.draw-prompt{padding:5px 12px}.draw-prompt-icon{display:none}.draw-prompt-label{font-size:11px}.draw-challenge{font-size:13px}.draw-paper-region{padding-left:12px;padding-right:12px}.draw-tool{min-height:48px}.draw-color,.draw-size{width:48px;height:48px;flex-basis:48px}}
+@media(max-width:370px){.draw-size-row .draw-control-label{display:none}.draw-size-row{min-width:0}.draw-sizes{max-width:96px}.draw-actions .button{min-width:48px;width:48px}.draw-header{gap:7px}.draw-save{padding:10px 12px}}
+@media(max-height:560px) and (min-width:560px){.draw-controls{width:286px;min-width:0;flex:0 0 286px}.draw-prompt .draw-shuffle{height:48px;min-height:48px}.draw-prompt{padding-top:0;padding-bottom:2px}.draw-actions .button{min-width:48px}.draw-controls{overflow-y:auto}.draw-supply-row,.draw-tools,.draw-actions{flex-shrink:0}}
+.draw-save{min-height:48px}

@@ -44,7 +44,9 @@ jobs:
   iphone-build:
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: macos-latest
-    timeout-minutes: 30
+    # The complete age matrix plus a separate trusted-audio build exceeds 30m
+    # on hosted runners; individual test/step timeouts still bound failures.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -91,10 +93,12 @@ jobs:
         run: |
           caffeinate -di npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID" \
             --output "$RUNNER_TEMP/DoodleFun-native-audio-qa" --without-gameplay \
-            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedSoundDetectiveRequiresAudioAndRespectsItsOwnMute \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedSoundDetectiveRequiresAudioWithSystemVolume \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPitchPathCanRetryAndChooseTheHeardContour \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedMelodyEchoPlaysPadsInOrderAfterRetry \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground \
             2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-audio-qa.log"
       - name: Keep native failure evidence
         uses: actions/upload-artifact@v7
