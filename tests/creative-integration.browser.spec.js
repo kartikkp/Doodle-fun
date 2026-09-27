@@ -118,7 +118,13 @@ test('compact coloring preserves paper space with wider system-font metrics',asy
   expect(await paper.evaluate(node=>node.toDataURL())).not.toBe(before);
   await page.getByRole('button',{name:'Undo last action',exact:true}).tap();expect(await paper.evaluate(node=>node.toDataURL())).toBe(before);
   await page.screenshot({path:test.info().outputPath('compact-coloring-wide-font.png')});
-  // Restore the previous extra caption. Its wrapping must consume drawing space.
+  // Restoring the caption must consume the same space the paper loses. Fonts
+  // change the added row height, so measure that cost instead of assuming 16px.
+  const prompt=page.locator('.draw-prompt'),fixedPrompt=await prompt.boundingBox();
   await page.addStyleTag({content:'.draw-prompt-label{display:inline!important}'});
-  await expect.poll(async()=>(await paper.boundingBox()).width).toBeLessThan(fixed.width-16);
+  await expect(page.locator('.draw-prompt-label')).toBeVisible();
+  await expect.poll(async()=>(await prompt.boundingBox()).height-fixedPrompt.height).toBeGreaterThan(1);
+  await expect.poll(async()=>fixed.width-(await paper.boundingBox()).width).toBeGreaterThan(1);
+  await expect.poll(async()=>Math.abs((fixed.width-(await paper.boundingBox()).width)-((await prompt.boundingBox()).height-fixedPrompt.height))).toBeLessThanOrEqual(1);
+  await test.info().attach('compact-coloring-caption-geometry',{body:JSON.stringify({fixed:{paper:fixed,prompt:fixedPrompt},restored:{paper:await paper.boundingBox(),prompt:await prompt.boundingBox()}},null,2),contentType:'application/json'});
 });
