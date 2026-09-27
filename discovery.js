@@ -499,6 +499,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       else {
         const first=current.flipped[0] ?? round.cards.findIndex(card=>!current.matched.has(card.id));
         const partner=round.cards.findIndex((card,index)=>index!==first && card.id===round.cards[first].id);
+        if(!current.flipped.length)current.hintOpenedCard=first;
         current.flipped=[first]; render();
         play.querySelector(`[data-card="${partner}"]`).classList.add('is-hint');
         text=`This is ${round.cards[first].name.toLowerCase()}. Try the outlined card for its partner.`;
@@ -510,6 +511,14 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
       text=`The outlined square is one step toward ${target===round.goal?'the carrot':`checkpoint ${collected+1}`}. Follow its open path.`;
     }
     message(text,'hint');
+  }
+  function clearHints() {
+    stopSpeaking();if(!active)return;
+    // Keep the child's selected card; conceal only a card opened by Hint.
+    if(Number.isInteger(current.hintOpenedCard))current.flipped=current.flipped.filter(index=>index!==current.hintOpenedCard);
+    delete current.hintOpenedCard;
+    if(current.feedback==='hint'){current.message='Keep exploring at your own pace.';current.feedback='';}
+    render();
   }
   $('.discover-back').addEventListener('click', onBack);
   hearButton.addEventListener('click', () => speak(`${objective.textContent} ${$('.discover-tip')?.textContent || ''}`));
@@ -528,5 +537,6 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     close() { active = false; stopSpeaking(); },
     settingsChanged,
     hint,
+    clearHints,
   };
 }

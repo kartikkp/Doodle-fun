@@ -159,6 +159,14 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   }
   function checkBeat(){if(!heard||busy||previewBusy||complete)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}recordMistake();hideModel();feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
   function hint(){if(!id)return;recordHint();cancel();model=true;helpText=question.help;feedback=heard?'The hint is here. Replay whenever you want.':'The hint is here. Tap Listen to hear it before your turn.';render();}
+  function clearHints(){
+    stopSpeaking();if(!id)return;const revealed=model;
+    cancel();hideModel();engine.suspend();
+    // Unlike lifecycle suspension, clearing a model preserves played tones,
+    // drum taps and a fully heard clue. An interrupted clue remains unheard.
+    if(revealed&&!complete)feedback=heard?'Keep going at your own pace.':'Tap Listen when you are ready.';
+    render();
+  }
   function next(){round=(round+1)%10000;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();}
 
   function renderModel(parent) {
@@ -222,5 +230,5 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
   return {open(nextId='sound-match') {cancel();id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));selectedAge=getSettings().age;round=getRoundCursor(id,selectedAge,profile.age);question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
     close(){cancel();engine.suspend();id=null;container.replaceChildren();},
-    settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age||getSettings().age!==selectedAge){profile=nextProfile;selectedAge=getSettings().age;round=getRoundCursor(id,selectedAge,profile.age);question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,suspendAudio};
+    settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age||getSettings().age!==selectedAge){profile=nextProfile;selectedAge=getSettings().age;round=getRoundCursor(id,selectedAge,profile.age);question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,clearHints,suspendAudio};
 }

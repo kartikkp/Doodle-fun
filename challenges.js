@@ -344,6 +344,17 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
   }
   function open(nextId='compare') {id=CHALLENGE_INFO[nextId]?nextId:'compare';profile=getProfile(getSettings());round=getRoundCursor(id,profile.age,profile.challengeAge);opened=true;reset();report();}
   function close(){opened=false;stopSpeech();}
+  function clearHints() {
+    stopSpeech();showHelp=false;if(!opened)return;
+    container.querySelectorAll('.challenge-place-support,.challenge-comparison-model,.challenge-bond-support,.challenge-partner-model,.challenge-word-model').forEach(node=>node.hidden=true);
+    container.querySelectorAll('.is-suggested').forEach(node=>node.classList.remove('is-suggested'));
+    container.querySelectorAll('.challenge-dot.is-numbered').forEach(node=>{node.textContent=node.closest('.challenge-berries')?'●':'';node.classList.remove('is-numbered');});
+    container.querySelectorAll('details.challenge-help').forEach(node=>node.open=false);
+    const labels={'Hide the picture hint':'Show a picture hint','Hide the word hint':'Show the word hint','Hide the strategy':'Show a place-value strategy'};
+    container.querySelectorAll('.challenge-hint-button').forEach(node=>{if(labels[node.textContent])node.textContent=labels[node.textContent];if(node.hasAttribute('aria-expanded'))node.setAttribute('aria-expanded','false');});
+    const count=container.querySelector('.challenge-frame-count');if(id==='ten-frame'&&question.age>5&&count)count.textContent='Check your model when ready';
+    if(!done&&feedback?.isConnected)message('Keep working at your own pace.');
+  }
   function hint() {
     if(!opened||done)return;recordHint();
     if(question.model==='place-value'&&['subtraction','number-bonds'].includes(id)) {
@@ -363,5 +374,5 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     }
   }
   function settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge||next.age!==profile.age;profile=next;if(!opened)return;if(changed){round=getRoundCursor(id,profile.age,profile.challengeAge);reset();}else container.querySelectorAll('[data-challenge-speech]').forEach(node=>node.hidden=!canSpeak());}
-  return {open,close,settingsChanged,hint};
+  return {open,close,settingsChanged,hint,clearHints};
 }

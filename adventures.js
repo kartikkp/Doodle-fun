@@ -195,6 +195,12 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
     else {state.showModel=true;render();const smallest=Math.min(...state.sharing.counts),index=smallest<round.each?state.sharing.counts.indexOf(smallest):-1;target=index>=0?`[data-basket="${index}"]`:'[data-basket="leftover"]';text=`Give one to each friend in turn. Each friend needs ${round.each}${round.remainder?`, and ${round.remainder} stay in Left over`:''}. You can undo cookies to make the shares equal.`;}
     play.querySelectorAll('.is-hint').forEach(node=>node.classList.remove('is-hint'));play.querySelector(target)?.classList.add('is-hint');tell(text,'hint');
   }
+  function clearHints(){
+    stopSpeaking();if(!active)return;
+    state.showModel=false;
+    if(state.kind==='hint'){state.message='Keep working at your own pace.';state.kind='';}
+    suspendAudio();if(id!=='rhythm')render();
+  }
   $('.adventure-back').addEventListener('click',onBack);$('.adventure-hear').addEventListener('click',()=>{suspendAudio();say(`${$('.adventure-objective').textContent} ${$('.adventure-instructions').textContent}`);});$('.adventure-hint').addEventListener('click',hint);
   $('.adventure-next').addEventListener('click',()=>{suspendAudio();state=fresh(state.index+1);sessions.set(`${id}:${profile.age}:${profile.challengeAge}`,state);render();$('.adventure-objective').focus({preventScroll:true});});
   $('.adventure-retry').addEventListener('click',()=>{suspendAudio();const recorded=state.recorded;state=fresh(state.index,state.round);state.recorded=recorded;sessions.set(`${id}:${profile.age}:${profile.challengeAge}`,state);render();tell('A fresh start. Take it one step at a time.');});
@@ -202,5 +208,5 @@ export function createAdventures(container,{getSettings,getTitle=()=>null,onBack
   report();
   document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendAudio();});
   globalThis.addEventListener?.('pagehide',suspendAudio);globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
-  return {open(next){if(!ADVENTURE_IDS.includes(next))throw new Error(`Unknown adventure: ${next}`);active=true;id=next;profile=getProfile(getSettings());session();render();},close(){active=false;suspendAudio();stopSpeaking();},settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge||next.age!==profile.age;profile=next;if(!getSettings().sound)stopSpeaking();if(active){if(changed){suspendAudio();session();render();}else $('.adventure-hear').disabled=!canSpeak();}},hint,suspendAudio};
+  return {open(next){if(!ADVENTURE_IDS.includes(next))throw new Error(`Unknown adventure: ${next}`);active=true;id=next;profile=getProfile(getSettings());session();render();},close(){active=false;suspendAudio();stopSpeaking();},settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge||next.age!==profile.age;profile=next;if(!getSettings().sound)stopSpeaking();if(active){if(changed){suspendAudio();session();render();}else $('.adventure-hear').disabled=!canSpeak();}},hint,clearHints,suspendAudio};
 }
