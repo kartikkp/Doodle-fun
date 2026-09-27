@@ -227,7 +227,7 @@ final class DrawingRecoveryUITests: XCTestCase {
         for (index, region) in regions.enumerated() {
             let name = region.name
             app.buttons["Choose a coloring page"].tap()
-            let choice = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Color \(name) ")).firstMatch
+            let choice = app.buttons.matching(NSPredicate(format: "label == %@", "Color \(name)")).firstMatch
             XCTAssertTrue(choice.waitForExistence(timeout: 10), "\(name) should be offered in the page picker.")
             choice.tap()
             if index > 0 {

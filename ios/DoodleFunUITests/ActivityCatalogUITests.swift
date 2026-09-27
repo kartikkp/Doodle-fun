@@ -212,18 +212,34 @@ final class ActivityCatalogUITests: XCTestCase {
     }
 
     private func checkPracticeSelection(_ activity: Activity, age: Int) {
-        let practiceHeadings = ["trails": age <= 4 ? "Down" : age >= 8 ? "Write “cat”" : "Trace A"]
-        if let heading = practiceHeadings[activity.id] {
-            XCTAssertTrue(text(heading).waitForExistence(timeout: 10), "The requested practice opened: \(activity.id)")
+        // Exact opening items from catalog.js routing and getLearningItems.
+        // Older word practice must not silently fall back to the preschool bank.
+        if activity.id == "trails" {
+            let headings = [2: "Down", 3: "Down", 4: "Down", 5: "Trace A", 6: "Trace A",
+                            7: "Trace SUN", 8: "Write “replay”", 9: "Write “hopeful”", 10: "Write “evidence”"]
+            guard let heading = headings[age] else {
+                XCTFail("No expected opening tracing item for age \(age)")
+                return
+            }
+            XCTAssertTrue(text(heading).waitForExistence(timeout: 10), "Age \(age) opened its tracing practice: \(heading)")
         }
-        let prompt: NSPredicate?
+        let prompt: String?
         switch activity.id {
-        case "counting": prompt = NSPredicate(format: "label BEGINSWITH %@", "How many dots")
-        case "number-stories": prompt = NSPredicate(format: "label CONTAINS %@ AND label ENDSWITH %@", " + ", " = ?")
+        case "counting":
+            prompt = age <= 3 ? "How many dots in the empty frame?"
+                : age <= 5 ? "How many dots can you count?"
+                : age <= 9 ? "How many altogether in these bundles?"
+                : "What decimal amount do these units make?"
+        case "number-stories":
+            let openingSums = [2: "0 + 0 = ?", 3: "0 + 0 = ?", 4: "1 + 1 = ?", 5: "1 + 2 = ?",
+                               6: "2 + 2 = ?", 7: "17 + 8 = ?", 8: "27 + 18 = ?", 9: "126 + 57 = ?",
+                               10: "1.26 + 0.57 + 0.38 = ?"]
+            prompt = openingSums[age]
+            XCTAssertNotNil(prompt, "No expected opening addition question for age \(age)")
         default: prompt = nil
         }
         if let prompt {
-            XCTAssertTrue(web.staticTexts.matching(prompt).firstMatch.waitForExistence(timeout: 10), "The requested number question opened: \(activity.id)")
+            XCTAssertTrue(text(prompt).waitForExistence(timeout: 10), "Age \(age) opened its \(activity.id) question: \(prompt)")
         }
     }
 

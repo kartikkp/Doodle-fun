@@ -66,6 +66,12 @@ final class TracingGestureUITests: XCTestCase {
         XCTAssertTrue(firstLines.waitForExistence(timeout: 15))
         reveal(firstLines)
         firstLines.tap()
+        // Older ages open an age-specific motif in this mode. Select the
+        // retained straight line before checking the same trusted gestures.
+        let down = app.buttons["Down"].exists ? app.buttons["Down"] : app.switches["Down"]
+        XCTAssertTrue(down.waitForExistence(timeout: 15))
+        reveal(down)
+        down.tap()
         let board = named("Trace the guide with a finger or Pencil")
         XCTAssertTrue(board.waitForExistence(timeout: 15))
         reveal(board, drawingSurface: true)
