@@ -97,6 +97,7 @@ jobs:
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPitchPathCanRetryAndChooseTheHeardContour \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedMelodyEchoPlaysPadsInOrderAfterRetry \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedBeatMakerPlaysSavedCompositionAndStaysStoppedAfterBackground \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground \
             2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-audio-qa.log"
