@@ -11,9 +11,14 @@ permissions:
   contents: read
 jobs:
   activities:
+    name: Activities (${{ matrix.browser }})
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -30,23 +35,45 @@ jobs:
           git diff --exit-code -- index.html sw.js
           node scripts/sync-ios.mjs
           git diff --exit-code -- ios/DoodleFun/Resources/index.html ios/DoodleFun/Resources/BundleManifest.json
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run test:browser
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npm run test:browser -- --project=${{ matrix.browser }}
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: failure() || cancelled()
+        timeout-minutes: 3
         with:
-          name: activity-qa-report
+          name: activity-qa-report-${{ matrix.browser }}
           path: |
             playwright-report/
             test-results/
           retention-days: 7
 
   iphone-build:
+    name: iPhone build + native (${{ matrix.group }})
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: macos-latest
-    # The complete age matrix plus a separate trusted-audio build exceeds 30m
-    # on hosted runners; individual test/step timeouts still bound failures.
+    # Run 36347261267 passed all 321 cases in 37m49s, then exhausted the
+    # shared 45m limit during audio. Each case now belongs to exactly one shard.
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: ages-02-06
+            selections: >-
+              --only DoodleFunTests/NativeGameplayAge02Tests
+              --only DoodleFunTests/NativeGameplayAge03Tests
+              --only DoodleFunTests/NativeGameplayAge04Tests
+              --only DoodleFunTests/NativeGameplayAge05Tests
+              --only DoodleFunTests/NativeGameplayAge06Tests
+          - group: ages-07-10-and-bridge
+            selections: >-
+              --only DoodleFunTests/NativeGameplayAge07Tests
+              --only DoodleFunTests/NativeGameplayAge08Tests
+              --only DoodleFunTests/NativeGameplayAge09Tests
+              --only DoodleFunTests/NativeGameplayAge10Tests
+              --only DoodleFunTests/NativeBridgeTests
+              --only DoodleFunTests/NativeParentGateTests
+              --only DoodleFunTests/NativeLayoutTests
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -80,11 +107,62 @@ jobs:
           console.log(`Native QA simulator: ${selected.name} (${selected.udid})`);
           NODE
       - name: Run native gameplay and landscape regressions
+        timeout-minutes: 35
+        shell: bash
         env:
           DOODLE_SIMULATOR_UDID: ${{ steps.simulator.outputs.udid }}
-        run: >-
-          npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID"
-          --output "$RUNNER_TEMP/DoodleFun-native-qa" --only DoodleFunTests
+          DOODLE_NATIVE_SELECTIONS: ${{ matrix.selections }}
+        run: |
+          read -r -a native_selections <<< "$DOODLE_NATIVE_SELECTIONS"
+          npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID" \
+            --output "$RUNNER_TEMP/DoodleFun-native-qa" "${native_selections[@]}" \
+            2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-qa.log"
+      - name: Keep native integration evidence
+        uses: actions/upload-artifact@v7
+        if: always()
+        timeout-minutes: 3
+        with:
+          name: iphone-native-qa-report-${{ matrix.group }}
+          path: |
+            ${{ runner.temp }}/DoodleFun-native-qa/*.xcresult/**
+            ${{ runner.temp }}/DoodleFun-native-qa/qa-build.json
+            ${{ runner.temp }}/DoodleFun-native-qa/run-*.json
+            ${{ runner.temp }}/DoodleFun-native-qa/last-command.json
+            ${{ runner.temp }}/DoodleFun-native-qa.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  iphone-audio:
+    name: iPhone trusted audio
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
+    runs-on: macos-latest
+    # Audio gets its own bounded budget instead of the gameplay job's remainder.
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Select an available iPhone simulator
+        id: simulator
+        shell: bash
+        run: |
+          xcrun simctl list devices available --json > "$RUNNER_TEMP/doodle-simulators.json"
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          import path from 'node:path';
+          const inventory = JSON.parse(readFileSync(path.join(process.env.RUNNER_TEMP, 'doodle-simulators.json'), 'utf8'));
+          const candidates = Object.entries(inventory.devices ?? {})
+            .filter(([runtime]) => runtime.includes('.iOS-'))
+            .flatMap(([, devices]) => devices)
+            .filter(device => device.isAvailable && /^iPhone(?:\s|$)/.test(device.name));
+          const selected = candidates.find(device => device.name === 'iPhone 17 Pro') ?? candidates[0];
+          if (!selected || !/^[0-9A-F-]{36}$/i.test(selected.udid)) throw new Error('No available iPhone simulator was found on this runner.');
+          appendFileSync(process.env.GITHUB_OUTPUT, `udid=${selected.udid}\n`);
+          console.log(`Native QA simulator: ${selected.name} (${selected.udid})`);
+          NODE
       - name: Run trusted native listening interactions
         timeout-minutes: 20
         shell: bash
@@ -101,22 +179,10 @@ jobs:
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground \
             2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-audio-qa.log"
-      - name: Keep native failure evidence
-        uses: actions/upload-artifact@v7
-        if: failure()
-        with:
-          name: iphone-native-qa-report
-          path: |
-            ${{ runner.temp }}/DoodleFun-native-qa/*.xcresult/**
-            ${{ runner.temp }}/DoodleFun-native-qa/qa-build.json
-            ${{ runner.temp }}/DoodleFun-native-qa/run-*.json
-            ${{ runner.temp }}/DoodleFun-native-qa/last-command.json
-          if-no-files-found: ignore
-          retention-days: 7
-
       - name: Keep native listening evidence
         uses: actions/upload-artifact@v7
         if: always()
+        timeout-minutes: 3
         with:
           name: iphone-native-audio-qa-report
           path: |
