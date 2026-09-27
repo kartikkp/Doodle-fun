@@ -81,3 +81,16 @@ for(const viewport of [{width:320,height:568},{width:375,height:667},{width:390,
     expect((await rail.boundingBox()).width).toBeLessThan((await first.boundingBox()).width);
   }
 });
+
+for(const viewport of [{width:320,height:568},{width:375,height:667}])for(const mode of ['draw','coloring'])test(`creative paper keeps usable space without a progress row: ${mode} at ${viewport.width}`,async({page})=>{
+  await page.setViewportSize(viewport);await page.addInitScript(()=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:10,level:'auto'})));await page.goto('/#'+mode);if(mode==='coloring')await page.locator('.draw-template-card').first().tap();
+  const paper=page.locator('.draw-canvas'),rail=page.locator('#activity-mode-bar'),coach=page.locator('#activity-coach-bar');await expect(paper).toBeVisible();await expect(page.locator('#journey-open')).toBeHidden();
+  await expect.poll(async()=>(await paper.boundingBox()).width).toBeGreaterThan(120);const r=await rail.boundingBox(),c=await coach.boundingBox();expect(Math.abs(c.y-r.y)).toBeLessThan(3);
+  const before=await paper.evaluate(node=>node.toDataURL());await paper.tap({position:{x:30,y:40}});expect(await paper.evaluate(node=>node.toDataURL())).not.toBe(before);await page.getByRole('button',{name:'Undo last action',exact:true}).tap();expect(await paper.evaluate(node=>node.toDataURL())).toBe(before);
+  await page.screenshot({path:test.info().outputPath('creative-paper.png')});
+  if(viewport.width===320){
+    // The first navigation fix wrapped creative controls unnecessarily.
+    await page.addStyleTag({content:'.activity-navigation{flex-wrap:wrap!important}.activity-navigation .activity-mode-bar:not([hidden]){flex:1 0 100%!important}.activity-navigation:has(.activity-mode-bar:not([hidden])) .activity-coach-bar{flex:1 0 100%!important}'});
+    await expect.poll(async()=>(await paper.boundingBox()).width).toBeLessThanOrEqual(120);
+  }
+});
