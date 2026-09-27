@@ -1,3 +1,4 @@
+import {beginRound,recordMistake,recordHint,completeRound,getRoundCursor} from './progression.js';
 import { getProfile, readStore, writeStore } from './core.js';
 import { canSpeak, requestSpeech, stopSpeaking } from './speech.js';
 import { objectArt } from './activity-art.js';
@@ -298,11 +299,11 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   nextButton = $('.discover-next'); restartButton = $('.discover-restart'); hearButton = $('.discover-hear'); counter = $('.discover-round-count');
   function speak(text) { if(active) requestSpeech(text); }
   function report() { onProgress({ source: 'discovery', completedCount: Object.values(progress).reduce((sum, count) => sum + count, 0) }); }
-  function fresh(index = 0) { return { index, round: buildDiscoveryRound(currentId, profile.challengeAge, index), done: false, recorded: false, selected: null, sorted: new Set(), flipped: [], matched: new Set(), path: [0], message: '', feedback: '' }; }
-  function getSession() { const key = `${currentId}:${profile.challengeAge}`; if (!sessions.has(key)) sessions.set(key, fresh()); current = sessions.get(key); }
+  function fresh(index = getRoundCursor(currentId,profile.age,profile.challengeAge)) { return { index, round: buildDiscoveryRound(currentId, profile.challengeAge, index), done: false, recorded: false, selected: null, sorted: new Set(), flipped: [], matched: new Set(), path: [0], message: '', feedback: '' }; }
+  function getSession() { const key = `${currentId}:${profile.age}:${profile.challengeAge}`; if (!sessions.has(key)) sessions.set(key, fresh()); current = sessions.get(key); }
   function message(text, kind = '') { current.message = text; current.feedback = kind; status.textContent = text; status.className = `discover-status ${kind ? `is-${kind}` : ''}`; }
   function complete(text) {
-    current.done = true;
+    current.done = true;completeRound();
     if (!current.recorded) { current.recorded = true; progress[currentId] = Math.min(100000, progress[currentId] + 1); writeStore('discovery-progress-v1', progress); report(); }
     message(`✓ ${text}`, 'success'); nextButton.classList.add('is-ready'); updateCounter();
   }
@@ -310,7 +311,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   function choiceButton(item, label, action) { const node = button('', 'discover-choice', action); node.dataset.choice = item.id; node.setAttribute('aria-label', label); node.append(tokenPicture(item), element('span', 'discover-choice-label', item.name)); return node; }
   function selectChoice(value, node) {
     if (current.done) return;
-    if (value !== current.round.answer) {
+    if (value !== current.round.answer) {recordMistake();
       node.classList.add('is-try'); node.setAttribute('aria-label', `${node.dataset.label || node.getAttribute('aria-label')}. Try another picture`);
       message(currentId === 'patterns' ? current.round.kind==='number-rule'?'Check how the numbers change. Use Hint for the rule, then try again.':'Have another look at the part that repeats.' : currentId === 'odd-one-out' ? `Look for a different ${current.round.property}. You can try again.` : 'Take another look. You can try again.', 'retry');
       return;
@@ -374,7 +375,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
         if (current.done) return;
         const selected = round.items.find(item => item.id === current.selected);
         if (!selected) { message('Choose an item first, then tap its basket.', 'retry'); return; }
-        if (selected.category !== category.id) { message(`Check ${selected.name} against the basket rule. Try another basket, or ask for a hint.`, 'retry'); return; }
+        if (selected.category !== category.id) {recordMistake(); message(`Check ${selected.name} against the basket rule. Try another basket, or ask for a hint.`, 'retry'); return; }
         current.sorted.add(selected.id); current.selected = null;
         if (current.sorted.size === round.items.length) complete('Every item fits its basket rule. Lovely sorting!');
         else message(`${selected.name} found its basket. Choose another item.`, 'success');
@@ -460,6 +461,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     controls.append(arrows, undo, element('p', 'discover-tip', 'Follow the open paths. Take your time.')); layout.append(board, controls); play.append(layout);
   }
   function render() {
+    beginRound({mode:currentId,age:profile.age,step:profile.challengeAge,roundKey:String(current.index)});
     const meta = META[currentId]; title.textContent = getTitle() || meta[0]; $('.discover-activity-icon').textContent = meta[2]; $('.discover-level').textContent = `${profile.name} · round ${current.index + 1}`;
     hearButton.disabled = !canSpeak(); hearButton.title = hearButton.disabled ? 'Spoken instructions are unavailable on this device' : 'Hear these instructions';
     play.replaceChildren(); nextButton.classList.toggle('is-ready', current.done); container.dataset.discovery = currentId;
@@ -468,7 +470,7 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
     message(current.message || openingMessage, current.feedback); updateCounter();
   }
   function hint() {
-    if(!active || current.done) return;
+    if(!active || current.done) return;recordHint();
     const round=current.round;
     play.querySelectorAll('.is-hint').forEach(node=>node.classList.remove('is-hint'));
     let text='';
@@ -512,14 +514,14 @@ export function createDiscovery(container, { getSettings, getTitle=()=>null, onB
   $('.discover-back').addEventListener('click', onBack);
   hearButton.addEventListener('click', () => speak(`${objective.textContent} ${$('.discover-tip')?.textContent || ''}`));
   $('.discover-hint').addEventListener('click', hint);
-  nextButton.addEventListener('click', () => { const key = `${currentId}:${profile.challengeAge}`; current = fresh(current.index + 1); sessions.set(key, current); render(); objective.focus({ preventScroll: true }); });
-  restartButton.addEventListener('click', () => { const { round, index, recorded } = current; current = { ...fresh(index), round, recorded }; sessions.set(`${currentId}:${profile.challengeAge}`, current); render(); message('A fresh start. Have another go.'); });
+  nextButton.addEventListener('click', () => { const key = `${currentId}:${profile.age}:${profile.challengeAge}`; current = fresh(current.index + 1); sessions.set(key, current); render(); objective.focus({ preventScroll: true }); });
+  restartButton.addEventListener('click', () => { const { round, index, recorded } = current; current = { ...fresh(index), round, recorded }; sessions.set(`${currentId}:${profile.age}:${profile.challengeAge}`, current); render(); message('A fresh start. Have another go.'); });
   objective.tabIndex = -1;
   document.addEventListener('keydown', event => {
     if (!active || currentId !== 'maze' || !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) || event.target.closest?.('dialog, input, select, textarea')) return;
     event.preventDefault(); const position = current.path[current.path.length - 1], offset = { ArrowUp: -current.round.size, ArrowDown: current.round.size, ArrowLeft: -1, ArrowRight: 1 }[event.key]; moveMaze(position + offset);
   });
-  function settingsChanged() { const next = getProfile(getSettings()), tierChanged = next.challengeAge !== profile.challengeAge; profile = next; if (!getSettings().sound) stopSpeaking(); if (active) { if (tierChanged) { getSession(); render(); } else { hearButton.disabled=!canSpeak(); hearButton.title=hearButton.disabled?'Spoken instructions unavailable':'Hear these instructions'; } } }
+  function settingsChanged() { const next = getProfile(getSettings()), tierChanged = next.challengeAge !== profile.challengeAge || next.age !== profile.age; profile = next; if (!getSettings().sound) stopSpeaking(); if (active) { if (tierChanged) { getSession(); render(); } else { hearButton.disabled=!canSpeak(); hearButton.title=hearButton.disabled?'Spoken instructions unavailable':'Hear these instructions'; } } }
   report();
   return {
     open(id) { if (!DISCOVERY_IDS.includes(id)) throw new Error(`Unknown discovery activity: ${id}`); active = true; currentId = id; profile = getProfile(getSettings()); getSession(); render(); },
