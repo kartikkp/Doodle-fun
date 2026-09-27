@@ -17,7 +17,7 @@ const full = indexNativeTests(sources);
 test('real Swift inventory indexes each test under its declared target and class', () => {
   assert.deepEqual([...full.keys()], ['DoodleFunTests', 'DoodleFunUITests']);
   assert.equal(full.get('DoodleFunTests').get('NativeBridgeTests').size, 9);
-  assert.equal(full.get('DoodleFunTests').get('NativeParentGateTests').size, 4);
+  assert.equal(full.get('DoodleFunTests').get('NativeParentGateTests').size, 5);
   for (let age = 2; age <= 10; age++) {
     const methods=full.get('DoodleFunTests').get(`NativeGameplayAge${String(age).padStart(2, '0')}Tests`);
     const gameplayModes=ACTIVITY_MODES.filter(mode=>mode.engine!=='listening');
@@ -91,7 +91,7 @@ test('without gameplay excludes all gameplay and layout filters while keeping bo
   const included = new Set(nativeTestSourcePaths({withoutGameplay:true}));
   const index = indexNativeTests(sources.filter(({file}) => included.has(file)));
   assert.deepEqual([...index.get('DoodleFunTests')].map(([name, methods]) => [name, methods.size]), [
-    ['NativeBridgeTests', 9], ['NativeParentGateTests', 4],
+    ['NativeBridgeTests', 9], ['NativeParentGateTests', 5],
   ]);
   assert.equal(validateNativeTestSelection('DoodleFunTests', index), 'DoodleFunTests');
   assert.equal(validateNativeTestSelection('DoodleFunUITests/ActivityCatalogUITests/testAge6LandscapeCatalog', index),
