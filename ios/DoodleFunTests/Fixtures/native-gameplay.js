@@ -7,6 +7,7 @@ import {getProfile} from '../../../core.js';
 import {generateChallenge} from '../../../challenges.js';
 import discoveryAdventures from './native-discovery-adventures.js';
 import studios from './native-studios.js';
+import {waitForNative} from './native-wait.js';
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const visible = node => Boolean(node && node.getClientRects().length && !node.closest('[hidden]'));
@@ -36,9 +37,7 @@ function context(id, age) {
       qa.assert(node, `Missing button: ${label}`); return node;
     },
     async waitFor(predicate, label, timeout=4000) {
-      const end=performance.now()+timeout;
-      while(performance.now()<end) { if(predicate()) return; await pause(20); }
-      qa.assert(false, `Timed out: ${label}`);
+      if(!await waitForNative(predicate,{timeout})) qa.assert(false, `Timed out: ${label}`);
     },
     get assertions() { return assertions; },
   };
@@ -368,6 +367,6 @@ globalThis.__doodleNativeQA=async({id,age})=>{
     qa.assert(runtimeErrors.length===0,`No uncaught browser errors: ${runtimeErrors.join('; ')}`);
     return {id,age,status:'passed',assertions:qa.assertions,steps:qa.steps,elapsedMs:Math.round(performance.now()-begin),interaction:'Native WKWebView DOM actions; drawing/tracing use synthetic pointers with scoped capture adapter. Trusted simulator finger gestures are tested separately.'};
   } catch(error) {
-    return {id,age,status:'failed',assertions:qa.assertions,steps:qa.steps,error:String(error.message||error),stack:error.stack,runtimeErrors,route:location.hash,visibleText:document.body.innerText.slice(0,6000),elapsedMs:Math.round(performance.now()-begin)};
+    return {id,age,status:'failed',assertions:qa.assertions,steps:qa.steps,error:String(error.message||error),stack:error.stack,runtimeErrors,route:location.hash,routeState:{activity:document.body.dataset.activity,family:document.body.dataset.family,coachVisible:visible(document.querySelector('#coach-open')),readyState:document.readyState,visibility:document.visibilityState},visibleText:document.body.innerText.slice(0,6000),elapsedMs:Math.round(performance.now()-begin)};
   } finally {removeEventListener('error',recordError);removeEventListener('unhandledrejection',recordError);}
 };
