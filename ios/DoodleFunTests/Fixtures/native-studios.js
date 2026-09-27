@@ -28,7 +28,11 @@ async function tactile(qa){
     qa.assert(qa.all('.studio-mirror-cell',view).every((tile,cell)=>Number(tile.dataset.color)===round.solution[cell]),'The visible tile colors form the actual reflection');
   }else if(qa.id==='balance-lab'){
     qa.assert(qa.all('.studio-block.is-fixed',view).length===round.fixed.length,'The starting weights stay on the left');
-    if(round.mystery)qa.assert(find('.studio-evidence').textContent.includes(String(round.mystery)),'Unknown-weight evidence is available without an answer button');
+    if(round.mystery){
+      const equation=`${Array(round.clue.copies).fill('?').join(' + ')} + ${round.clue.extra} = ${round.clue.total}`;
+      qa.assert(find('.studio-unit-clue').textContent===equation,'The visible equation supplies the age-specific unknown-weight evidence');
+      qa.assert(round.clue.copies*round.mystery+round.clue.extra===round.clue.total,'The unknown weight satisfies the displayed clue');
+    }
     const solution=solveBalance(round);qa.assert(solution?.length>0,'The weight target and age-specific constraints have a legal solution');
     for(const weight of solution){click(`[data-weight="${weight}"]`);click('[data-pan="1"]');}
     const right=qa.all('[data-side="1"] .studio-block',view).reduce((sum,piece)=>sum+Number(piece.textContent),0);
