@@ -88,9 +88,13 @@ final class TracingGestureUITests: XCTestCase {
             } else if visibleRail.width >= 96, visibleRail.height >= 48 {
                 // Gesture within this observed rail, not on the tracing board.
                 // Scroll right to reveal a left-clipped choice and vice versa.
-                let left = origin.withOffset(CGVector(dx: visibleRail.minX - windowFrame.minX + visibleRail.width * 0.2,
+                // Coach and progress leave a narrow mode rail on SE. A fixed
+                // 60%-width pan overshoots its 89pt First lines control and
+                // alternates between clipping its left and right edges.
+                let distance = min(visibleRail.width * 0.6, max(24, (visibleRail.width - frame.width) * 0.8))
+                let left = origin.withOffset(CGVector(dx: visibleRail.midX - windowFrame.minX - distance / 2,
                                                       dy: visibleRail.midY - windowFrame.minY))
-                let right = origin.withOffset(CGVector(dx: visibleRail.minX - windowFrame.minX + visibleRail.width * 0.8,
+                let right = origin.withOffset(CGVector(dx: visibleRail.midX - windowFrame.minX + distance / 2,
                                                        dy: visibleRail.midY - windowFrame.minY))
                 let towardStart = frame.minX < visibleRail.minX
                 (towardStart ? left : right).press(forDuration: 0.05, thenDragTo: towardStart ? right : left)
