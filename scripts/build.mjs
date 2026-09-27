@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {ACTIVITIES} from '../catalog.js';
+import {voiceTranscripts} from './voice-transcripts.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const result=await build({absWorkingDir:root,entryPoints:['app.js'],bundle:true,write:false,format:'iife',target:['safari15','chrome100'],minify:true,legalComments:'none'});
 let html=await readFile(new URL('../app-shell.html',import.meta.url),'utf8');
@@ -21,6 +22,18 @@ for(const [,file] of styles)html=html.replace(`<link rel="stylesheet" href="${fi
 const icon=await readFile(new URL('../icon.svg',import.meta.url),'utf8');
 html=html.replace('href="icon.svg"',`href="data:image/svg+xml,${encodeURIComponent(icon)}"`);
 html=html.replace('<script type="module" src="app.js"></script>','');
+// Verify every recorded transcript before embedding. A changed lesson must
+// never silently play an older recording or fetch media at runtime.
+const voiceManifest=JSON.parse(await readFile(new URL('../assets/voice/manifest.json',import.meta.url),'utf8'));
+const clips={};
+for(const transcript of voiceTranscripts()) {
+  const record=voiceManifest.clips.find(clip=>clip.id===transcript.id&&clip.text===transcript.text);
+  if(!record||!(/^[a-f0-9]{16}\.m4a$/).test(record.file)||record.mime!=='audio/mp4')throw new Error(`Missing coaching recording: ${transcript.id}. Regenerate voice clips.`);
+  const bytes=await readFile(new URL('../assets/voice/'+record.file,import.meta.url));
+  if(createHash('sha256').update(bytes).digest('hex')!==record.sha256)throw new Error(`Corrupt coaching recording: ${record.file}`);
+  clips[transcript.text]=`data:${record.mime};base64,${bytes.toString('base64')}`;
+}
+html=html.replace('</head>',()=>`<script>globalThis.__DOODLE_VOICE_CLIPS__=${JSON.stringify(clips).replace(/<\/script/gi,'<\\/script')};</script>\n</head>`);
 // Inline all game code so file:// use and first-entry play do not require a server.
 html=html.replace('</body>',()=>`<script>${result.outputFiles[0].text.replace(/<\/script/gi,'<\\/script')}</script>\n</body>`);
 const publicContents=await Promise.all(publicPages.map(file=>readFile(new URL('../'+file,import.meta.url))));
