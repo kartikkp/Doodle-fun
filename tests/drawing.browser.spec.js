@@ -40,14 +40,39 @@ async function compareDecodedPaper(page, before, after) {
       return { count, bounds: [left, top, right, bottom] };
     }
     let maxRGBDelta = 0, maxAlphaDelta = 0, changedPixels = 0;
+    let addedThresholdInk = 0, removedThresholdInk = 0, unexpectedInkChanges = 0;
     for (let i = 0; i < a.pixels.length; i += 4) {
       const delta = Math.max(Math.abs(a.pixels[i] - b.pixels[i]), Math.abs(a.pixels[i + 1] - b.pixels[i + 1]), Math.abs(a.pixels[i + 2] - b.pixels[i + 2]));
       maxRGBDelta = Math.max(maxRGBDelta, delta);
       maxAlphaDelta = Math.max(maxAlphaDelta, Math.abs(a.pixels[i + 3] - b.pixels[i + 3]));
       if (delta > 0) changedPixels++;
+      const before = Math.min(...a.pixels.subarray(i, i + 3));
+      const after = Math.min(...b.pixels.subarray(i, i + 3));
+      if ((before < 240) !== (after < 240)) {
+        if (before === 240 && after === 239) addedThresholdInk++;
+        else if (before === 239 && after === 240) removedThresholdInk++;
+        else unexpectedInkChanges++;
+      }
     }
-    return { dimensions, maxRGBDelta, maxAlphaDelta, changedPixels, pixelCount: a.width * a.height, beforeInk: ink(a), afterInk: ink(b) };
+    return { dimensions, maxRGBDelta, maxAlphaDelta, changedPixels, pixelCount: a.width * a.height,
+      beforeInk: ink(a), afterInk: ink(b), addedThresholdInk, removedThresholdInk, unexpectedInkChanges };
   }, [before, after]);
+}
+
+function expectPreservedPaper(restored) {
+  expect(restored.dimensions.slice(0, 2)).toEqual(restored.dimensions.slice(2));
+  expect(restored.beforeInk.count).toBeGreaterThan(100);
+  expect(restored.afterInk.bounds).toEqual(restored.beforeInk.bounds);
+  expect(restored.maxAlphaDelta).toBe(0);
+  // Linux WebKit can round antialiased RGB values by one on PNG restore.
+  // CI's single ink-count difference was exactly 240 -> 239 at (232, 227).
+  // Check membership at every pixel: only 239 <-> 240 may cross the <240
+  // ink threshold. Missing/moved ink elsewhere must still fail, even with
+  // unchanged bounds or total count. Keep the existing sparse RGB limit.
+  expect(restored.unexpectedInkChanges).toBe(0);
+  expect(restored.afterInk.count).toBe(restored.beforeInk.count + restored.addedThresholdInk - restored.removedThresholdInk);
+  expect(restored.maxRGBDelta).toBeLessThanOrEqual(1);
+  expect(restored.changedPixels / restored.pixelCount).toBeLessThanOrEqual(.005);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -231,17 +256,42 @@ test('rotation, home navigation, and reload keep the same saved artwork', async 
   await page.reload();
   await expect(page.locator('.draw-draft-status')).toHaveText('Your last picture is ready');
   const restored = await compareDecodedPaper(page, rotated, await snapshot(page));
-  expect(restored.dimensions.slice(0, 2)).toEqual(restored.dimensions.slice(2));
-  expect(restored.beforeInk.count).toBeGreaterThan(100);
-  expect(restored.afterInk).toEqual(restored.beforeInk);
-  expect(restored.maxAlphaDelta).toBe(0);
-  // Linux WebKit's transparent PNG restore rounds a few antialiased RGB values:
-  // CI showed 200/252,004 pixels changing by one level, with identical ink geometry.
-  // Preserve exact geometry/alpha and allow only that bounded color rounding.
-  expect(restored.maxRGBDelta).toBeLessThanOrEqual(1);
-  expect(restored.changedPixels / restored.pixelCount).toBeLessThanOrEqual(.005);
+  expectPreservedPaper(restored);
   // The full-resolution backing PNG itself must remain byte-for-byte unchanged.
   expect(await draft(page)).toBe(original);
+});
+
+test('paper preservation permits threshold rounding but rejects changed artwork', async ({ page }) => {
+  const samples = await page.evaluate(() => {
+    const paper = document.createElement('canvas'); paper.width = paper.height = 30;
+    const ctx = paper.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 30, 30);
+    ctx.fillStyle = 'rgb(238,110,126)'; ctx.fillRect(5, 5, 20, 20);
+    const original = ctx.getImageData(0, 0, 30, 30);
+    const set = (pixels, x, y, rgba) => pixels.data.set(rgba, (y * 30 + x) * 4);
+    set(original, 8, 8, [255, 255, 255, 255]);
+    set(original, 24, 20, [254, 240, 241, 255]);
+    const sample = mutate => {
+      const pixels = new ImageData(new Uint8ClampedArray(original.data), 30, 30);
+      mutate(pixels); ctx.putImageData(pixels, 0, 0); return paper.toDataURL();
+    };
+    return {
+      original: sample(() => {}),
+      rounded: sample(p => set(p, 24, 20, [253, 239, 241, 255])),
+      erased: sample(p => set(p, 10, 10, [255, 255, 255, 255])),
+      moved: sample(p => { set(p, 10, 10, [255, 255, 255, 255]); set(p, 8, 8, [238, 110, 126, 255]); }),
+      expanded: sample(p => set(p, 25, 20, [238, 110, 126, 255])),
+      recolored: sample(p => set(p, 10, 10, [238, 108, 126, 255])),
+      alphaChanged: sample(p => set(p, 10, 10, [238, 110, 126, 254])),
+    };
+  });
+  for (const [before, after] of [[samples.original, samples.rounded], [samples.rounded, samples.original]]) {
+    expectPreservedPaper(await compareDecodedPaper(page, before, after));
+  }
+  for (const name of ['erased', 'moved', 'expanded', 'recolored', 'alphaChanged']) {
+    const comparison = await compareDecodedPaper(page, samples.original, samples[name]);
+    expect(() => expectPreservedPaper(comparison), `${name} artwork must not pass preservation`).toThrow();
+  }
 });
 
 test.describe('short landscape drawing', () => {
