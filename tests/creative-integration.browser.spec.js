@@ -76,9 +76,17 @@ for(const viewport of [{width:320,height:568},{width:375,height:667},{width:390,
   await page.locator('#journey-open').tap();await expect(page.locator('#journey-dialog')).toBeVisible();await page.locator('#journey-done').tap();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
   if(viewport.width===320){
-    // Restore the original crowded row: this fails the reachability geometry.
-    await page.addStyleTag({content:'.activity-navigation{flex-wrap:nowrap!important}.activity-navigation .activity-mode-bar:not([hidden]){flex:1 1 0!important}.activity-navigation:has(.activity-mode-bar:not([hidden])) .activity-coach-bar{flex:0 0 auto!important}'});
-    expect((await rail.boundingBox()).width).toBeLessThan((await first.boundingBox()).width);
+    // Replay the native failure's measured 89px choice and 214px Coach/progress
+    // area. Host fonts can otherwise make the old row just barely fit on Linux.
+    // Only the negative control fixes these sizes; production above uses its
+    // actual geometry and must support the full-size target and a real tap.
+    await page.addStyleTag({content:'.activity-navigation{flex-wrap:nowrap!important}.activity-navigation .activity-mode-bar:not([hidden]){flex:1 1 0!important}.activity-navigation:has(.activity-mode-bar:not([hidden])) .activity-coach-bar{flex:0 0 214px!important;min-width:214px!important}.activity-mode[data-activity-mode="prewriting"]{width:89px!important;min-width:89px!important}'});
+    await first.scrollIntoViewIfNeeded();const crowded=await rail.boundingBox(),clipped=await first.boundingBox();
+    expect(clipped.width).toBeGreaterThanOrEqual(48);expect(clipped.height).toBeGreaterThanOrEqual(48);
+    expect(crowded.width).toBeLessThan(clipped.width);
+    const visibleWidth=Math.max(0,Math.min(crowded.x+crowded.width,clipped.x+clipped.width)-Math.max(crowded.x,clipped.x));
+    expect(visibleWidth).toBeLessThan(clipped.width);
+    await test.info().attach('practice-rail-geometry',{body:JSON.stringify({production:{rail:r,choice:f},negativeControl:{rail:crowded,choice:clipped,visibleWidth}},null,2),contentType:'application/json'});
   }
 });
 
