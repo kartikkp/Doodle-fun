@@ -34,7 +34,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   let opened=false,kind='letters',set=null,index=0,ink=[],activePointer=null,activePath=null,done=false;
   let animation=0,demoRunning=false,profile=getProfile(getSettings()),saved=safeProgress();
   let svg,inkLayer,guideLayer,markers,trail,status,checkButton,showButton,clearButton,prevButton,nextButton,picker,itemLabel,example;
-  let countValue=0,countMode='count',countRound=0,countAnswered=false,countMarked=new Map(),countButtons=[];
+  let countValue=0,countMode='count',countRound=0,countAnswered=false,countMarked=new Map(),countButtons=[],hintMarked=new Set();
   let pageMode='trace',countQuestion=null,managedModes=false;
   let focusIndex=null,focusControls,wordContext,focusPrevious,focusNext,focusLabel,wholeButton,sessionTolerance=null,activeRoundKey=null;
   const progressionMode=()=>pageMode==='count'?{count:'counting',add:'addition',groups:'equal-groups'}[countMode]:{shapes:'prewriting',upper:'uppercase',lower:'lowercase',words:'word-tracing',nums:'number-tracing'}[set];
@@ -283,14 +283,14 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     animation=requestAnimationFrame(tick);
   }
   function nextCount() {
-    countRound++;countValue=(countValue+1)%(profile.numberMax+1);countAnswered=false;countMarked.clear();render();
+    countRound++;countValue=(countValue+1)%(profile.numberMax+1);countAnswered=false;countMarked.clear();hintMarked.clear();render();
   }
   function renderCount(body) {
     const layout=element('div','learn-count-layout'),card=element('section','learn-count-card'),side=element('aside','learn-count-side');
     if(!managedModes) {
       const modeButtons=element('div','learn-tabs');modeButtons.setAttribute('role','group');modeButtons.setAttribute('aria-label','Choose number challenge');
       for(const [mode,label]of [['count','Count dots'],['add','Add together'],['groups','Equal groups']]) {
-        const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();reportMode();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
+        const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();hintMarked.clear();reportMode();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
       }
       card.append(modeButtons);
     }
@@ -307,7 +307,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
           if(countMarked.has(dotIndex))return;
           countMarked.set(dotIndex,countMarked.size+1);dot.textContent=String(countMarked.size);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${countMarked.size}`);
         });
-        dot.setAttribute('aria-label',countMarked.has(dotIndex)?`Counted ${countMarked.get(dotIndex)}`:`Count dot ${dotIndex+1}`);dot.setAttribute('aria-pressed',String(countMarked.has(dotIndex)));dot.classList.toggle('is-counted',countMarked.has(dotIndex));box.append(dot);
+        dot.dataset.dotIndex=String(dotIndex);dot.setAttribute('aria-label',countMarked.has(dotIndex)?`Counted ${countMarked.get(dotIndex)}`:`Count dot ${dotIndex+1}`);dot.setAttribute('aria-pressed',String(countMarked.has(dotIndex)));dot.classList.toggle('is-counted',countMarked.has(dotIndex));box.append(dot);
       }
       return box;
     };
@@ -364,7 +364,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   }
   function open(requestedKind='letters',options={}) {
     profile=getProfile(getSettings());opened=true;managedModes=Boolean(options.managedModes);kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
-    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];countRound=0;countAnswered=false;countMarked.clear();}
+    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];countRound=0;countAnswered=false;countMarked.clear();hintMarked.clear();}
     else{set=SETS.some(([value])=>value===profile.defaultSet)?profile.defaultSet:'upper';index=0;pageMode='trace';}
     if(SETS.some(([value])=>value===options.set)){set=options.set;index=0;pageMode='trace';}
     if(kind==='numbers'&&['count','add','groups'].includes(options.mode)){countMode=options.mode;pageMode='count';}
@@ -382,14 +382,27 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     if(countAnswered||!countQuestion)return;
     recordHint();
     if(countQuestion.representation){container.querySelector('.learn-place-strategy').hidden=false;updateStatus(`${countQuestion.strategy} ${countQuestion.worked}. Combine the parts to find your answer.`);return;}
-    countMarked.clear();container.querySelectorAll('.learn-count-dot').forEach((dot,i)=>{countMarked.set(i,i+1);dot.textContent=String(i+1);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${i+1}`);});
+    container.querySelectorAll('.learn-count-dot').forEach((dot,i)=>{if(!countMarked.has(i)){countMarked.set(i,countMarked.size+1);hintMarked.add(i);}const number=countMarked.get(i);dot.textContent=String(number);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${number}`);});
     updateStatus(`${countQuestion.strategy} ${countQuestion.answer?`The last dot is ${countQuestion.answer}.`:'Zero means none.'}`);
+  }
+  function clearHints() {
+    if(!opened)return;
+    stopDemo();container.querySelectorAll('details.learn-help').forEach(help=>help.open=false);
+    container.querySelectorAll('.learn-place-strategy').forEach(strategy=>strategy.hidden=true);
+    // Remove only numbers supplied by the model. The child's counted dots and
+    // canonical tracing ink survive a change to the parent's hint preference.
+    for(const index of hintMarked)countMarked.delete(index);hintMarked.clear();
+    container.querySelectorAll('.learn-count-dot').forEach(dot=>{const index=Number(dot.dataset.dotIndex),number=countMarked.get(index);dot.textContent=number?String(number):'';dot.classList.toggle('is-counted',Boolean(number));dot.setAttribute('aria-pressed',String(Boolean(number)));dot.setAttribute('aria-label',number?`Counted ${number}`:`Count dot ${index+1}`);});
+    if(pageMode==='trace'){
+      if(guideLayer)[...guideLayer.children].forEach(path=>path.setAttribute('stroke','#e1dffb'));
+      if(!done)updateStatus(tracingHint());
+    }else if(!countAnswered)updateStatus('Choose a number. There’s plenty of time.');
   }
   function settingsChanged() {
     const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;
-    if(changed){ink=[];activeRoundKey=null;index=Math.min(index,getLearningItems(set,profile.challengeAge).length-1);countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();done=false;render();}
+    if(changed){ink=[];activeRoundKey=null;index=Math.min(index,getLearningItems(set,profile.challengeAge).length-1);countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();hintMarked.clear();done=false;render();}
     else container.querySelectorAll('[data-learning-speech]').forEach(node=>node.hidden=!canSpeak());
     
   }
-  return {open,close,settingsChanged,hint};
+  return {open,close,settingsChanged,hint,clearHints};
 }

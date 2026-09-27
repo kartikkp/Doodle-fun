@@ -29,3 +29,21 @@ test('letter focus survives rotation and rejects taps, missing letters, and off-
   await page.getByRole('button',{name:'Check tracing',exact:true}).click();await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
   await page.getByRole('button',{name:'↺ Start again',exact:true}).click();await board(page).scrollIntoViewIfNeeded();const r=await board(page).boundingBox();await page.mouse.move(r.x+8,r.y+8);await page.mouse.down();await page.mouse.move(r.x+r.width-8,r.y+r.height-8,{steps:15});await page.mouse.up();await page.getByRole('button',{name:'Check tracing',exact:true}).click();await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
 });
+
+// Change the settings control without leaving the mounted exercise: returning
+// through Home intentionally starts a new round and would not test revocation.
+async function hintPolicy(page,value){await page.locator('#hint-policy').selectOption(value,{force:true});await expect(page.locator('body')).toHaveAttribute('data-help-policy',value);}
+test('revoking a tracing hint removes its model while preserving ink and mistake history',async({page})=>{
+  await start(page);await page.emulateMedia({reducedMotion:'reduce'});
+  const item=getLearningItems('words',10)[0];await tracePaths(page,item.strokes.slice(0,1));
+  await page.getByRole('button',{name:'Check tracing',exact:true}).click();const ink=await page.locator('.learn-ink-layer').innerHTML();
+  await page.getByRole('button',{name:'▶ Show me',exact:true}).click();await expect(page.locator('.learn-demo-layer path')).not.toHaveCount(0);
+  const medalsBefore=await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:medal-progress-v1'));
+  await hintPolicy(page,'off');await expect(page.locator('.learn-demo-layer')).toBeEmpty();await expect(page.locator('.learn-ink-layer')).toHaveJSProperty('innerHTML',ink);
+  expect(await page.evaluate(()=>localStorage.getItem('doodle-fun:v2:medal-progress-v1'))).toBe(medalsBefore);await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
+});
+test('revoking counting hints removes model counts but keeps the child’s counted dots',async({page})=>{
+  await start(page,5);await page.goto('/#counting');const dots=page.locator('.learn-count-dot');await dots.last().click();await expect(dots.last()).toHaveText('1');
+  await page.getByRole('button',{name:'Show counting steps',exact:true}).click();await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(await dots.count());
+  await hintPolicy(page,'off');await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(1);await expect(dots.last()).toHaveText('1');await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
+});
