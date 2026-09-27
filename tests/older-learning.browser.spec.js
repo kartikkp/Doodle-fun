@@ -4,10 +4,10 @@ import {test,expect} from '@playwright/test';
 // the quantity frame's internal answer to decide which button completes a round.
 function solvePrintedPrompt(prompt,id) {
   if(id==='addition') {
-    const equation=prompt.match(/^(\d+(?: \+ \d+){1,2}) = \?$/);
+    const equation=prompt.match(/^(\d+(?:\.\d+)?(?: \+ \d+(?:\.\d+)?){1,2}) = \?$/);
     expect(equation,'addition shows its complete operands').not.toBeNull();
     const operands=equation[1].split(' + ').map(Number);
-    return {answer:operands.reduce((sum,operand)=>sum+operand,0),numbers:operands,equation:equation[1]};
+    return {answer:Math.round(operands.reduce((sum,operand)=>sum+operand,0)*100)/100,numbers:operands,equation:equation[1]};
   }
   const equation=prompt.match(/^(\d+) groups of (\d+)\. How many\?$/);
   expect(equation,'equal groups shows both factors').not.toBeNull();
@@ -27,30 +27,31 @@ for(const age of [9,10])for(const viewport of [{width:375,height:812},{width:812
       for(let round=0;round<3;round++) {
         const prompt=await page.locator('.learn-count-prompt').innerText(),q=solvePrintedPrompt(prompt,id),feedback=page.locator('.learn-feedback');
         expect(seen.has(prompt),'new rounds vary the actual equation').toBe(false);seen.add(prompt);
-        if(id==='addition') {expect(q.answer).toBeGreaterThan(20);expect(q.numbers.every(number=>number>=10)).toBe(true);}
+        const decimal=age===10&&id==='addition',format=n=>decimal?n.toFixed(2):String(n);
+        if(id==='addition') {expect(q.answer).toBeGreaterThan(decimal?2:20);expect(q.numbers.every(number=>number>=(decimal?.1:10))).toBe(true);}
         else if(age===9)expect(q.numbers.every(number=>number>=4)).toBe(true);
         else expect(q.numbers[1]).toBeGreaterThanOrEqual(12);
         await expect(feedback).not.toHaveClass(/is-complete/);
-        await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity',String(q.answer));
+        await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity',String(Math.round(q.answer*(decimal?100:1))));
         await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-representation','place-value');
         await expect(page.locator('.learn-count-dot')).toHaveCount(0);
         await expect(page.locator('.learn-place-strategy')).toBeHidden();
-        await expect(page.locator('.learn-number-card')).toHaveText(id==='addition'?q.numbers.map(String):[q.equation]);
+        await expect(page.locator('.learn-number-card')).toHaveText(id==='addition'?q.numbers.map(format):[q.equation]);
         const choices=(await page.locator('.learn-answer').allTextContents()).map(Number);
         expect(new Set(choices).size).toBe(choices.length);expect(choices.filter(value=>value===q.answer)).toHaveLength(1);
-        expect(choices.filter(value=>value!==q.answer&&value%10===q.answer%10).length,'at least two alternatives require checking more than the ones digit').toBeGreaterThanOrEqual(2);
+        expect(choices.filter(value=>value!==q.answer&&Math.round(value*(decimal?100:1))%10===Math.round(q.answer*(decimal?100:1))%10).length,'at least two alternatives require checking more than the ones digit').toBeGreaterThanOrEqual(2);
         const range=await page.locator('.learn-range strong').innerText(),max=Number(range.split('–')[1]);
-        expect(choices.every(value=>Number.isInteger(value)&&value>=0&&value<=max),'all choices stay in the shown practice range').toBe(true);
+        expect(choices.every(value=>Number.isInteger(Math.round(value*(decimal?100:1)))&&value>=0&&value<=max),'all choices stay in the shown practice range').toBe(true);
         const wrong=choices.find(value=>value!==q.answer);
-        await page.getByRole('button',{name:`Answer ${wrong}`,exact:true}).click();
+        await page.getByRole('button',{name:`Answer ${format(wrong)}`,exact:true}).click();
         await expect(feedback).not.toHaveClass(/is-complete/);
-        await expect(feedback).toContainText(`You chose ${wrong}.`);
+        await expect(feedback).toContainText(`You chose ${format(wrong)}.`);
         await page.getByRole('button',{name:'Show counting steps',exact:true}).click();
         await expect(page.locator('.learn-place-strategy')).toBeVisible();
         await expect(feedback).not.toHaveClass(/is-complete/);
-        await page.getByRole('button',{name:`Answer ${q.answer}`,exact:true}).click();
+        await page.getByRole('button',{name:`Answer ${format(q.answer)}`,exact:true}).click();
         await expect(feedback).toHaveClass(/is-complete/);
-        await expect(feedback).toContainText(`${q.equation} = ${q.answer}`);
+        await expect(feedback).toContainText(`${q.equation} = ${format(q.answer)}`);
         for(const button of await page.locator('.learn-answer').all())await expect(button).toBeDisabled();
         const layout=await page.locator('#learning-view').evaluate(screen=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth,controls:[...screen.querySelectorAll('button')].filter(node=>node.getClientRects().length).map(node=>{const r=node.getBoundingClientRect();return {label:node.textContent,left:r.left,right:r.right,width:r.width,height:r.height};})}));
         expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);

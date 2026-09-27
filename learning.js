@@ -1,4 +1,5 @@
 import {getProfile, readStore, writeStore} from './core.js';
+import {objectArt} from './activity-art.js';
 import {canSpeak,speak as speakText,stopSpeaking} from './speech.js';
 import {getLearningItems, evaluateTrace, samplePath, pathLength, buildQuantityQuestion} from './learning-data.js';
 
@@ -71,7 +72,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     const back=button('← Home','button learn-back',()=>{close();onBack();});back.setAttribute('aria-label','Back to home');
     const heading=element('div','learn-heading');heading.append(element('p','learn-eyebrow',kind==='numbers'?'COUNT • NOTICE • LEARN':'TRACE • DISCOVER • GROW'),element('h1','',getTitle()||(kind==='numbers'?'Number explorers':'Letter adventures')));
     const support=element('span','learn-support',`Practice ${profile.challengeAge} · No rush`);
-    header.append(back,heading,support);container.append(header);
+    const hear=speechButton('♪',()=>speak(pageMode==='count'?countQuestion.spoken:set==='shapes'?item().word:set==='words'?`The word is ${item().word}. ${[...item().ch].join(', ')}.`:`${item().ch}. ${item().word}.`));hear.setAttribute('aria-label','Hear the question');header.append(back,heading,support,hear);container.append(header);
     const body=element('div','activity-body learn-body');
     if(kind==='numbers'&&!managedModes) {
       const modes=element('div','learn-tabs');modes.setAttribute('role','group');modes.setAttribute('aria-label','Number activities');
@@ -111,10 +112,9 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     side.append(sideTitle);
     picker=element('div','learn-picker');picker.setAttribute('role','group');picker.setAttribute('aria-label','Choose what to trace');
     getLearningItems(set,profile.challengeAge).forEach((current,i)=>{
-      const choice=button(current.label||current.ch,'learn-choice',()=>selectItem(i));choice.dataset.learnItem=current.ch;picker.append(choice);
+      const choice=button(current.label||current.ch,`learn-choice${(current.label||current.ch).length>2?' learn-choice-word':''}`,()=>selectItem(i));choice.dataset.learnItem=current.ch;picker.append(choice);
     });side.append(picker);
     const help=element('details','learn-help');help.append(element('summary','','Hint · writing strategy'),element('p','',set==='words'?'Trace each letter, then say the whole word. Lift your finger between numbered strokes.':'Follow one path at a time. Lift your finger between strokes. A little practice is a big win.'));
-    help.append(speechButton('♪ Hear it',()=>speak(set==='shapes'?item().word:set==='words'?`The word is ${item().word}. ${[...item().ch].join(', ')}.`:`${item().ch}. ${item().word}.`)));
     side.append(help);
     const navigation=element('div','learn-navigation');
     prevButton=button('← Previous','button',()=>selectItem(index-1));nextButton=button('Next →','button button-primary',()=>selectItem(index+1));navigation.append(prevButton,nextButton);side.append(navigation);
@@ -131,6 +131,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     const current=item();
     itemLabel.textContent=set==='shapes'?current.label:set==='words'?`Write “${current.ch}”`:`Trace ${current.ch}`;
     example.textContent=set==='nums'&&current.ch.length===1?`${current.word} · ${current.ch==='0'?'an empty group':`${current.ch} ${current.ch==='1'?'dot':'dots'}`}`:`${current.em} ${current.word}`;
+    const illustration=objectArt(current.word.toLowerCase(),{age:profile.age});if(illustration){example.replaceChildren();const picture=element('span','learn-example-art');picture.innerHTML=illustration;picture.setAttribute('aria-hidden','true');example.append(picture,document.createTextNode(current.word));}
     guideLayer.replaceChildren(...current.strokes.map(path=>svgElement('path',{d:pathData(path),fill:'none',stroke:'#e1dffb','stroke-width':traceTolerance()*1500,'stroke-linecap':'round','stroke-linejoin':'round'})));
     drawInk();paintMarkers();
     [...picker.children].forEach((choice,i)=>{
@@ -162,6 +163,8 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     inkLayer.replaceChildren(...ink.map(path=>svgElement('path',{d:pathData(path.length===1?[path[0],[path[0][0]+.0001,path[0][1]]]:path),fill:'none',stroke:'#5754d6','stroke-width':set==='words'?12:profile.tier==='little'?25:19,'stroke-linecap':'round','stroke-linejoin':'round'})));
   }
   function position(event) {
+    const matrix=svg.getScreenCTM();
+    if(matrix){const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const local=point.matrixTransform(matrix.inverse());return [local.x/1000,local.y/1000];}
     const rect=svg.getBoundingClientRect(),side=Math.min(rect.width,rect.height),x=(event.clientX-rect.left-(rect.width-side)/2)/side,y=(event.clientY-rect.top-(rect.height-side)/2)/side;
     // Keep true out-of-board coordinates: clamping would turn an off-canvas
     // scribble into valid edge ink. The SVG clips their visual representation.
@@ -268,7 +271,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       const strategy=element('p','learn-place-strategy',question.worked);strategy.hidden=true;frames.append(strategy);
     }else if(question.representation==='place-value') {
       frames.dataset.representation='place-value';frames.classList.add('learn-place-values');
-      if(countMode==='add')question.operands.forEach((amount,i)=>{if(i)frames.append(element('span','learn-count-plus','+'));const tile=element('div','learn-number-card',question.answerScale===100?(amount/100).toFixed(2):String(amount));tile.setAttribute('aria-label',`${amount}`);frames.append(tile);});
+      if(countMode==='add')question.operands.forEach((amount,i)=>{if(i)frames.append(element('span','learn-count-plus','+'));const tile=element('div','learn-number-card',question.answerScale===100?(amount/100).toFixed(2):String(amount));tile.setAttribute('aria-label',question.answerScale===100?(amount/100).toFixed(2):String(amount));frames.append(tile);});
       else {const tile=element('div','learn-number-card',`${question.groups} × ${question.each}`);tile.setAttribute('aria-label',`${question.groups} groups of ${question.each}`);frames.append(tile);}
       const strategy=element('p','learn-place-strategy',question.worked);strategy.hidden=true;frames.append(strategy);
     }else if(countMode==='groups') {
@@ -284,7 +287,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     const formatAmount=value=>question.answerScale===100?(value/100).toFixed(2):String(value);
     const answers=element('div','learn-answers');answers.setAttribute('role','group');answers.setAttribute('aria-label','Choose your answer');
     const choiceCount=profile.choiceCount,values=new Set([question.answer]);
-    if(question.representation==='place-value') {
+    if(question.representation==='place-value'||(question.representation==='unit-model'&&profile.challengeAge>=8)) {
       // Keep two alternatives with the same ones digit: checking only that digit
       // must not identify the answer to a multi-digit calculation.
       for(const distance of [10,100,20])for(const candidate of [question.answer-distance,question.answer+distance])if(candidate>=0&&candidate<=question.maxValue&&values.size<Math.min(choiceCount,3))values.add(candidate);
@@ -304,7 +307,6 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     updateStatus(countAnswered?`${formatAmount(question.answer)} — you found it!`:'Choose a number. There’s plenty of time.',countAnswered);
     card.append(button('Show counting steps','button learn-count-coach',hint),button('Next puzzle →','button button-primary learn-next-puzzle',nextCount));
     const help=element('details','learn-help');help.append(element('summary','','Hint · a strategy'),element('p','',question.representation?question.strategy:countMode==='groups'?'Each group has the same number. Try counting by groups, then tap every dot to check your total.':countMode==='add'?question.operands.length===3?'Count the first two groups together. Then count on with the third group. How many are there altogether?':'Count the first group. Count the second group. How many are there altogether?':'Touch one dot for each number you say. The last number tells you how many.'));
-    help.append(speechButton('♪ Read the question',()=>speak(question.spoken)));
     side.append(help);
     const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${formatAmount(question.maxValue??profile.numberMax)}`),element('p','',profile.challengeAge<=4?'Explore together: point and count with a grown-up. Every picture and hint is here to help.':`Practice for age ${profile.challengeAge}. A strategy matters more than speed. Use the help or adjust this activity whenever you like.`));side.append(range);
     side.append(button('Try writing a number →','button',()=>{

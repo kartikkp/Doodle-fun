@@ -10,7 +10,8 @@ async function trace(page,set,ch,prepare=true) {
   if(prepare){await page.locator(`[data-learn-set="${set}"]`).click();await page.locator(`[data-learn-item="${ch}"]`).click();}
   const board=page.getByTestId('trace-board');await board.scrollIntoViewIfNeeded();
   const rect=await board.boundingBox();
-  const paths=getLearningItems(set).find(item=>item.ch===ch).strokes;
+  const age=await page.evaluate(()=>JSON.parse(localStorage.getItem('doodle-fun:v2:settings')).age);
+  const paths=getLearningItems(set,age).find(item=>item.ch===ch).strokes;
   for(const path of paths) {
     await page.mouse.move(rect.x+path[0][0]*rect.width,rect.y+path[0][1]*rect.height);await page.mouse.down();
     for(let i=1;i<path.length;i++) {
@@ -58,7 +59,7 @@ test('age starting points keep all letter, lowercase, number, shape and word set
   await page.locator('[data-learn-set="nums"]').click();await expect(page.locator('.learn-choice')).toHaveCount(10);
   await expect(page.locator('[data-learn-item="0"]')).toBeVisible();
   await trace(page,'lower','g');await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
-  await page.locator('[data-learn-set="words"]').click();await expect(page.locator('.learn-choice')).toHaveCount(6);
+  await page.locator('[data-learn-set="words"]').click();await expect(page.locator('.learn-choice')).toHaveCount(4);
   await expect(page.locator('[data-learn-set="upper"]')).toBeVisible();
 });
 test('zero has an empty group and count/addition questions give recoverable feedback',async({page})=>{
@@ -66,7 +67,7 @@ test('zero has an empty group and count/addition questions give recoverable feed
   await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity','0');
   await expect(page.locator('.learn-count-dot')).toHaveCount(0);
   await page.getByRole('button',{name:'Answer 1',exact:true}).click();
-  await expect(page.locator('.learn-feedback')).toContainText('try another number');
+  await expect(page.locator('.learn-feedback')).toContainText('Try again');
   await page.getByRole('button',{name:'Answer 0',exact:true}).click();
   await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   await page.getByRole('button',{name:'Next puzzle →',exact:true}).click();
@@ -81,7 +82,7 @@ test('zero has an empty group and count/addition questions give recoverable feed
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('counting retains tap order between panels and equal-group totals match visible dots',async({page})=>{
-  await page.setViewportSize({width:390,height:844});await start(page,8,'numbers');
+  await page.setViewportSize({width:390,height:844});await start(page,5,'numbers');
   await page.getByRole('button',{name:'Count dots',exact:true}).click();
   await page.locator('.learn-count-dot').nth(2).click();await page.locator('.learn-count-dot').nth(0).click();
   await page.getByRole('button',{name:'Trace numbers',exact:true}).click();
@@ -113,26 +114,26 @@ test('smooth round guides render and accept accurate pointer traces at the stric
     await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   }
 });
-test('older children can complete a word and explore the entire 0–20 count range',async({page})=>{
+test('older children trace longer words and compose varied grouped-unit amounts',async({page})=>{
   await page.setViewportSize({width:1180,height:820});await start(page,9);
   await expect(page.locator('[data-learn-set="words"]')).toHaveAttribute('aria-pressed','true');
-  await trace(page,'words','cat');await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
+  await trace(page,'words','hopeful');await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
   await page.locator('#card-sharing').click();
   await page.locator('[data-activity-mode="equal-groups"]').click();
   await expect(page.locator('[data-activity-mode="equal-groups"]')).toHaveAttribute('aria-pressed','true');
-  await expect(page.locator('.learn-count-prompt')).toHaveText('5 groups of 4. How many?');
+  await expect(page.locator('.learn-count-prompt')).toContainText('groups of');
   await expect(page.locator('.learn-count-dot')).toHaveCount(0);
   await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-representation','place-value');
   await page.getByRole('button',{name:'Back to home',exact:true}).click();
   await page.locator('#card-counting').click();
-  await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-quantity','8');
+  await expect(page.getByTestId('quantity-frame')).toHaveAttribute('data-representation','unit-model');
   const seen=new Set();
   for(let i=0;i<21;i++) {
     seen.add(Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity')));
     await page.getByRole('button',{name:'Next puzzle →',exact:true}).click();
   }
-  expect([...seen].sort((a,b)=>a-b)).toEqual(Array.from({length:21},(_,i)=>i));
+  expect(seen.size).toBeGreaterThan(15);expect([...seen].every(n=>n>100)).toBe(true);
 });
 test('catalog trails and number activities open their requested practice instead of the age default',async({page})=>{
   await page.addInitScript(()=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:9,level:'auto',sound:false})));
@@ -152,7 +153,8 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
   test(`age ${age} traces a complete path in every practice set with a retry and guide`,async({page})=>{
     await page.setViewportSize(age%2?{width:820,height:1180}:{width:375,height:812});
     await page.emulateMedia({reducedMotion:'reduce'});await start(page,age);
-    for(const [set,ch]of [['shapes','line'],['upper','A'],['lower','g'],['words','cat'],['nums','0']]) {
+    for(const set of ['shapes','upper','lower','words','nums']) {
+      const ch=getLearningItems(set,age)[0].ch;
       await page.locator(`[data-learn-set="${set}"]`).click();await page.locator(`[data-learn-item="${ch}"]`).click();
       await page.getByRole('button',{name:'Check tracing',exact:true}).click();await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
       await page.getByRole('button',{name:'▶ Show me',exact:true}).click();await expect(page.locator('.learn-demo-layer path')).not.toHaveCount(0);
@@ -164,24 +166,24 @@ for(const age of [2,3,4,5,6,7,8,9,10]) {
     await page.setViewportSize(age%2?{width:844,height:390}:{width:375,height:812});await start(page,age,'numbers');
     for(const label of ['Count dots','Add together','Equal groups']) {
       await page.getByRole('button',{name:label,exact:true}).click();
-      if(age>=9&&label==='Add together')await expect(page.locator('.learn-help')).toContainText('exchange');
+      if(age>=9&&label==='Add together')await expect(page.locator('.learn-place-strategy')).toBeHidden();
       const answer=Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity'));
-      const wrong=await page.locator('.learn-answer').evaluateAll((buttons,answer)=>buttons.find(button=>Number(button.textContent)!==answer).textContent,answer);
+      const wrong=await page.locator('.learn-answer').evaluateAll((buttons,answer)=>buttons.find(button=>Number(button.dataset.answer)!==answer).textContent,answer);
       await page.getByRole('button',{name:`Answer ${wrong}`,exact:true}).click();await expect(page.locator('.learn-feedback')).not.toHaveClass(/is-complete/);
       await page.getByRole('button',{name:'Show counting steps',exact:true}).click();
-      if(age>=9&&label!=='Count dots'){await expect(page.locator('.learn-place-strategy')).toBeVisible();await expect(page.locator('.learn-count-dot')).toHaveCount(0);}
+      if((age>=6&&label==='Count dots')||(age>=7&&label!=='Count dots')){await expect(page.locator('.learn-place-strategy')).toBeVisible();await expect(page.locator('.learn-count-dot')).toHaveCount(0);}
       else await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(answer);
-      await page.getByRole('button',{name:`Answer ${answer}`,exact:true}).click();await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
+      await page.locator(`[data-answer="${answer}"]`).click();await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     }
   });
 }
-test('learning read-aloud toggle preserves ink and counted dots and shared hint supplies a model',async({page})=>{
-  await start(page,6);await trace(page,'upper','A');
-  const ink=await page.locator('.learn-ink-layer').innerHTML();await page.locator('#coach-sound').click();
+test('opening coaching preserves ink and counted dots and shared hint supplies a model',async({page})=>{
+  await start(page,5);await trace(page,'upper','A');
+  const ink=await page.locator('.learn-ink-layer').innerHTML();await page.locator('#coach-open').click();await page.locator('#coach-done').click();
   await expect(page.locator('.learn-ink-layer')).toHaveJSProperty('innerHTML',ink);await expect(page.locator('.learn-feedback')).toHaveClass(/is-complete/);
   await page.goto('/#counting');await page.locator('.learn-count-dot').first().click();
-  await page.locator('#coach-sound').click();await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(1);
+  await page.locator('#coach-open').click();await page.locator('#coach-done').click();await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(1);
   await page.locator('#coach-open').click();await page.locator('#coach-hint').click();
   const total=Number(await page.getByTestId('quantity-frame').getAttribute('data-quantity'));
   await expect(page.locator('.learn-count-dot.is-counted')).toHaveCount(total);

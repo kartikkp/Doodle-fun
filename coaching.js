@@ -162,7 +162,7 @@ export function coachingFor(id, age) {
   }
   if(age>=6 && id==='ten-frame') {
     content[0]=age===6?'Add the amounts in the clue, then fill that many spaces.':age===7?'Work out how many remain after taking away, then show the result.':age===8?'Read the fraction. Use the frame to show that part of the whole.':age===9?'Find an equivalent fraction that uses the twenty spaces in the frame.':'Combine the fractions, then check whether the clue asks for filled or empty spaces.';
-    content[1]=age<=7?'Use full rows of five to organize your thinking. Check the calculation before you check the frame.':age===8?'The bottom number tells how many equal parts make the whole. The top number tells how many of those parts to show.':age===9?'Scale the numerator and denominator by the same amount. Twenty spaces represent the whole frame.':'Add the numerators when the denominators match. Filled and empty spaces together make one whole frame.';
+    content[1]=age<=7?'Use full rows of five to organize your thinking. Check the calculation before you check the frame.':age===8?'The bottom number tells how many equal parts make the whole. The top number tells how many of those parts to show.':age===9?'Scale the numerator and denominator by the same amount. Twenty spaces represent the whole frame.':'Rename both fractions as twentieths, then add. Filled and empty spaces together make one whole frame.';
     content[2]=age<=7?'Can a different calculation give the same number of spaces?':'Can you name the same part of the frame with a different fraction?';
   }
   return {start:content[0],strategy:content[1],reflect:age<=4?'Point to something you noticed. Tell a grown-up about it.':content[2],offline:content[3],together:age<=4};

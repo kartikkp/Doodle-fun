@@ -31,13 +31,13 @@ test('grown-up settings persist and support can override age without locks',asyn
   await page.getByRole('button',{name:'Grown-ups',exact:true}).click();
   await page.locator('#support-level').selectOption('little');
   await page.locator('#age-plus').click();
-  await page.locator('#settings-sound').check();
+  await expect(page.locator('#settings-sound')).toHaveCount(0);
   await page.locator('#settings-done').click();
   await page.reload();
   await page.getByRole('button',{name:'Grown-ups',exact:true}).click();
   await expect(page.locator('#child-age-output')).toHaveText('7');
   await expect(page.locator('#support-level')).toHaveValue('little');
-  await expect(page.locator('#settings-sound')).toBeChecked();
+  await expect(page.locator('#settings-sound')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await page.locator('#card-trails').click();
   await expect(page.locator('[data-learn-set=lower]')).toBeEnabled();
@@ -100,4 +100,20 @@ test('real touch taps can select a color, make a mark, and undo on a phone',asyn
   await page.locator('.draw-undo').tap();
   await expect(page.locator('.draw-redo')).toBeEnabled();
   await context.close();
+});
+
+test('changing activities immediately clears the previous activity notice',async({page})=>{
+  await page.goto('/#coloring');
+  await page.locator('.draw-template-card').first().click();
+  const notice=page.locator('#app-notice');
+  await expect(notice).toBeVisible();
+  await expect(notice).toContainText('Pick a color');
+  await page.getByRole('button',{name:/Back to (home|activities)/}).click();
+  await expect(page.locator('#home-screen')).toBeVisible();
+  // Require navigation cleanup, rather than waiting for the 4.2-second timeout.
+  await expect(notice).toBeHidden({timeout:1000});
+  await expect(notice).toBeEmpty();
+  await page.locator('#card-counting').click();
+  await expect(page.locator('#learning-view')).toBeVisible();
+  await expect(notice).toBeHidden();
 });

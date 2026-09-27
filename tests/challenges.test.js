@@ -45,11 +45,11 @@ test('subtraction and missing-part choices have exactly one mathematically corre
   }
   assert.equal(generateChallenge('subtraction',profiles[0],3).answer,0);
 });
-test('frames visit every quantity in the supported age range, including zero',()=>{
+test('foundational frames cover every amount; advanced fraction frames vary nontrivial amounts',()=>{
   for(const [index,profile]of profiles.entries()) {
     const size=profile.frameSize,seen=new Set();
     for(let round=0;round<=(profile.numberMax+1)*2;round++){const q=generateChallenge('ten-frame',profile,round);assert.equal(q.size,size);seen.add(q.target);}
-    assert.deepEqual([...seen].sort((a,b)=>a-b),Array.from({length:profile.numberMax+1},(_,i)=>i));
+    if(profile.challengeAge===10){assert.ok(seen.size>=10);assert.ok([...seen].every(n=>n>0&&n<size));}else assert.deepEqual([...seen].sort((a,b)=>a-b),Array.from({length:profile.numberMax+1},(_,i)=>i));
   }
 });
 test('letter relationships progress from case through rhyme and meaningful word parts',()=>{

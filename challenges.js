@@ -1,4 +1,5 @@
 import {getProfile,readStore,writeStore} from './core.js';
+import {objectArt} from './activity-art.js';
 import {canSpeak,speak as speakText,stopSpeaking} from './speech.js';
 
 export const CHALLENGE_INFO={
@@ -78,7 +79,7 @@ function olderMath(id,profile,age,n,seed) {
   }
   return null;
 }
-export function generateChallenge(id,profile,round=0) {
+function generateBaseChallenge(id,profile,round=0) {
   const age=profile.challengeAge??profile.age??({little:3,explorer:6,maker:9}[profile.tier]||6);
   const tier=profile.tier||'explorer',max=profile.numberMax??[3,4,5,8,10,12,15,20,20][age-2],n=Math.max(0,Math.floor(round)||0),seed=n*17+age;
   const common={id,tier,age};
@@ -109,14 +110,14 @@ export function generateChallenge(id,profile,round=0) {
     return {...common,total,part,answer,choices:numberChoices(answer,max,profile,seed),prompt:`${part} + ? = ${total}`,help:`The whole is ${total}. One part is ${part}. Start at ${part} and count on until ${total}; each extra count belongs to the missing part.`};
   }
   if(id==='ten-frame') {
-    const size=profile.frameSize??(age<=4?5:age<=6?10:20),target=(n+Math.ceil(max*.65))%(max+1),empty=size-target;
+    const size=profile.frameSize??(age<=4?5:age<=6?10:20);let target=(n+Math.ceil(max*.65))%(max+1);const empty=size-target;
     let ask=age===10&&n%2===0?'empty':'filled',prompt=`Make ${target}`,intro='Tap spaces to build the amount. Work it out before you check.',help=`A full row holds five. Count full rows, then the extra spaces. The whole frame has ${size} spaces.`;
     if(age===5&&n%2){ask='empty';prompt=`Leave ${empty} spaces empty`;}
     if(age===6){const part=Math.floor(target/2);prompt=`Make ${part} + ${target-part}`;}
     if(age===7){const whole=target+3+n%5;prompt=`${whole} − ${whole-target}: build what remains`;}
     if(age===8){prompt=`Fill ${target}/20 of the frame`;help='The denominator is the number of equal spaces in the whole. The numerator tells how many of those spaces to fill.';}
     if(age===9){prompt=`Fill ${target*2}/40 of this 20-space frame`;help='Find an equivalent fraction with twenty as the denominator. Change the numerator by the same factor.';}
-    if(age===10){const part=n%(target+1);prompt=`Fill ${part}/20 + ${target-part}/20 of the frame`;if(ask==='empty')prompt=`Leave ${part}/20 + ${target-part}/20 of the frame empty`;help='Add fractions with the same denominator by adding their numerators. Check whether the question asks for filled or empty spaces.';}
+    if(age===10){const denominator=[4,5,10][n%3],first=1+Math.floor(n/3)%(denominator-1),firstSpaces=first*20/denominator,second=1+n*7%(19-firstSpaces);target=firstSpaces+second;prompt=`${ask==='empty'?'Leave':'Fill'} ${first}/${denominator} + ${second}/20 of the frame${ask==='empty'?' empty':''}`;help='Rename both fractions as twentieths, then add their numerators. Check whether the question asks for filled or empty spaces.';}
     const answer=age===10&&ask==='empty'?size-target:target;
     return {...common,size,target:answer,empty:size-answer,ask,answer,prompt,intro,help};
   }
@@ -146,6 +147,18 @@ export function generateChallenge(id,profile,round=0) {
   throw new Error(`Unknown challenge: ${id}`);
 }
 
+export function generateChallenge(id,profile,round=0) {
+  const q=generateBaseChallenge(id,profile,round);
+  if(q.age!==10||q.model!=='place-value')return q;
+  const label=n=>(n/100).toFixed(2);
+  // Store hundredths as integers so exact-value checks never depend on binary
+  // floating point. Only presentation and strategy use decimal notation.
+  return {...q,answerScale:100,prompt:q.prompt.replace(/\d+/g,n=>label(Number(n))),
+    intro:id==='number-order'?'Order decimal amounts. Compare whole units, then tenths and hundredths.':id==='compare'?'Compare the decimal amounts, then find their difference.':q.intro,
+    help:'Line up the decimal points. Compare or combine matching places: ones, tenths, then hundredths. Ten hundredths make one tenth.',
+    strategy:id==='compare'?`Compare ${label(q.left)} and ${label(q.right)} from left to right. For the difference, subtract the smaller amount from the larger.`:id==='number-order'?'Check ones first. If those are equal, compare tenths and then hundredths.':`Keep every digit in its place. Exchange one tenth for ten hundredths if needed. Use the opposite operation to check the missing amount.`};
+}
+
 function el(tag,className,text) {const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;}
 function button(label,className,action) {const node=el('button',className,label);node.type='button';node.addEventListener('click',action);return node;}
 function visualDots(amount,{crossed=0,known=null,berries=false}={}) {
@@ -161,6 +174,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
   const stored=readStore('challenges-progress-v1',{});
   const saved=stored&&typeof stored==='object'&&!Array.isArray(stored)?Object.fromEntries(Object.entries(stored).filter(([key,value])=>value===true&&Object.keys(CHALLENGE_INFO).some(id=>key.startsWith(`${id}:`))).slice(0,1000)):{};
   function report(){onProgress({completedCount:Object.keys(saved).length,source:'challenges'});}
+  const numberLabel=value=>question?.answerScale===100?(value/100).toFixed(2):String(value);
   function say(text) {if(canSpeak())speakText(text);}
   function stopSpeech(){stopSpeaking();}
   function message(text,success=false) {feedback.textContent=text;feedback.classList.toggle('is-complete',success);}
@@ -190,21 +204,21 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     feedback=el('p','challenge-feedback','Take your time. You can try as many times as you like.');feedback.dataset.testid='challenge-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');card.append(feedback);
     const footer=el('div','challenge-footer');footer.append(button('↺ Try this round again','button',reset),button('New round →','button button-primary challenge-new',()=>{round++;reset();}));card.append(footer);
     const help=el('details','challenge-help');help.append(el('summary','','Hint · a strategy'),el('p','',question.help));
-    const hear=button('♪ Hear it','button',()=>say(id==='word-build'?`Build the word for this clue. ${question.clue}`:question.prompt));hear.dataset.challengeSpeech='';hear.hidden=!canSpeak();help.append(hear);
+    const hear=button('♪ Hear it','button',()=>say(id==='word-build'?`Build the word for this clue. ${question.clue}`:question.prompt));hear.dataset.challengeSpeech='';hear.hidden=!canSpeak();hear.textContent='♪';hear.setAttribute('aria-label','Hear the question');header.append(hear);
     side.append(help,el('p','challenge-grownup',profile.tier==='little'?'Explore together: point, count, and say the sounds. There’s no need to read on your own.':'A hint is always welcome. Discover the pattern, then try another round.'));
     body.append(card,side);container.append(body);
   }
   function numericAnswers(play,answer,max=profile.numberMax) {
     const choices=el('div','challenge-answers');choices.setAttribute('role','group');choices.setAttribute('aria-label','Choose a number');
     for(const value of question.choices||numberChoices(answer,max,profile,round+7)) {
-      const choice=button(String(value),'challenge-answer',()=>{
+      const choice=button(numberLabel(value),'challenge-answer',()=>{
         if(done)return;
-        if(value===answer){choice.classList.add('is-correct');complete(`${answer} — you found it! ${id==='subtraction'?`${question.start} − ${question.removed} = ${question.remaining}.`:id==='number-bonds'?`${question.firstPart??question.part} + ${question.secondPart??answer} = ${question.total}.`:''}`);}
+        if(value===answer){choice.classList.add('is-correct');complete(`${numberLabel(answer)} — you found it! ${id==='subtraction'?`${numberLabel(question.start)} − ${numberLabel(question.removed)} = ${numberLabel(question.remaining)}.`:id==='number-bonds'?`${numberLabel(question.firstPart??question.part)} + ${numberLabel(question.secondPart??answer)} = ${numberLabel(question.total)}.`:''}`);}
         else{
           choice.classList.add('is-retry');
-          message(`You chose ${value}. That does not fit yet. Try again, or open Hint for a strategy.`);
+          message(`You chose ${numberLabel(value)}. That does not fit yet. Try again, or open Hint for a strategy.`);
         }
-      });choice.dataset.answer=String(value);choice.setAttribute('aria-label',`Answer ${value}`);choices.append(choice);
+      });choice.dataset.answer=String(value);choice.setAttribute('aria-label',`Answer ${numberLabel(value)}`);choices.append(choice);
     }
     play.append(choices);
   }
@@ -217,7 +231,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     const older=question.model==='place-value';
     const groups=el('div','challenge-compare-groups');
     for(const [label,value,tone]of [['A',question.left,'purple'],['B',question.right,'green']]) {
-      const group=el('div',`challenge-quantity is-${tone}`);group.append(el('span','challenge-group-name',`${older?'Number':'Group'} ${label}`));if(!older)group.append(visualDots(value));group.append(el('strong','challenge-quantity-number',String(value)));groups.append(group);
+      const group=el('div',`challenge-quantity is-${tone}`);group.append(el('span','challenge-group-name',`${older?'Number':'Group'} ${label}`));if(!older)group.append(visualDots(value));group.append(el('strong','challenge-quantity-number',numberLabel(value)));groups.append(group);
     }
     play.append(groups);
     const model=el('div','challenge-comparison-model');model.hidden=true;
@@ -230,11 +244,11 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     play.append(button(older?'Compare place values':'Line up the dots','button challenge-hint-button',reveal));
     const answers=el('div','challenge-compare-answers');
     const comparisonComplete=value=>{
-      const explanation=question.answer==='same'?`${question.left} and ${question.right} are the same amount!`:older?`Number ${value==='left'?'A':'B'} is ${question.direction==='more'?'greater':'smaller'}.`:`Group ${value==='left'?'A':'B'} has ${question.direction}.`;
+      const explanation=question.answer==='same'?`${numberLabel(question.left)} and ${numberLabel(question.right)} are the same amount!`:older?`Number ${value==='left'?'A':'B'} is ${question.direction==='more'?'greater':'smaller'}.`:`Group ${value==='left'?'A':'B'} has ${question.direction}.`;
       if(!question.followup){complete(explanation);return;}
       answers.querySelectorAll('button').forEach(button=>button.disabled=true);
       const followup=el('div','challenge-difference');followup.append(el('h3','',older?'What is the difference?':'How many extra dots are left over?'));
-      const choices=el('div','challenge-answers');for(const amount of question.followup.choices){const choice=button(String(amount),'challenge-answer',()=>{if(done)return;if(amount===question.followup.answer){choice.classList.add('is-correct');complete(`${explanation} The difference is ${amount}: ${Math.max(question.left,question.right)} − ${Math.min(question.left,question.right)} = ${amount}.`);}else{message(older?'Subtract the smaller number from the larger. Try counting up in tens and ones to check the gap.':'Pair each dot first. Then count only the dots without a partner to find the difference.');}});choice.dataset.followAnswer=String(amount);choice.setAttribute('aria-label',`Difference ${amount}`);choices.append(choice);}followup.append(choices);play.append(followup);message(explanation+(older?' One more step: find the difference.':' One more step: find how many extra dots there are.'));
+      const choices=el('div','challenge-answers');for(const amount of question.followup.choices){const choice=button(numberLabel(amount),'challenge-answer',()=>{if(done)return;if(amount===question.followup.answer){choice.classList.add('is-correct');complete(`${explanation} The difference is ${numberLabel(amount)}: ${numberLabel(Math.max(question.left,question.right))} − ${numberLabel(Math.min(question.left,question.right))} = ${numberLabel(amount)}.`);}else{message(older?'Subtract the smaller number from the larger. Try counting up in tens and ones to check the gap.':'Pair each dot first. Then count only the dots without a partner to find the difference.');}});choice.dataset.followAnswer=String(amount);choice.setAttribute('aria-label',`Difference ${numberLabel(amount)}`);choices.append(choice);}followup.append(choices);play.append(followup);message(explanation+(older?' One more step: find the difference.':' One more step: find how many extra dots there are.'));
     };
     for(const [value,label]of [['left',older?'← Number A':'← Group A'],['same','= Same amount'],['right',older?'Number B →':'Group B →']]) {
       const choice=button(label,'button challenge-compare-choice',()=>{if(done)return;if(value===question.answer){choice.classList.add('is-correct');comparisonComplete(value);}else message("That does not fit the question yet. Compare again, or ask for a hint.");});choice.dataset.answer=value;answers.append(choice);
@@ -247,30 +261,30 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     question.sequence.forEach((number,i)=>{const slot=el('span','challenge-slot','·');slot.dataset.slot=String(i);slots.append(slot);});play.append(slots);
     const direction=question.direction==='down'?'biggest':'smallest';
     const hint=el('p','challenge-action-hint',`Choose the ${direction} number first.`);play.append(hint);
-    const showNext=()=>{if(done)return;const next=question.sequence[steps.length];container.querySelector(`[data-tile="${next}"]`).classList.add('is-suggested');message(`${steps.length?`After ${steps.at(-1)},`:'Start here:'} choose ${next}. ${question.step>1?`This path moves ${question.step} at a time.`:`It is the ${direction} number left.`}`);};
+    const showNext=()=>{if(done)return;const next=question.sequence[steps.length];container.querySelector(`[data-tile="${next}"]`).classList.add('is-suggested');message(`${steps.length?`After ${numberLabel(steps.at(-1))},`:'Start here:'} choose ${numberLabel(next)}. ${question.step>1?`This path moves ${numberLabel(question.step)} at a time.`:`It is the ${direction} number left.`}`);};
     play.append(button('Show my next step','button challenge-hint-button',showNext));
     const tiles=el('div','challenge-tiles');
-    for(const value of question.tiles){const tile=button(String(value),'challenge-tile',()=>{
+    for(const value of question.tiles){const tile=button(numberLabel(value),'challenge-tile',()=>{
       if(done)return;
-      if(value===question.sequence[steps.length]){steps.push(value);tile.disabled=true;tile.classList.remove('is-suggested');tile.classList.add('is-used');const slot=slots.children[steps.length-1];slot.textContent=String(value);slot.classList.add('is-filled');if(steps.length===question.sequence.length)complete(`You put every number in order, moving ${question.direction==='down'?'down':'up'} the path!`);else{hint.textContent=`Now find the ${direction} number left.`;message(`${value} fits here. Keep moving ${question.direction==='down'?'down':'up'}.`);}}
+      if(value===question.sequence[steps.length]){steps.push(value);tile.disabled=true;tile.classList.remove('is-suggested');tile.classList.add('is-used');const slot=slots.children[steps.length-1];slot.textContent=numberLabel(value);slot.classList.add('is-filled');if(steps.length===question.sequence.length)complete(`You put every number in order, moving ${question.direction==='down'?'down':'up'} the path!`);else{hint.textContent=`Now find the ${direction} number left.`;message(`${numberLabel(value)} fits here. Keep moving ${question.direction==='down'?'down':'up'}.`);}}
       else message("That does not fit here yet. Try again, or request the next-step hint.");
-    });tile.dataset.tile=String(value);tile.setAttribute('aria-label',`Number ${value}`);tiles.append(tile);}play.append(tiles);
+    });tile.dataset.tile=String(value);tile.setAttribute('aria-label',`Number ${numberLabel(value)}`);tiles.append(tile);}play.append(tiles);
   }
   function renderSubtraction(play) {
     if(question.model==='place-value') {
       const parts=el('div','challenge-calculation-parts');
-      for(const [key,label]of [['start','START'],['removed','TAKE AWAY'],['remaining','LEFT']]){const part=el('div',`challenge-calculation-part${question.ask===key?' is-missing':''}`);part.append(el('span','',label),el('strong','',question.ask===key?'?':String(question[key])));parts.append(part);}
+      for(const [key,label]of [['start','START'],['removed','TAKE AWAY'],['remaining','LEFT']]){const part=el('div',`challenge-calculation-part${question.ask===key?' is-missing':''}`);part.append(el('span','',label),el('strong','',question.ask===key?'?':numberLabel(question[key])));parts.append(part);}
       play.append(parts);renderStrategy(play);numericAnswers(play,question.answer,question.maxValue);return;
     }
-    const picture=el('div','challenge-picnic');picture.append(visualDots(question.start,{crossed:question.removed,berries:true}),el('p','challenge-picture-caption',question.ask==='removed'?`We started with ${question.start}. ${question.remaining} are left. Find how many went away.`:`${question.removed} ${question.removed===1?'berry':'berries'} taken away`));play.append(picture,button('Show what to count','button challenge-hint-button',hint));numericAnswers(play,question.answer);
+    const picture=el('div','challenge-picnic');picture.append(visualDots(question.start,{crossed:question.removed,berries:true}),el('p','challenge-picture-caption',question.ask==='removed'?`We started with ${numberLabel(question.start)}. ${numberLabel(question.remaining)} are left. Find how many went away.`:`${numberLabel(question.removed)} ${question.removed===1?'berry':'berries'} taken away`));play.append(picture,button('Show what to count','button challenge-hint-button',hint));numericAnswers(play,question.answer);
   }
   function renderBonds(play) {
     if(question.model==='place-value') {
-      const whole=el('div','challenge-whole');whole.append(el('span','','WHOLE'),el('strong','',question.ask==='total'?'?':String(question.total)));play.append(whole);
-      const parts=el('div','challenge-bond-parts');for(const [index,key]of ['first','second'].entries()){if(index)parts.append(el('span','challenge-plus','+'));const part=el('div',`challenge-bond-part${question.ask===key?' is-missing':''}`);part.append(el('span','','PART'),el('strong','',question.ask===key?'?':String(question[`${key}Part`])));parts.append(part);}play.append(parts);
+      const whole=el('div','challenge-whole');whole.append(el('span','','WHOLE'),el('strong','',question.ask==='total'?'?':numberLabel(question.total)));play.append(whole);
+      const parts=el('div','challenge-bond-parts');for(const [index,key]of ['first','second'].entries()){if(index)parts.append(el('span','challenge-plus','+'));const part=el('div',`challenge-bond-part${question.ask===key?' is-missing':''}`);part.append(el('span','','PART'),el('strong','',question.ask===key?'?':numberLabel(question[`${key}Part`])));parts.append(part);}play.append(parts);
       renderStrategy(play);numericAnswers(play,question.answer,question.maxValue);return;
     }
-    const whole=el('div','challenge-whole');whole.append(el('span','','ALTOGETHER'),el('strong','',String(question.total)));play.append(whole);
+    const whole=el('div','challenge-whole');whole.append(el('span','','ALTOGETHER'),el('strong','',numberLabel(question.total)));play.append(whole);
     const parts=el('div','challenge-bond-parts'),known=el('div','challenge-bond-part'),missing=el('div','challenge-bond-part is-missing');
     known.append(el('strong','',String(question.part)),visualDots(question.part));missing.append(el('strong','','?'),el('span','','Find this part'));parts.append(known,el('span','challenge-plus','+'),missing);play.append(parts);
     const support=el('div','challenge-bond-support');support.hidden=!showHelp;support.append(visualDots(question.total,{known:question.part}),el('p','challenge-picture-caption','The empty dots are the missing part.'));play.append(support);
@@ -313,7 +327,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     }else{selection.card.classList.remove('is-selected');selection.card.setAttribute('aria-pressed','false');selection=null;message('Those do not form a pair yet. Try again, or request the partner hint.');}
   }
   function renderWord(play) {
-    const picture=el('div','challenge-word-picture',question.picture);picture.setAttribute('role','img');picture.setAttribute('aria-label',question.age>=8?'Word clue illustration':question.word);play.append(picture,el('p','challenge-word-clue',question.clue));
+    const picture=el('div','challenge-word-picture',question.picture);const art=objectArt(question.word,{age:profile.age});if(art)picture.innerHTML=art;picture.setAttribute('role','img');picture.setAttribute('aria-label',question.age>=8?'Word clue illustration':question.word);play.append(picture,el('p','challenge-word-clue',question.clue));
     const model=el('p','challenge-word-model',question.word);model.hidden=!showHelp;model.setAttribute('aria-label',`Word model: ${question.word}`);play.append(model);
     const hint=button(showHelp?'Hide the word hint':'Show the word hint','button challenge-hint-button',()=>{showHelp=!showHelp;model.hidden=!showHelp;hint.textContent=showHelp?'Hide the word hint':'Show the word hint';hint.setAttribute('aria-expanded',String(showHelp));});hint.setAttribute('aria-expanded',String(showHelp));play.append(hint);
     const slots=el('div','challenge-slots challenge-word-slots');slots.setAttribute('aria-label','Your word');[...question.word].forEach((letter,i)=>{const slot=el('span','challenge-slot','·');slot.dataset.slot=String(i);slots.append(slot);});play.append(slots);

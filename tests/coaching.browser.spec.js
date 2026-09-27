@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test';
+import {creativeStep} from '../draw.js';
 
 test('nine ages select exact starting steps; support applies only to the chosen game and persists',async({page})=>{
   await page.setViewportSize({width:390,height:844});
@@ -33,16 +34,17 @@ test('nine ages select exact starting steps; support applies only to the chosen 
   await expect(page.locator('#coach-level')).toContainText('practice step 6');
 });
 
-test('coach can read a strategy through the native bridge and sound toggles preserve play',async({page})=>{
+test('coach uses an explicit request and opening it preserves play',async({page})=>{
   await page.addInitScript(()=>{window.nativeMessages=[];window.webkit={messageHandlers:{doodleNative:{postMessage:message=>window.nativeMessages.push(message)}}};});
   await page.goto('/#ten-frame');
   await page.locator('[data-cell]').first().click();
   const before=await page.locator('[data-cell]').first().getAttribute('aria-pressed');
-  await page.locator('#coach-sound').click();
+  await expect(page.locator('#coach-sound')).toHaveCount(0);
   await expect(page.locator('[data-cell]').first()).toHaveAttribute('aria-pressed',before);
   await page.locator('#coach-open').click();
+  await page.evaluate(()=>{window.__DOODLE_VOICE_CLIPS__={};});
   await page.locator('#coach-hear').click();
-  expect(await page.evaluate(()=>nativeMessages.some(m=>m.type==='speak' && m.text.includes('Fill a row')))).toBe(true);
+  expect(await page.evaluate(()=>nativeMessages.some(m=>m.type==='speak' && m.text.length>30))).toBe(true);
   await page.locator('#coach-done').click();
   expect(await page.evaluate(()=>nativeMessages.at(-1).type)).toBe('stopSpeaking');
 });
@@ -109,7 +111,7 @@ test('late native share results cannot replace feedback after a new picture or n
     }
     await page.locator('#coach-open').click();await page.locator('#coach-hint').click();
     const message=await page.locator('.draw-draft-status').textContent();
-    expect(message).toContain('Pick Pen and a color.');
+    expect(message).toBe(creativeStep(6).hint);
     for(const outcome of ['failed','completed']) {
       await page.evaluate(outcome=>dispatchEvent(new CustomEvent('doodle-native-share',{detail:{status:outcome}})),outcome);
       await expect(page.locator('.draw-draft-status')).toHaveText(message);

@@ -147,11 +147,14 @@ const AGE_WORDS={
   2:['up','on','in','go'],3:['cat','sun','dog','map'],4:['hat','bus','hen','cup'],5:['ship','fish','frog','star'],6:['brush','plant','shell','train'],7:['rabbit','sunset','picnic','basket'],8:['replay','unpack','careful','helpful'],9:['hopeful','teacher','rebuild','quietly'],10:['evidence','fraction','symmetry','decision']
 };
 export function makeWordStrokes(word) {
-  const columns=Math.min(4,word.length),scale=word.length<=3?.4:.31,rows=Math.ceil(word.length/columns);
-  return [...word].flatMap((ch,i)=>(STROKES[ch]||[]).map(stroke=>stroke.map(([x,y])=>[
-    x*scale+(i%columns)*scale*.7+.06,
-    y*scale+(rows===1?.29:Math.floor(i/columns)*.46+.06)
-  ])));
+  const columns=word.length<=6?word.length:Math.ceil(word.length/2),scale=Math.min(.4,.88/(columns*.7+.3)),rows=Math.ceil(word.length/columns);
+  return [...word].flatMap((ch,i)=>(STROKES[ch]||[]).map(stroke=>{
+    const mapped=stroke.map(([x,y])=>[x*scale+(i%columns)*scale*.7+.06,y*scale+(rows===1?.29:Math.floor(i/columns)*.46+.06)]);
+    // A scaled i/j dot must remain a drawable mark on a phone. A roughly nine-pixel stroke
+    // retains meaningful travel after phone pointer-coordinate rounding.
+    if(mapped.length===2&&pathLength(mapped)<.028){const [a,b]=mapped,dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy)||1;mapped[1]=[a[0]+dx/length*.028,a[1]+dy/length*.028];}
+    return mapped;
+  }));
 }
 export function getLearningItems(set,age) {
   const exactAge=Number.isInteger(age)?Math.max(2,Math.min(10,age)):null;
@@ -249,7 +252,7 @@ export function buildQuantityQuestion(value, mode='count', max=10, variant=0, ag
   const n=Math.max(0,Math.floor(Number(variant)||0));
   if(age>=6&&mode==='count') {
     const units=age===6?[10,1]:age===7?[10,1]:age===8?[100,10,1]:age===9?[100,10,1]:[100,10,1];
-    const amounts=age===6?[1,1+n%9]:age===7?[2+n%6,n*3%10]:age===8?[1+n%5,1+n%8,n*7%10]:age===9?[1+n%5,10+n%7,1+n%9]:[1+n%4,2+n%13,3+n%14];
+    const amounts=age===6?[1,1+n%9]:age===7?[2+n%6,n*3%10]:age===8?[1+n%5,1+n%8,n*7%10]:age===9?[1+n%5,10+n%7,1+n%9]:[1+n%4,11+n%9,12+n%13];
     const answer=amounts.reduce((sum,amount,i)=>sum+amount*units[i],0),decimal=age===10;
     const bundles=units.map((unit,i)=>({count:amounts[i],unit,label:decimal?(i===0?'ones':i===1?'tenths':'hundredths'):(unit===100?'hundreds':unit===10?'tens':'ones')}));
     return {mode,answer,bundles,representation:'unit-model',answerScale:decimal?100:1,maxValue:decimal?700:999,
