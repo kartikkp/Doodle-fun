@@ -96,6 +96,7 @@ jobs:
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedMelodyEchoPlaysPadsInOrderAfterRetry \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedBeatStudioRecoversFromBackgroundAndChecksRealTaps \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPicturePracticePlaysModelAndUsesSystemVolumeAcrossModes \
+            --only DoodleFunUITests/ActivityCatalogUITests/testTrustedCoachClipCompletesOnlyAfterHearAndCancelsOnBackground \
             2>&1 | tee "$RUNNER_TEMP/DoodleFun-native-audio-qa.log"
       - name: Keep native failure evidence
         uses: actions/upload-artifact@v7
