@@ -1,5 +1,6 @@
 import { getProfile, readStore, writeStore } from './core.js';
 import { TEMPLATES } from './templates.js';
+import {objectArt} from './activity-art.js';
 import { requestParentAction } from './parental-gate.js';
 
 const SIDE = 1536;
@@ -43,6 +44,19 @@ export const COLORING_IDEAS = {
   10:['Choose a main color, a second color, and one accent. Make each one count.','Use color and extra details to turn this picture into a story.'],
 };
 export function coloringIdeas(age) { return COLORING_IDEAS[Math.max(2,Math.min(10,Math.round(age)||6))]; }
+
+export const CREATIVE_STEPS = {
+  2:{label:'Marks & movement',hint:'Choose one color. Make a dot, then slide your finger into a line. Try a second color beside it.'},
+  3:{label:'Shapes & faces',hint:'Start with one big shape. Add a smaller shape or a line. Tell someone what your picture could be.'},
+  4:{label:'Picture building',hint:'Break your idea into circles, lines and other shapes. Start with the biggest part, then add a detail.'},
+  5:{label:'Patterns & places',hint:'Choose a few shapes or colors to repeat. Point to what is above, below or beside the main part.'},
+  6:{label:'Details tell a story',hint:'Draw the main subject first. Add a place and two details that explain what it is doing.'},
+  7:{label:'Space & symmetry',hint:'Plan where the main parts go. Use a bigger shape for something near, or a center line to help match both sides.'},
+  8:{label:'Color & composition',hint:'Choose a focal point before you begin. Repeat a shape or color so the other parts belong together.'},
+  9:{label:'Design & viewpoint',hint:'Sketch the big shapes first. Add labels, a second viewpoint, or details that explain how your idea works.'},
+  10:{label:'Visual storytelling',hint:'Plan a beginning, a change and a result. Use placement, size and color to guide someone through your idea.'},
+};
+export function creativeStep(age){return CREATIVE_STEPS[Math.max(2,Math.min(10,Math.round(Number(age))||6))];}
 
 /** Flood a connected region, comparing its visible color against white paper.
  * The fixed-size queue prevents repeated neighbor allocations on large fills.
@@ -155,7 +169,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     <dialog class="draw-dialog draw-template-dialog" aria-labelledby="draw-pages-title"><div class="draw-dialog-heading"><div><p class="draw-eyebrow">A PICTURE TO MAKE YOUR OWN</p><h2 id="draw-pages-title">Pick a coloring page</h2></div><button class="icon-button" data-close aria-label="Close coloring pages">×</button></div><p class="draw-dialog-description">Choose any picture. The simplest pages come first for little artists.</p><div class="draw-template-grid"></div></dialog>
     <dialog class="draw-dialog draw-stamp-dialog" aria-labelledby="draw-stamps-title"><div class="draw-dialog-heading"><div><p class="draw-eyebrow">LITTLE EXTRAS, BIG IDEAS</p><h2 id="draw-stamps-title">Pick a stamp</h2></div><button class="icon-button" data-close aria-label="Close stamps">×</button></div><p class="draw-dialog-description">Then tap your paper to place it.</p><div class="draw-stamp-grid"></div></dialog>
     <dialog class="draw-dialog draw-confirm-dialog" aria-labelledby="draw-confirm-title"><h2 id="draw-confirm-title">Start a fresh picture?</h2><p>Your current picture will be replaced. Save it first if you want to keep it. You can also use Undo to bring it back.</p><div class="draw-confirm-actions"><button class="button" data-keep>Keep drawing</button><button class="button button-primary" data-replace>Start fresh</button></div></dialog>
-    <dialog class="draw-dialog draw-export-dialog" aria-labelledby="draw-export-title"><div class="draw-dialog-heading"><h2 id="draw-export-title">Your masterpiece</h2><button class="icon-button" data-close aria-label="Close saved picture">×</button></div><p>Touch and hold the picture to save it, or use the download button.</p><img class="draw-export-image" alt="Your finished drawing"><a class="button button-primary draw-download" download="my-doodle.png">Download PNG</a></dialog>`;
+    <dialog class="draw-dialog draw-export-dialog" aria-labelledby="draw-export-title"><div class="draw-dialog-heading"><h2 id="draw-export-title">Your picture</h2><button class="icon-button" data-close aria-label="Close saved picture">×</button></div><p>Touch and hold the picture to save it, or use the download button.</p><img class="draw-export-image" alt="Your finished drawing"><a class="button button-primary draw-download" download="my-doodle.png">Download PNG</a></dialog>`;
   const $ = selector => container.querySelector(selector);
   const canvas = $('.draw-canvas');
   const display = canvas.getContext('2d');
@@ -338,12 +352,15 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   }
   STAMPS.forEach(([emoji, name]) => {
     const button = document.createElement('button'); button.className = 'draw-stamp-choice';
-    button.textContent = emoji; button.setAttribute('aria-label', `${name} stamp`);
+    const art=objectArt(({Star:'star',Rainbow:'rainbow',Dog:'dog',Cat:'cat',Butterfly:'butterfly',Flower:'flower',Rocket:'rocket',Heart:'love',Fox:'fox',Lion:'lion'})[name]);
+    if(art)button.innerHTML=art;else button.textContent=emoji; button.setAttribute('aria-label', `${name} stamp`);
     button.addEventListener('click', () => { stamp = emoji; setTool('stamp'); $('.draw-stamp-dialog').close(); tell(`${name} stamp ready. Tap the paper!`); });
     $('.draw-stamp-grid').append(button);
   });
   function updateChallenge() {
-    const ideas = (coloringMode ? coloringIdeas : drawingIdeas)(profile.challengeAge || profile.age);
+    const age=profile.challengeAge || profile.age;
+    const ideas = (coloringMode ? coloringIdeas : drawingIdeas)(age);
+    $('.draw-prompt-label').textContent=`${coloringMode?'Color study':'Optional idea'} · ${creativeStep(age).label}`;
     $('.draw-challenge').textContent = ideas[challengeIndex % ideas.length];
   }
   function settingsChanged() {
@@ -454,7 +471,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       if (coloring) showDialog($('.draw-template-dialog'));
     },
     close() { active = false; invalidateExport(); finishPointer(); persist(); container.querySelectorAll('dialog[open]').forEach(dialog => dialog.close()); },
-    hint() { tell(coloringMode ? "Pick Fill, then tap inside a space. Use Pen for details and Undo to try another color." : "Pick Pen and a color. Make a line or a shape. Undo lets you try another way."); },
+    hint() { const age=profile.challengeAge||profile.age; tell(coloringMode ? age<=5?"Pick Fill, then tap inside a space. Use Pen for details and Undo to try another color.":`${coloringIdeas(age)[challengeIndex%coloringIdeas(age).length]} Use Fill for areas and Pen for details. Undo lets you compare choices.` : creativeStep(age).hint); },
     settingsChanged,
   };
 }
