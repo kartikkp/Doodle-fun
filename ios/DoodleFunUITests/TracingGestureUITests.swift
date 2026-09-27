@@ -235,6 +235,10 @@ final class TracingGestureUITests: XCTestCase {
         reveal(letterI); letterI.tap(); reveal(board, drawingSurface: true)
         let restored = try purplePixelCount(board, region: focusedRegion)
         XCTAssertGreaterThanOrEqual(restored, Int(Double(focusedAfter) * 0.95), "Switching letters and Whole word preserves the enlarged ink.")
-        XCTAssertTrue(partial.exists, "The production validator retains both completed letter strokes after view changes.")
+        // Changing focus replaces the progress sentence with that view's
+        // drawing instruction. Retained native pixels above prove the ink;
+        // eligibility remains incomplete independently of that status copy.
+        XCTAssertTrue(check.isEnabled, "Returning to a practiced letter cannot complete the unfinished word.")
+        XCTAssertFalse(named("evidence, practiced").exists)
     }
 }
