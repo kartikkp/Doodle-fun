@@ -6,6 +6,7 @@ import {getLearningItems} from '../../../learning-data.js';
 import {getProfile} from '../../../core.js';
 import {generateChallenge} from '../../../challenges.js';
 import discoveryAdventures from './native-discovery-adventures.js';
+import studios from './native-studios.js';
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const visible = node => Boolean(node && node.getClientRects().length && !node.closest('[hidden]'));
@@ -90,6 +91,12 @@ async function trace(qa) {
   const ch=getLearningItems(set,qa.age)[0].ch;
   qa.assert(qa.el(`[data-learn-set="${set}"]`).getAttribute('aria-pressed')==='true','Catalog route selects the requested trace set');
   qa.click(`[data-learn-item="${ch}"]`);
+  // Canonical source strokes use the whole 0..1 board. Focused letter tracing
+  // has its own trusted-gesture checks; do not project full-word points into it.
+  if(set==='words'){
+    const whole=qa.button('Whole word');if(!whole.disabled)qa.click(whole);
+    qa.assert(qa.el('[data-testid="trace-board"]').dataset.focusLetter==='whole','Canonical tracing coordinates use the whole-word board');
+  }
   qa.click(qa.button('Check tracing'));
   qa.assert(!complete('.learn-feedback'),'An empty tracing must not complete');
   const board=qa.el('[data-testid="trace-board"]');
@@ -319,7 +326,7 @@ async function creative(qa) {
   qa.check('local draft saved');
 }
 
-const handlers={...discoveryAdventures,draw:creative,coloring:creative};
+const handlers={...discoveryAdventures,...studios,draw:creative,coloring:creative};
 for(const id of ['prewriting','uppercase','lowercase','word-tracing','number-tracing'])handlers[id]=trace;
 for(const id of ['counting','addition','equal-groups'])handlers[id]=quantity;
 for(const id of ['compare','number-order','subtraction','number-bonds','ten-frame','letter-match','word-build'])handlers[id]=challenge;
@@ -331,9 +338,9 @@ globalThis.__doodleNativeQA=async({id,age})=>{
   const recordError=event=>runtimeErrors.push(String(event.message||event.reason||event.error||'Unknown script error'));
   addEventListener('error',recordError);addEventListener('unhandledrejection',recordError);
   try {
-    const legacy=ACTIVITY_MODES.filter(mode=>mode.engine!=='listening');
-    qa.assert(legacy.length===30 && legacy.every(activity=>handlers[activity.id]),'All 30 retained practice-mode handlers are packaged');
-    const activity=legacy.find(activity=>activity.id===id), family=getFamily(id);
+    const nativeModes=ACTIVITY_MODES.filter(mode=>mode.engine!=='listening');
+    qa.assert(nativeModes.length===34 && nativeModes.every(activity=>handlers[activity.id]),'All 30 retained and four new studio-mode handlers are packaged');
+    const activity=nativeModes.find(activity=>activity.id===id), family=getFamily(id);
     qa.assert(activity&&age>=2&&age<=10,'Known activity and supported exact age');
     qa.assert(location.protocol==='file:','The activity must run from the native offline bundle');
     qa.assert(Boolean(window.webkit?.messageHandlers?.doodleNative),'Actual native bridge must be present');

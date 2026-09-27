@@ -23,12 +23,17 @@ const sourceProject = path.join(root, 'ios', 'DoodleFun.xcodeproj', 'project.pbx
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const originalProjectHash = sha(await readFile(sourceProject));
 const withoutGameplay = args.includes('--without-gameplay');
+const studioOnly = args.includes('--studio-only');
+if(studioOnly&&withoutGameplay)throw new Error('--studio-only requires the native gameplay fixture; remove --without-gameplay.');
+const studioSelections=studioOnly?Array.from({length:9},(_,i)=>i+2).flatMap(age=>
+  ['testMirrorMosaic','testBalanceLab','testMeasurePour','testBeatMaker'].flatMap(method=>
+    ['--only',`DoodleFunTests/NativeGameplayAge${String(age).padStart(2,'0')}Tests/${method}`])):[];
 const testSources = await Promise.all(nativeTestSourcePaths({withoutGameplay}).map(async file =>
   ({file, source:await readFile(path.join(root, 'ios', file), 'utf8')})
 ));
 // Xcode silently ignores unknown filters. Validate the complete tuple against
 // tests included in this run before creating files or invoking Xcode.
-const selections = nativeTestSelections(args, indexNativeTests(testSources));
+const selections = nativeTestSelections([...args,...studioSelections], indexNativeTests(testSources));
 const testSourceSHA256 = Object.fromEntries(testSources.map(({file, source}) => [file, sha(source)]));
 
 // Work in a copy: Xcode signing settings and an already running app stay intact.
@@ -57,7 +62,7 @@ const manifest = JSON.parse(await readFile(path.join(root, 'ios/DoodleFun/Resour
 const preparedAt = new Date().toISOString();
 const stamp = preparedAt.replaceAll(':','-').replaceAll('.','-');
 const metadata = {
-  device, manifest, originalProjectHash, testSourceSHA256, fixtureSHA256:sha(script),
+  device, manifest, originalProjectHash, testSourceSHA256, fixtureSHA256:sha(script), testSelections:selections,
   preparedAt, project,
 };
 await writeFile(path.join(output,'qa-build.json'), JSON.stringify(metadata, null, 2) + '\n');

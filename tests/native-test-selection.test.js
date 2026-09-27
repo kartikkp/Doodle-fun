@@ -6,6 +6,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {nativeTestSourcePaths, indexNativeTests, validateNativeTestSelection, nativeTestSelections} from '../scripts/native-test-selection.mjs';
+import {ACTIVITY_MODES} from '../catalog.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sources = await Promise.all(nativeTestSourcePaths().map(async file =>
@@ -18,13 +19,34 @@ test('real Swift inventory indexes each test under its declared target and class
   assert.equal(full.get('DoodleFunTests').get('NativeBridgeTests').size, 9);
   assert.equal(full.get('DoodleFunTests').get('NativeParentGateTests').size, 4);
   for (let age = 2; age <= 10; age++) {
-    assert.equal(full.get('DoodleFunTests').get(`NativeGameplayAge${String(age).padStart(2, '0')}Tests`).size, 30);
+    const methods=full.get('DoodleFunTests').get(`NativeGameplayAge${String(age).padStart(2, '0')}Tests`);
+    const gameplayModes=ACTIVITY_MODES.filter(mode=>mode.engine!=='listening');
+    assert.equal(gameplayModes.length,34);assert.equal(methods.size,gameplayModes.length);
+    for(const mode of gameplayModes){const method='test'+mode.id.split('-').map(part=>part[0].toUpperCase()+part.slice(1)).join('');assert.equal(methods.has(method),true,`${mode.id} age ${age} is a selectable native case`);}
   }
   assert.equal(full.get('DoodleFunTests').get('NativeLayoutTests').size, 1);
   assert.deepEqual([...full.get('DoodleFunUITests')].map(([name, methods]) => [name, methods.size]), [
     ['DoodleFunUITests', 4], ['ActivityCatalogUITests', 12], ['DrawingRecoveryUITests', 3], ['TracingGestureUITests', 2],
   ]);
   assert.equal(full.get('DoodleFunTests').has('NativeGameplayCase'), false, 'A helper-only base is not a runnable suite.');
+});
+
+test('studio-only preparation compiles the fixture and selects exactly four studios at all nine ages',async()=>{
+  const temp=await mkdtemp(path.join(tmpdir(),'doodle-native-studios-'));
+  const output=path.join(temp,'prepared');
+  const projectPath=path.join(root,'ios/DoodleFun.xcodeproj/project.pbxproj'),original=await readFile(projectPath);
+  try{
+    const result=spawnSync(process.execPath,['scripts/run-iphone-qa.mjs','--prepare-only','--studio-only','--output',output],{cwd:root,encoding:'utf8',timeout:30000});
+    assert.equal(result.error,undefined);assert.equal(result.status,0,result.stderr);
+    const metadata=JSON.parse(await readFile(path.join(output,'qa-build.json'),'utf8'));
+    assert.equal(metadata.testSelections.length,36);
+    assert.equal(new Set(metadata.testSelections.map(item=>item.selection)).size,36);
+    for(let age=2;age<=10;age++)for(const method of ['testMirrorMosaic','testBalanceLab','testMeasurePour','testBeatMaker'])assert.ok(metadata.testSelections.some(item=>item.flag==='--only'&&item.selection===`DoodleFunTests/NativeGameplayAge${String(age).padStart(2,'0')}Tests/${method}`));
+    assert.match(metadata.fixtureSHA256,/^[a-f0-9]{64}$/);
+    const fixture=await readFile(path.join(output,'project/ios/DoodleFunTests/NativeBridgeTests.swift'),'utf8');
+    assert.match(fixture,/enum NativeQAFixtures/);assert.match(fixture,/func testBeatMaker\(\)/);
+    assert.deepEqual(await readFile(projectPath),original,'Preparation preserves the source signing project');
+  }finally{await rm(temp,{recursive:true,force:true});}
 });
 
 test('target, class, and exact method selections accept every included test', () => {
@@ -108,6 +130,7 @@ test('runner rejects invalid and excluded selections before copying or changing 
       ['--only', 'DoodleFunUITests/ActivityCatalogUITests/testDraw'],
       ['--skip', 'DoodleFunUITests/TypoClass'],
       ['--without-gameplay', '--only', 'DoodleFunTests/NativeGameplayAge02Tests/testDraw'],
+      ['--without-gameplay','--studio-only'],
     ];
     for (const [i, args] of cases.entries()) {
       const output = path.join(temp, `invalid-${i}`);
@@ -115,7 +138,7 @@ test('runner rejects invalid and excluded selections before copying or changing 
         {cwd:root, encoding:'utf8', timeout:10_000});
       assert.equal(result.error, undefined);
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /Unknown (?:native test method|or excluded native test class)/);
+      assert.match(result.stderr, /Unknown (?:native test method|or excluded native test class)|--studio-only requires the native gameplay fixture/);
       await assert.rejects(access(output), {code:'ENOENT'});
     }
     assert.deepEqual(await readFile(projectPath), original);

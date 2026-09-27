@@ -43,6 +43,9 @@ final class ActivityCatalogUITests: XCTestCase {
         Activity("pitch-path", "Higher or lower", controls: ["Listen"]),
         Activity("melody-echo", "Melody echo", controls: ["Listen"]),
         Activity("beat-studio", "Beat studio", controls: ["Listen"]),
+        Activity("mirror-mosaic", "Mirror mosaic", controls: ["Check"]),
+        Activity("balance-lab", "Balance workshop", controls: ["Check"]),
+        Activity("measure-pour", "Measure & pour", controls: ["Check"]),
     ]
 
     private var app: XCUIApplication!
@@ -81,8 +84,8 @@ final class ActivityCatalogUITests: XCTestCase {
         } else {
             XCTFail("No native StatusBar frame or verified safe-area geometry for \(frame.size)")
         }
-        XCTAssertEqual(Self.activities.count, 21)
-        XCTAssertEqual(Set(Self.activities.map(\.id)).count, 21)
+        XCTAssertEqual(Self.activities.count, 24)
+        XCTAssertEqual(Set(Self.activities.map(\.id)).count, 24)
     }
 
     override func tearDownWithError() throws {
