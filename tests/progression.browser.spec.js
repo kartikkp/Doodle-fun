@@ -6,6 +6,7 @@ import {buildListeningRound} from '../listening.js';
 import {getProfile} from '../core.js';
 
 async function start(page,mode,age){
+  await page.addInitScript(()=>{Math.random=()=>0.314159;});
   await page.addInitScript(age=>localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age,level:'auto',sound:false})),age);
   await page.goto(`/#${mode}`);
 }
@@ -34,7 +35,7 @@ test('comparison medals preserve retry mistakes and improve only on a fresh set'
 });
 
 test('memory exploration is not an incorrect answer',async({page})=>{
-  const q=buildDiscoveryRound('memory',4,0);
+  const q=buildDiscoveryRound('memory',4,0,()=>0.314159);
   await start(page,'memory',4);
   const different=q.cards.findIndex(card=>card.id!==q.cards[0].id);
   await page.locator('[data-card="0"]').click();await page.locator(`[data-card="${different}"]`).click();
@@ -48,7 +49,7 @@ test('memory exploration is not an incorrect answer',async({page})=>{
 });
 
 test('an incorrect route command remains recorded after restarting the adventure',async({page})=>{
-  const q=buildAdventureRound('directions',3,0);
+  const q=buildAdventureRound('directions',3,0,()=>0.314159);
   await start(page,'directions',3);
   const wrong=['up','down','left','right'].find(value=>value!==q.commands[0]);
   await page.locator(`[data-direction="${wrong}"]`).click();
