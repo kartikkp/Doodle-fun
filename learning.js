@@ -3,7 +3,7 @@ import {objectArt} from './activity-art.js';
 import {canSpeak,speak as speakText,stopSpeaking} from './speech.js';
 import {getLearningItems, STROKES, evaluateTrace, samplePath, pathLength, buildQuantityQuestion} from './learning-data.js';
 
-import {beginRound,recordMistake,recordHint,completeRound,getRoundCursor} from './progression.js';
+import {beginRound,recordMistake,recordHint,completeRound,getRoundCursor,getModeProgress,beginNewAttempt} from './progression.js';
 
 const SVG_NS='http://www.w3.org/2000/svg';
 const SETS=[['shapes','First lines'],['upper','ABC'],['lower','abc'],['words','Words'],['nums','123']];
@@ -38,7 +38,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   let pageMode='trace',countQuestion=null,managedModes=false;
   let focusIndex=null,focusControls,wordContext,focusPrevious,focusNext,focusLabel,wholeButton,sessionTolerance=null,activeRoundKey=null;
   const progressionMode=()=>pageMode==='count'?{count:'counting',add:'addition',groups:'equal-groups'}[countMode]:{shapes:'prewriting',upper:'uppercase',lower:'lowercase',words:'word-tracing',nums:'number-tracing'}[set];
-  function startProgress(roundKey){const identity=`${progressionMode()}:${profile.age}:${profile.challengeAge}:${roundKey}`;if(identity===activeRoundKey)return;activeRoundKey=identity;beginRound({mode:progressionMode(),age:profile.age,step:profile.challengeAge,roundKey,scored:true});}
+  function startProgress(roundKey){const identity=`${progressionMode()}:${profile.age}:${profile.challengeAge}:${roundKey}`;if(identity===activeRoundKey)return;activeRoundKey=identity;beginRound({mode:progressionMode(),age:profile.age,step:profile.challengeAge,roundKey,scored:true,automaticSets:pageMode==='count'});}
   const isWord=()=>set!=='shapes'&&item().ch.length>1;
   function letterGroups(){let offset=0;return [...item().ch].map((ch,index)=>{const count=(STROKES[ch]||[]).length,indices=Array.from({length:count},(_,i)=>offset+i);offset+=count;const points=indices.flatMap(i=>item().strokes[i]);if(!points.length)return {index,ch,indices,box:[0,0,1,1]};const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),left=Math.min(...xs),top=Math.min(...ys),right=Math.max(...xs),bottom=Math.max(...ys),span=Math.max(right-left,bottom-top)+.12;return {index,ch,indices,box:[(left+right-span)/2,(top+bottom-span)/2,span,span]};});}
   function resetFocus(){sessionTolerance=null;focusIndex=isWord()&&window.matchMedia('(max-width:650px)').matches?0:null;}
@@ -399,10 +399,21 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     }else if(!countAnswered)updateStatus('Choose a number. There’s plenty of time.');
   }
   function settingsChanged() {
-    const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;
+    const next=getProfile(getSettings()),changed=next.age!==profile.age||next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;
     if(changed){ink=[];activeRoundKey=null;index=Math.min(index,getLearningItems(set,profile.challengeAge).length-1);countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();hintMarked.clear();done=false;render();}
     else container.querySelectorAll('[data-learning-speech]').forEach(node=>node.hidden=!canSpeak());
     
   }
-  return {open,close,settingsChanged,hint,clearHints};
+  function canStartPracticeSet() {
+    if(!opened||pageMode!=='trace')return false;
+    const progress=getModeProgress(progressionMode(),profile.age,profile.challengeAge);
+    return progress.completed===progress.required;
+  }
+  function startPracticeSet() {
+    if(!canStartPracticeSet())return false;
+    const progress=beginNewAttempt({mode:progressionMode(),age:profile.age,step:profile.challengeAge});
+    if(!progress)return false;
+    clearTransient();activeRoundKey=null;index=0;ink=[];done=false;render();report();return true;
+  }
+  return {open,close,settingsChanged,hint,clearHints,canStartPracticeSet,startPracticeSet};
 }
