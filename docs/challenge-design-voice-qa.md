@@ -1,6 +1,6 @@
 # Activity, design and coaching revision
 
-Review started September 26, 2026. This revision keeps 21 activity families and all 34 modes, with starting ages 2–10. It is implemented on `codex/audible-effects-older-challenges` for PR #8. It has not been uploaded to TestFlight.
+Review started September 26, 2026. This revision keeps 21 activity families and all 34 modes, with starting ages 2–10. It was implemented on `codex/audible-effects-older-challenges` and merged through PR #8 as `6a7b13a`. Release **2.1.0 (4)** is now **Testing** in both existing TestFlight groups; the September 27 release verification is recorded below.
 
 ## Changes
 
@@ -48,7 +48,7 @@ Runtime **`2c7d4518986f0cef`**, standalone/native HTML SHA256 **`fad176d8c60d5a8
 - **13/13 native bridge/gate tests** pass on `350c552bb56fb62c`. The earlier CI share-presentation timeout prompted scene-backed test windows and an exact-call-site 10-second bounded wait; real UIKit predicates remain required.
 - **6/6 trusted native sound tests pass on `2c7d4518986f0cef`**: Beat Studio, Coach, Melody Echo, Picture practice, Higher or lower and Sound Detective. These use actual simulator taps and require playback/score/cancellation behavior, including real coaching completion rather than accepting device-speech fallback.
 
-Local iPhone: dedicated iPhone 17 Pro / iOS 26.5 simulator, Xcode 27; copied project and app-only test data. **284/284 native integration cases pass** on runtime `2c7d4518986f0cef` after the fixture correction (270 gameplay cases: 30 modes × nine ages, nine bridge checks, four parental-gate checks and one layout regression; zero failures). The successful result is `run-2026-09-27T01-18-07-757Z.xcresult` (full path retained in the native log). Separate trusted audio cases cover the four listening modes. The compact native results and independent CI status are recorded below. No release upload has been attempted for this new candidate.
+Local iPhone: dedicated iPhone 17 Pro / iOS 26.5 simulator, Xcode 27; copied project and app-only test data. **284/284 native integration cases pass** on runtime `2c7d4518986f0cef` after the fixture correction (270 gameplay cases: 30 modes × nine ages, nine bridge checks, four parental-gate checks and one layout regression; zero failures). The successful result is `run-2026-09-27T01-18-07-757Z.xcresult` (full path retained in the native log). Separate trusted audio cases cover the four listening modes. The compact native results and independent CI status are recorded below. No release upload had been attempted at this stage; the later final-runtime release is recorded below.
 
 Evidence directories outside Git: `work/phase7-visual-qa`, `work/educator-review-qa-2026-09-26`, `work/ondemand-voice-qa-2026-09-26`, `work/phase7-native-qa-2026-09-26`, and the `work/phase7-*-browser.json` / native logs. The temporary 509 MB generation environment and model downloads were removed after recording/hash verification; reproducible scripts, clip manifest, generated assets and logs remain.
 
@@ -73,7 +73,7 @@ A separate trusted XCTest action then **passed the complete 21-family landscape 
 
 Independent CI at `284af1b` confirms **284/284 native integration cases passed**. Its browser job repeats the known 747/748 PNG-rounding failure already corrected in `383152c`; its separate audio step was cancelled by the native job's 30-minute budget, not counted as a pass. The job allowance is now 45 minutes while existing per-test and audio-step limits remain. The corrected frozen browser run at `259c725` passed **750/750 checks** in 23.1 minutes, plus 133 unit checks and committed-bundle verification ([CI 36286328165](https://github.com/kartikkp/Doodle-fun/actions/runs/36286328165)). The same frozen CI run also passed **284/284 native integration checks and all six trusted native audio cases**, zero failures. This is a completed successful main-candidate run; it is distinct from the final small display follow-up below.
 
-This revision has not been archived or uploaded to TestFlight. Physical listening, subjective voice preference and observed child challenge/engagement remain direct acceptance checks.
+At this stage, the revision had not yet been archived or uploaded to TestFlight; the later build 4 release is recorded below. Physical listening, subjective voice preference and observed child challenge/engagement remain direct acceptance checks.
 
 
 ## Final sorting display correction
@@ -86,3 +86,17 @@ The final synchronized runtime is **`4df4c6c112b64140`**, standalone/native HTML
 On the final runtime, **133/133 unit checks, 22/22 focused browser checks and 9/9 native sorting age cases pass**. The browser checks cover ages 2/4/6/9/10 on 375-point portrait and 874-point landscape in both engines, plus the existing wrong-basket/recovery/persistence case. They require single visible numeric/fraction values, descriptive picture labels, preserved accessible names, 48px cards, no horizontal overflow, correct/incorrect scoring, restart/next behavior and progress credit. Native sorting passes at every age 2–10 in `run-2026-09-27T02-08-08-955Z.xcresult`. The source fix is `a1e3aea`, synchronized bundles `f5bc9b1`. The earlier nine-case native result on `2a6fd4917e897193` is retained separately; that runtime differed only in its last progress-caption wording.
 
 Together, the versioned evidence covers all **770 distinct browser checks and 297 distinct native cases**; these totals describe coverage across the specified runs, not one final-head execution. Final display evidence is in `work/phase7-sorting-label-qa`; original native contact sheets and the independent review are in `work/phase7-native-landscape-final-review`. The production bundle and native resource are byte-identical, syntax/diff checks pass, and the owner's protected Xcode project hash is unchanged. A fresh full CI run is triggered by the final push; its status must be read separately rather than inferred from the completed `259c725` run.
+
+
+## TestFlight release verification — September 27
+
+The exact final source CI 36287813484 completed with **133 unit, 770 browser and 284 native integration checks passing**. Its audio step hit its separate 10-minute limit: build/install consumed approximately six minutes, Beat Studio and Coach passed, and Melody Echo was interrupted. No XCTest assertion failure was recorded; the unfinished cases are not counted as passes. Commit `79d9413` increases only this audio-step allowance to 20 minutes and retains the 45-minute job budget.
+
+The complete six-case trusted native audio suite was then run locally on final runtime `4df4c6c112b64140`: **6/6 passed, zero failures, 221.740 seconds, exit 0**. It covers Beat Studio, requested bundled Coach completion/background cancellation, Melody Echo, Picture practice, Pitch Path and Sound Detective. Evidence: `work/testflight-build4-2026-09-26/native-audio/run-2026-09-27T06-04-01-461Z.xcresult` and adjacent native-audio.log. Owner signing edits and all production resources remain unchanged.
+
+**Earlier signing blocker, since resolved:** merged source `6a7b13a` was archived as 2.1.0 (4) and passed archive identity/content/signature/privacy checks. App Store distribution export initially reported No Accounts/no distribution signing certificate, including after the user unlocked the Mac. The GUI showed the developer team before the Mac relocked. No upload or group assignment had occurred at that point.
+
+
+**September 27 distribution verified:** user Xcode reauthentication resolved signing. The App Store IPA passed independent signature/profile/content/privacy checks and build **2.1.0 (4) uploaded successfully at 15:27:13 UTC**. The owner manually authenticated Safari, and Apple processing was verified **Complete** for app `6816519633`, build UUID `5c368446-aea8-4f3e-a14b-973e1d4c1d6e`. What to Test was saved and read back. Build 4 was assigned to existing **Doodle Fun Internal** (one tester) and **Doodle Fun Beta** (two testers), and Submit for Review was completed with automatic tester notification checked. At approximately **16:13 UTC**, both groups' Builds pages showed **2.1.0 (4) — Testing**, with no pending review status shown.
+
+No groups, testers or public links were created, and no public App Store submission occurred. Actual build 4 installation and notification-email delivery remain unverified; physical listening, voice preference and observed child engagement remain acceptance checks. Safari and Xcode were released to the authorized other chat after verification.

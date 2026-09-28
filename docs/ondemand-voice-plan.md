@@ -19,7 +19,7 @@ Updated September 26, 2026. Spoken help is a per-request action. Opening an acti
 
 ## Clip contract
 
-`coachingText(id, age)` returns the age-adjusted start and strategy, normalized with `trim().replace(/\s+/g, ' ')`. Reflection and offline extensions stay on screen. The current curriculum produces **116 unique transcripts across 34 modes and nine ages**, at most **240 characters** each. Recording generation must read this helper after curriculum changes; it must not recreate its conditions independently.
+`coachingText(id, age)` returns the age-adjusted start and strategy, normalized with `trim().replace(/\s+/g, ' ')`. Reflection and offline extensions stay on screen. The September 26 curriculum produced **116 unique transcripts across 34 modes and nine ages**, at most **240 characters** each. The creative revision expands this to 120 clips and 38 modes; see [current voice provenance](voice-provenance.md). Recording generation must read this helper after curriculum changes; it must not recreate its conditions independently.
 
 The build provides:
 

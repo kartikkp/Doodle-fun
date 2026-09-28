@@ -1,3 +1,4 @@
+import {beginRound,recordMistake,recordHint,completeRound,getRoundCursor} from './progression.js';
 import {getProfile,readStore,writeStore} from './core.js';
 import {objectArt} from './activity-art.js';
 import {canSpeak,speak as speakText,stopSpeaking} from './speech.js';
@@ -179,12 +180,13 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
   function stopSpeech(){stopSpeaking();}
   function message(text,success=false) {feedback.textContent=text;feedback.classList.toggle('is-complete',success);}
   function complete(text='You did it! Take a moment to enjoy your discovery.') {
-    if(done)return;done=true;saved[`${id}:age${profile.challengeAge}:${round%60}`]=true;writeStore('challenges-progress-v1',saved);report();
+    if(done)return;done=true;completeRound();saved[`${id}:age${profile.challengeAge}:${round%60}`]=true;writeStore('challenges-progress-v1',saved);report();
     container.querySelectorAll('[data-answer],[data-follow-answer],[data-tile],[data-cell],[data-letter]').forEach(node=>node.disabled=true);
     message(text,true);container.querySelector('.challenge-new').textContent='Play another round →';
   }
   function reset() {stopSpeech();question=generateChallenge(id,profile,round);done=false;steps=[];cells.clear();matched.clear();selection=null;showHelp=false;render();}
   function render() {
+    beginRound({mode:id,age:profile.age,step:profile.challengeAge,roundKey:String(round)});
     const info=CHALLENGE_INFO[id];container.replaceChildren();container.classList.add('challenges-screen');container.dataset.challengeId=id;
     const header=el('header','activity-header challenge-header'),heading=el('div','challenge-heading');
     heading.append(el('p','challenge-eyebrow',info.skill),el('h1','',getTitle() || info.title));
@@ -203,7 +205,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     if(id==='word-build')renderWord(play);
     feedback=el('p','challenge-feedback','Take your time. You can try as many times as you like.');feedback.dataset.testid='challenge-feedback';feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');card.append(feedback);
     const footer=el('div','challenge-footer');footer.append(button('↺ Try this round again','button',reset),button('New round →','button button-primary challenge-new',()=>{round++;reset();}));card.append(footer);
-    const help=el('details','challenge-help');help.append(el('summary','','Hint · a strategy'),el('p','',question.help));
+    const help=el('details','challenge-help');help.append(el('summary','','Hint · a strategy'),el('p','',question.help));help.addEventListener('toggle',()=>{if(help.open&&help.isConnected&&opened)recordHint();});
     const hear=button('♪ Hear it','button',()=>say(id==='word-build'?`Build the word for this clue. ${question.clue}`:question.prompt));hear.dataset.challengeSpeech='';hear.hidden=!canSpeak();hear.textContent='♪';hear.setAttribute('aria-label','Hear the question');header.append(hear);
     side.append(help,el('p','challenge-grownup',profile.tier==='little'?'Explore together: point, count, and say the sounds. There’s no need to read on your own.':'A hint is always welcome. Discover the pattern, then try another round.'));
     body.append(card,side);container.append(body);
@@ -215,7 +217,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
         if(done)return;
         if(value===answer){choice.classList.add('is-correct');complete(`${numberLabel(answer)} — you found it! ${id==='subtraction'?`${numberLabel(question.start)} − ${numberLabel(question.removed)} = ${numberLabel(question.remaining)}.`:id==='number-bonds'?`${numberLabel(question.firstPart??question.part)} + ${numberLabel(question.secondPart??answer)} = ${numberLabel(question.total)}.`:''}`);}
         else{
-          choice.classList.add('is-retry');
+          recordMistake();choice.classList.add('is-retry');
           message(`You chose ${numberLabel(value)}. That does not fit yet. Try again, or open Hint for a strategy.`);
         }
       });choice.dataset.answer=String(value);choice.setAttribute('aria-label',`Answer ${numberLabel(value)}`);choices.append(choice);
@@ -224,7 +226,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
   }
   function renderStrategy(play) {
     const support=el('div','challenge-place-support',question.strategy);support.hidden=true;support.dataset.testid='place-value-strategy';
-    const toggle=button('Show a place-value strategy','button challenge-hint-button',()=>{support.hidden=!support.hidden;toggle.textContent=support.hidden?'Show a place-value strategy':'Hide the strategy';toggle.setAttribute('aria-expanded',String(!support.hidden));});toggle.setAttribute('aria-expanded','false');
+    const toggle=button('Show a place-value strategy','button challenge-hint-button',()=>{support.hidden=!support.hidden;if(!support.hidden)recordHint();toggle.textContent=support.hidden?'Show a place-value strategy':'Hide the strategy';toggle.setAttribute('aria-expanded',String(!support.hidden));});toggle.setAttribute('aria-expanded','false');
     play.append(toggle,support);
   }
   function renderCompare(play) {
@@ -240,7 +242,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
       const row=el('div','challenge-pair-row');row.append(el('span','',i<question.left?'●':''),el('span','',i<question.right?'●':''));model.append(row);
     }
     model.append(el('p','challenge-picture-caption',older?question.strategy:difference?`${paired} pairs. Group ${question.left>question.right?'A':'B'} has ${difference} extra ${difference===1?'dot':'dots'}.`:'Every dot has a partner. Both groups have the same amount.'));play.append(model);
-    const reveal=()=>{model.hidden=false;message(older?question.help:difference?`Pair the dots. Group ${question.left>question.right?'A':'B'} has ${difference} left over, so it has more. The other group has fewer.`:'Each dot in A has a partner in B. Nothing is left over, so choose Same amount.');};
+    const reveal=()=>{recordHint();model.hidden=false;message(older?question.help:difference?`Pair the dots. Group ${question.left>question.right?'A':'B'} has ${difference} left over, so it has more. The other group has fewer.`:'Each dot in A has a partner in B. Nothing is left over, so choose Same amount.');};
     play.append(button(older?'Compare place values':'Line up the dots','button challenge-hint-button',reveal));
     const answers=el('div','challenge-compare-answers');
     const comparisonComplete=value=>{
@@ -248,10 +250,10 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
       if(!question.followup){complete(explanation);return;}
       answers.querySelectorAll('button').forEach(button=>button.disabled=true);
       const followup=el('div','challenge-difference');followup.append(el('h3','',older?'What is the difference?':'How many extra dots are left over?'));
-      const choices=el('div','challenge-answers');for(const amount of question.followup.choices){const choice=button(numberLabel(amount),'challenge-answer',()=>{if(done)return;if(amount===question.followup.answer){choice.classList.add('is-correct');complete(`${explanation} The difference is ${numberLabel(amount)}: ${numberLabel(Math.max(question.left,question.right))} − ${numberLabel(Math.min(question.left,question.right))} = ${numberLabel(amount)}.`);}else{message(older?'Subtract the smaller number from the larger. Try counting up in tens and ones to check the gap.':'Pair each dot first. Then count only the dots without a partner to find the difference.');}});choice.dataset.followAnswer=String(amount);choice.setAttribute('aria-label',`Difference ${numberLabel(amount)}`);choices.append(choice);}followup.append(choices);play.append(followup);message(explanation+(older?' One more step: find the difference.':' One more step: find how many extra dots there are.'));
+      const choices=el('div','challenge-answers');for(const amount of question.followup.choices){const choice=button(numberLabel(amount),'challenge-answer',()=>{if(done)return;if(amount===question.followup.answer){choice.classList.add('is-correct');complete(`${explanation} The difference is ${numberLabel(amount)}: ${numberLabel(Math.max(question.left,question.right))} − ${numberLabel(Math.min(question.left,question.right))} = ${numberLabel(amount)}.`);}else{recordMistake();message(older?'Subtract the smaller number from the larger. Try counting up in tens and ones to check the gap.':'Pair each dot first. Then count only the dots without a partner to find the difference.');}});choice.dataset.followAnswer=String(amount);choice.setAttribute('aria-label',`Difference ${numberLabel(amount)}`);choices.append(choice);}followup.append(choices);play.append(followup);message(explanation+(older?' One more step: find the difference.':' One more step: find how many extra dots there are.'));
     };
     for(const [value,label]of [['left',older?'← Number A':'← Group A'],['same','= Same amount'],['right',older?'Number B →':'Group B →']]) {
-      const choice=button(label,'button challenge-compare-choice',()=>{if(done)return;if(value===question.answer){choice.classList.add('is-correct');comparisonComplete(value);}else message("That does not fit the question yet. Compare again, or ask for a hint.");});choice.dataset.answer=value;answers.append(choice);
+      const choice=button(label,'button challenge-compare-choice',()=>{if(done)return;if(value===question.answer){choice.classList.add('is-correct');comparisonComplete(value);}else {recordMistake();message("That does not fit the question yet. Compare again, or ask for a hint.");}});choice.dataset.answer=value;answers.append(choice);
     }
     play.append(answers);
   }
@@ -261,13 +263,13 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     question.sequence.forEach((number,i)=>{const slot=el('span','challenge-slot','·');slot.dataset.slot=String(i);slots.append(slot);});play.append(slots);
     const direction=question.direction==='down'?'biggest':'smallest';
     const hint=el('p','challenge-action-hint',`Choose the ${direction} number first.`);play.append(hint);
-    const showNext=()=>{if(done)return;const next=question.sequence[steps.length];container.querySelector(`[data-tile="${next}"]`).classList.add('is-suggested');message(`${steps.length?`After ${numberLabel(steps.at(-1))},`:'Start here:'} choose ${numberLabel(next)}. ${question.step>1?`This path moves ${numberLabel(question.step)} at a time.`:`It is the ${direction} number left.`}`);};
+    const showNext=()=>{if(done)return;recordHint();const next=question.sequence[steps.length];container.querySelector(`[data-tile="${next}"]`).classList.add('is-suggested');message(`${steps.length?`After ${numberLabel(steps.at(-1))},`:'Start here:'} choose ${numberLabel(next)}. ${question.step>1?`This path moves ${numberLabel(question.step)} at a time.`:`It is the ${direction} number left.`}`);};
     play.append(button('Show my next step','button challenge-hint-button',showNext));
     const tiles=el('div','challenge-tiles');
     for(const value of question.tiles){const tile=button(numberLabel(value),'challenge-tile',()=>{
       if(done)return;
       if(value===question.sequence[steps.length]){steps.push(value);tile.disabled=true;tile.classList.remove('is-suggested');tile.classList.add('is-used');const slot=slots.children[steps.length-1];slot.textContent=numberLabel(value);slot.classList.add('is-filled');if(steps.length===question.sequence.length)complete(`You put every number in order, moving ${question.direction==='down'?'down':'up'} the path!`);else{hint.textContent=`Now find the ${direction} number left.`;message(`${numberLabel(value)} fits here. Keep moving ${question.direction==='down'?'down':'up'}.`);}}
-      else message("That does not fit here yet. Try again, or request the next-step hint.");
+      else {recordMistake();message("That does not fit here yet. Try again, or request the next-step hint.");}
     });tile.dataset.tile=String(value);tile.setAttribute('aria-label',`Number ${numberLabel(value)}`);tiles.append(tile);}play.append(tiles);
   }
   function renderSubtraction(play) {
@@ -288,7 +290,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     const parts=el('div','challenge-bond-parts'),known=el('div','challenge-bond-part'),missing=el('div','challenge-bond-part is-missing');
     known.append(el('strong','',String(question.part)),visualDots(question.part));missing.append(el('strong','','?'),el('span','','Find this part'));parts.append(known,el('span','challenge-plus','+'),missing);play.append(parts);
     const support=el('div','challenge-bond-support');support.hidden=!showHelp;support.append(visualDots(question.total,{known:question.part}),el('p','challenge-picture-caption','The empty dots are the missing part.'));play.append(support);
-    const hintButton=button(showHelp?'Hide the picture hint':'Show a picture hint','button challenge-hint-button',()=>{showHelp=!showHelp;support.hidden=!showHelp;hintButton.textContent=showHelp?'Hide the picture hint':'Show a picture hint';hintButton.setAttribute('aria-expanded',String(showHelp));});hintButton.setAttribute('aria-expanded',String(showHelp));play.append(hintButton);numericAnswers(play,question.answer);
+    const hintButton=button(showHelp?'Hide the picture hint':'Show a picture hint','button challenge-hint-button',()=>{showHelp=!showHelp;if(showHelp)recordHint();support.hidden=!showHelp;hintButton.textContent=showHelp?'Hide the picture hint':'Show a picture hint';hintButton.setAttribute('aria-expanded',String(showHelp));});hintButton.setAttribute('aria-expanded',String(showHelp));play.append(hintButton);numericAnswers(play,question.answer);
   }
   function renderFrame(play) {
     const frames=el('div','challenge-frames');frames.setAttribute('aria-label',`${question.size}-space frame`);
@@ -300,7 +302,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     }
     const counter=el('p','challenge-frame-count',question.age<=5?'0 filled':'Build your model, then check');counter.setAttribute('aria-live','polite');play.append(frames,counter);
     play.append(button('Show a frame strategy','button challenge-hint-button',hint));
-    const check=button('Check my frame','button button-primary',()=>{if(done)return;if(cells.size===question.target)complete(question.ask==='empty'?`${question.target} filled and ${question.empty} empty. You left exactly ${question.empty} spaces!`:`${question.target} ${question.target===1?'space':'spaces'} filled. You matched the number!`);else message('Your frame does not match yet. Check the question and try again. Hint is available when you want it.');});play.append(check);
+    const check=button('Check my frame','button button-primary',()=>{if(done)return;if(cells.size===question.target)complete(question.ask==='empty'?`${question.target} filled and ${question.empty} empty. You left exactly ${question.empty} spaces!`:`${question.target} ${question.target===1?'space':'spaces'} filled. You matched the number!`);else {recordMistake();message('Your frame does not match yet. Check the question and try again. Hint is available when you want it.');}});play.append(check);
   }
   function renderLetters(play) {
     const pairs=el('div','challenge-letter-columns');
@@ -312,7 +314,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
         const model=el('small','challenge-partner-model',`↔ ${partner}`);model.hidden=!showHelp;card.append(model);column.append(card);
       }pairs.append(column);
     }play.append(pairs);
-    play.append(button('Show partners','button challenge-hint-button',()=>{container.querySelectorAll('.challenge-partner-model').forEach(node=>node.hidden=false);message('The partner models are now visible. Look at the relationship, then try each pair.');}));
+    play.append(button('Show partners','button challenge-hint-button',()=>{recordHint();container.querySelectorAll('.challenge-partner-model').forEach(node=>node.hidden=false);message('The partner models are now visible. Look at the relationship, then try each pair.');}));
   }
   function pairKey(letter,side) {return question.relationships?.find(pair=>pair[side]===letter)?.key??letter.toLowerCase();}
   function chooseLetter(letter,side,card) {
@@ -324,26 +326,37 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     if(selection.key===key) {
       matched.add(key);for(const node of [selection.card,card]){node.classList.remove('is-selected');node.classList.add('is-matched');node.setAttribute('aria-pressed','true');node.disabled=true;}selection=null;
       if(matched.size===question.pairs.length)complete('Every pair connects! You found all the relationships.');else message('That pair fits. Find another relationship.');
-    }else{selection.card.classList.remove('is-selected');selection.card.setAttribute('aria-pressed','false');selection=null;message('Those do not form a pair yet. Try again, or request the partner hint.');}
+    }else{recordMistake();selection.card.classList.remove('is-selected');selection.card.setAttribute('aria-pressed','false');selection=null;message('Those do not form a pair yet. Try again, or request the partner hint.');}
   }
   function renderWord(play) {
     const picture=el('div','challenge-word-picture',question.picture);const art=objectArt(question.word,{age:profile.age});if(art)picture.innerHTML=art;picture.setAttribute('role','img');picture.setAttribute('aria-label',question.age>=8?'Word clue illustration':question.word);play.append(picture,el('p','challenge-word-clue',question.clue));
     const model=el('p','challenge-word-model',question.word);model.hidden=!showHelp;model.setAttribute('aria-label',`Word model: ${question.word}`);play.append(model);
-    const hint=button(showHelp?'Hide the word hint':'Show the word hint','button challenge-hint-button',()=>{showHelp=!showHelp;model.hidden=!showHelp;hint.textContent=showHelp?'Hide the word hint':'Show the word hint';hint.setAttribute('aria-expanded',String(showHelp));});hint.setAttribute('aria-expanded',String(showHelp));play.append(hint);
+    const hint=button(showHelp?'Hide the word hint':'Show the word hint','button challenge-hint-button',()=>{showHelp=!showHelp;if(showHelp)recordHint();model.hidden=!showHelp;hint.textContent=showHelp?'Hide the word hint':'Show the word hint';hint.setAttribute('aria-expanded',String(showHelp));});hint.setAttribute('aria-expanded',String(showHelp));play.append(hint);
     const slots=el('div','challenge-slots challenge-word-slots');slots.setAttribute('aria-label','Your word');[...question.word].forEach((letter,i)=>{const slot=el('span','challenge-slot','·');slot.dataset.slot=String(i);slots.append(slot);});play.append(slots);
     const tiles=el('div','challenge-tiles');
-    const showNext=()=>{if(done)return;showHelp=true;model.hidden=false;hint.textContent='Hide the word hint';hint.setAttribute('aria-expanded','true');const next=question.word[steps.length];container.querySelector(`[data-character="${next}"]:not(:disabled)`).classList.add('is-suggested');message(`The word is ${question.word}. ${steps.length?`You have ${steps.join('')}. `:''}Find ${next} for space ${steps.length+1}.`);};
+    const showNext=()=>{if(done)return;recordHint();showHelp=true;model.hidden=false;hint.textContent='Hide the word hint';hint.setAttribute('aria-expanded','true');const next=question.word[steps.length];container.querySelector(`[data-character="${next}"]:not(:disabled)`).classList.add('is-suggested');message(`The word is ${question.word}. ${steps.length?`You have ${steps.join('')}. `:''}Find ${next} for space ${steps.length+1}.`);};
     play.append(button('Show next letter','button challenge-hint-button',showNext));
     for(const {letter,index}of question.tiles){const tile=button(letter,'challenge-tile',()=>{
       if(done)return;
       if(letter===question.word[steps.length]){steps.push(letter);tile.disabled=true;tile.classList.remove('is-suggested');tile.classList.add('is-used');const slot=slots.children[steps.length-1];slot.textContent=letter;slot.classList.add('is-filled');if(steps.length===question.word.length)complete(`You built ${question.word}! Say the word, then try another picture.`);else message(`${letter} fits in space ${steps.length}. Move to the next letter in the word.`);}
-      else message("That does not fit here yet. Try again, or request the next-step hint.");
+      else {recordMistake();message("That does not fit here yet. Try again, or request the next-step hint.");}
     });tile.dataset.tile=String(index);tile.dataset.character=letter;tile.setAttribute('aria-label',`Letter ${letter}`);tiles.append(tile);}play.append(tiles);
   }
-  function open(nextId='compare') {id=CHALLENGE_INFO[nextId]?nextId:'compare';profile=getProfile(getSettings());round=0;opened=true;reset();report();}
+  function open(nextId='compare') {id=CHALLENGE_INFO[nextId]?nextId:'compare';profile=getProfile(getSettings());round=getRoundCursor(id,profile.age,profile.challengeAge);opened=true;reset();report();}
   function close(){opened=false;stopSpeech();}
+  function clearHints() {
+    stopSpeech();showHelp=false;if(!opened)return;
+    container.querySelectorAll('.challenge-place-support,.challenge-comparison-model,.challenge-bond-support,.challenge-partner-model,.challenge-word-model').forEach(node=>node.hidden=true);
+    container.querySelectorAll('.is-suggested').forEach(node=>node.classList.remove('is-suggested'));
+    container.querySelectorAll('.challenge-dot.is-numbered').forEach(node=>{node.textContent=node.closest('.challenge-berries')?'●':'';node.classList.remove('is-numbered');});
+    container.querySelectorAll('details.challenge-help').forEach(node=>node.open=false);
+    const labels={'Hide the picture hint':'Show a picture hint','Hide the word hint':'Show the word hint','Hide the strategy':'Show a place-value strategy'};
+    container.querySelectorAll('.challenge-hint-button').forEach(node=>{if(labels[node.textContent])node.textContent=labels[node.textContent];if(node.hasAttribute('aria-expanded'))node.setAttribute('aria-expanded','false');});
+    const count=container.querySelector('.challenge-frame-count');if(id==='ten-frame'&&question.age>5&&count)count.textContent='Check your model when ready';
+    if(!done&&feedback?.isConnected)message('Keep working at your own pace.');
+  }
   function hint() {
-    if(!opened||done)return;
+    if(!opened||done)return;recordHint();
     if(question.model==='place-value'&&['subtraction','number-bonds'].includes(id)) {
       const support=container.querySelector('.challenge-place-support');if(support.hidden)container.querySelector('.challenge-hint-button').click();message(question.help);
     }else if(id==='subtraction') {
@@ -360,6 +373,6 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
       [...container.querySelectorAll('button')].find(button=>button.textContent===label)?.click();
     }
   }
-  function settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;if(changed){round=0;reset();}else container.querySelectorAll('[data-challenge-speech]').forEach(node=>node.hidden=!canSpeak());}
-  return {open,close,settingsChanged,hint};
+  function settingsChanged(){const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge||next.age!==profile.age;profile=next;if(!opened)return;if(changed){round=getRoundCursor(id,profile.age,profile.challengeAge);reset();}else container.querySelectorAll('[data-challenge-speech]').forEach(node=>node.hidden=!canSpeak());}
+  return {open,close,settingsChanged,hint,clearHints};
 }

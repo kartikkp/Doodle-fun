@@ -1,7 +1,9 @@
 import {getProfile, readStore, writeStore} from './core.js';
 import {objectArt} from './activity-art.js';
 import {canSpeak,speak as speakText,stopSpeaking} from './speech.js';
-import {getLearningItems, evaluateTrace, samplePath, pathLength, buildQuantityQuestion} from './learning-data.js';
+import {getLearningItems, STROKES, evaluateTrace, samplePath, pathLength, buildQuantityQuestion} from './learning-data.js';
+
+import {beginRound,recordMistake,recordHint,completeRound,getRoundCursor,getModeProgress,beginNewAttempt} from './progression.js';
 
 const SVG_NS='http://www.w3.org/2000/svg';
 const SETS=[['shapes','First lines'],['upper','ABC'],['lower','abc'],['words','Words'],['nums','123']];
@@ -32,8 +34,15 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   let opened=false,kind='letters',set=null,index=0,ink=[],activePointer=null,activePath=null,done=false;
   let animation=0,demoRunning=false,profile=getProfile(getSettings()),saved=safeProgress();
   let svg,inkLayer,guideLayer,markers,trail,status,checkButton,showButton,clearButton,prevButton,nextButton,picker,itemLabel,example;
-  let countValue=0,countMode='count',countRound=0,countAnswered=false,countMarked=new Map(),countButtons=[];
+  let countValue=0,countMode='count',countRound=0,countAnswered=false,countMarked=new Map(),countButtons=[],hintMarked=new Set();
   let pageMode='trace',countQuestion=null,managedModes=false;
+  let focusIndex=null,focusControls,wordContext,focusPrevious,focusNext,focusLabel,wholeButton,sessionTolerance=null,activeRoundKey=null;
+  const progressionMode=()=>pageMode==='count'?{count:'counting',add:'addition',groups:'equal-groups'}[countMode]:{shapes:'prewriting',upper:'uppercase',lower:'lowercase',words:'word-tracing',nums:'number-tracing'}[set];
+  function startProgress(roundKey){const identity=`${progressionMode()}:${profile.age}:${profile.challengeAge}:${roundKey}`;if(identity===activeRoundKey)return;activeRoundKey=identity;beginRound({mode:progressionMode(),age:profile.age,step:profile.challengeAge,roundKey,scored:true,automaticSets:pageMode==='count'});}
+  const isWord=()=>set!=='shapes'&&item().ch.length>1;
+  function letterGroups(){let offset=0;return [...item().ch].map((ch,index)=>{const count=(STROKES[ch]||[]).length,indices=Array.from({length:count},(_,i)=>offset+i);offset+=count;const points=indices.flatMap(i=>item().strokes[i]);if(!points.length)return {index,ch,indices,box:[0,0,1,1]};const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]),left=Math.min(...xs),top=Math.min(...ys),right=Math.max(...xs),bottom=Math.max(...ys),span=Math.max(right-left,bottom-top)+.12;return {index,ch,indices,box:[(left+right-span)/2,(top+bottom-span)/2,span,span]};});}
+  function resetFocus(){sessionTolerance=null;focusIndex=isWord()&&window.matchMedia('(max-width:650px)').matches?0:null;}
+
   const report=()=>onProgress({completedCount:Object.keys(saved).length});
   const reportMode=()=>{
     onModeChange({set,mode:pageMode==='count'?countMode:'trace',kind,pageMode});
@@ -50,7 +59,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   function stopDemo() {
     cancelAnimationFrame(animation);animation=0;demoRunning=false;
     if(trail)trail.replaceChildren();
-    if(showButton){showButton.textContent='▶ Show me';showButton.setAttribute('aria-pressed','false');}
+    if(showButton){showButton.textContent='▶ Show me';showButton.setAttribute('aria-pressed','false');showButton.dataset.hint='';}
   }
   function releasePointer() {
     const pointer=activePointer;activePointer=null;activePath=null;
@@ -96,6 +105,14 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     const layout=element('div','learn-trace-layout'),workspace=element('section','learn-trace-card'),side=element('aside','learn-side');
     workspace.setAttribute('aria-label','Tracing practice');
     const top=element('div','learn-card-heading');itemLabel=element('h2','learn-item-title');example=element('p','learn-example');top.append(itemLabel,example);workspace.append(top);
+    focusControls=element('div','learn-focus-controls');
+    wordContext=element('div','learn-word-context');wordContext.setAttribute('aria-label','Word letters');
+    const focusNav=element('div','learn-focus-navigation');
+    focusPrevious=button('← Letter','button',()=>setFocus(focusIndex-1));focusPrevious.setAttribute('aria-label','Previous letter');
+    focusLabel=element('span','learn-focus-label');focusLabel.setAttribute('aria-live','polite');
+    focusNext=button('Letter →','button',()=>setFocus(focusIndex+1));focusNext.setAttribute('aria-label','Next letter');
+    wholeButton=button('Whole word','button learn-whole-word',()=>setFocus(null));
+    focusNav.append(focusPrevious,focusLabel,focusNext);focusControls.append(wordContext,focusNav,wholeButton);workspace.append(focusControls);
     const board=element('div','learn-board');
     svg=svgElement('svg',{viewBox:'0 0 1000 1000',preserveAspectRatio:'xMidYMid meet','aria-label':'Trace the guide with a finger or Pencil',role:'img','data-testid':'trace-board'});
     const guides=svgElement('g',{'aria-hidden':'true'});
@@ -103,7 +120,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     guideLayer=svgElement('g',{'class':'learn-guide-layer'});inkLayer=svgElement('g',{'class':'learn-ink-layer'});trail=svgElement('g',{'class':'learn-demo-layer'});markers=svgElement('g',{'class':'learn-marker-layer'});
     svg.append(guides,guideLayer,inkLayer,trail,markers);board.append(svg);workspace.append(board);
     const tools=element('div','learn-tools');
-    showButton=button('▶ Show me','button',()=>demoRunning?stopDemo():showDemo());showButton.setAttribute('aria-pressed','false');
+    showButton=button('▶ Show me','button',()=>demoRunning?stopDemo():showDemo());showButton.setAttribute('aria-pressed','false');showButton.dataset.hint='';
     clearButton=button('↺ Start again','button',()=>{stopDemo();releasePointer();ink=[];done=false;drawInk();paintMarkers();updateStatus(tracingHint());checkButton.disabled=false;});
     checkButton=button('Check tracing','button button-primary',()=>checkTrace(true));
     tools.append(showButton,clearButton,checkButton);workspace.append(tools);
@@ -115,25 +132,26 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       const choice=button(current.label||current.ch,`learn-choice${(current.label||current.ch).length>2?' learn-choice-word':''}`,()=>selectItem(i));choice.dataset.learnItem=current.ch;picker.append(choice);
     });side.append(picker);
     const help=element('details','learn-help');help.append(element('summary','','Hint · writing strategy'),element('p','',set==='words'?'Trace each letter, then say the whole word. Lift your finger between numbered strokes.':'Follow one path at a time. Lift your finger between strokes. A little practice is a big win.'));
+    help.querySelector('summary').dataset.hint='';help.addEventListener('toggle',()=>{if(help.open&&help.isConnected&&opened)recordHint();});
     side.append(help);
     const navigation=element('div','learn-navigation');
     prevButton=button('← Previous','button',()=>selectItem(index-1));nextButton=button('Next →','button button-primary',()=>selectItem(index+1));navigation.append(prevButton,nextButton);side.append(navigation);
     layout.append(workspace,side);body.append(layout);
     svg.addEventListener('pointerdown',pointerDown);svg.addEventListener('pointermove',pointerMove);svg.addEventListener('pointerup',pointerUp);svg.addEventListener('pointercancel',pointerCancel);svg.addEventListener('lostpointercapture',pointerCancel);
-    paintItem();
+    resetFocus();paintItem();
   }
   function selectItem(newIndex) {
     if(newIndex<0||newIndex>=getLearningItems(set,profile.challengeAge).length)return;
-    clearTransient();index=newIndex;ink=[];done=false;paintItem();
+    clearTransient();container.querySelectorAll('details.learn-help').forEach(help=>help.open=false);index=newIndex;ink=[];done=false;resetFocus();paintItem();
     picker.children[index]?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
   }
   function paintItem() {
-    const current=item();
+    const current=item();startProgress(key());
     itemLabel.textContent=set==='shapes'?current.label:set==='words'?`Write “${current.ch}”`:`Trace ${current.ch}`;
     example.textContent=set==='nums'&&current.ch.length===1?`${current.word} · ${current.ch==='0'?'an empty group':`${current.ch} ${current.ch==='1'?'dot':'dots'}`}`:`${current.em} ${current.word}`;
     const illustration=objectArt(current.word.toLowerCase(),{age:profile.age});if(illustration){example.replaceChildren();const picture=element('span','learn-example-art');picture.innerHTML=illustration;picture.setAttribute('aria-hidden','true');example.append(picture,document.createTextNode(current.word));}
     guideLayer.replaceChildren(...current.strokes.map(path=>svgElement('path',{d:pathData(path),fill:'none',stroke:'#e1dffb','stroke-width':traceTolerance()*1500,'stroke-linecap':'round','stroke-linejoin':'round'})));
-    drawInk();paintMarkers();
+    updateFocus();drawInk();paintMarkers();
     [...picker.children].forEach((choice,i)=>{
       const record=getLearningItems(set,profile.challengeAge)[i],practiced=Boolean(saved[`${set}:${record.ch}`]);
       choice.classList.toggle('is-practiced',practiced);choice.setAttribute('aria-pressed',String(i===index));choice.setAttribute('aria-label',`${record.label||record.ch}${practiced?', practiced':''}`);
@@ -141,11 +159,37 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     prevButton.disabled=index===0;nextButton.disabled=index===getLearningItems(set,profile.challengeAge).length-1;checkButton.disabled=done;
     updateStatus(done?'Beautiful practice! Your paths are complete. Pick another when you’re ready.':tracingHint(),done);
   }
-  function traceTolerance(){return profile.traceTolerance*(item().ch.length>1&&set!=='shapes'?(item().ch.length<=3?.55:.44):1);}
+  function traceTolerance(){
+    if(!isWord())return profile.traceTolerance;
+    // Ten screen pixels on the enlarged letter, expressed in the unchanged
+    // whole-word coordinates. Freeze this for the attempt: zooming or rotating
+    // must not change whether existing ink passes the coverage checks.
+    if(sessionTolerance===null){const width=Math.max(180,svg.getBoundingClientRect().width),span=Math.max(...letterGroups().map(group=>group.box[2]));sessionTolerance=Math.min(profile.traceTolerance,Math.max(.004,span*(profile.challengeAge<=4?13:10)/width));}
+    return sessionTolerance;
+  }
+  function setFocus(index){
+    if(index!==null&&(index<0||index>=item().ch.length))return;
+    stopDemo();releasePointer();focusIndex=index;updateFocus();drawInk();paintMarkers();
+  }
+  function updateFocus(){
+    const multi=isWord();focusControls.hidden=!multi;
+    const groups=multi?letterGroups():[];
+    if(!multi)focusIndex=null;
+    const focused=focusIndex===null?null:groups[focusIndex];
+    svg.setAttribute('viewBox',focused?focused.box.map(value=>value*1000).join(' '):'0 0 1000 1000');
+    svg.dataset.focusLetter=focusIndex===null?'whole':String(focusIndex);
+    svg.setAttribute('aria-label',focused?`Trace letter ${focusIndex+1} of ${item().ch.length}: ${focused.ch}`:'Trace the guide with a finger or Pencil');
+    wordContext.replaceChildren(...groups.map(group=>{const choice=button(group.ch,'learn-word-letter',()=>setFocus(group.index));choice.setAttribute('aria-label',`Focus letter ${group.index+1}: ${group.ch}`);choice.setAttribute('aria-pressed',String(group.index===focusIndex));return choice;}));
+    focusLabel.textContent=focused?`${focused.ch} · ${focusIndex+1} / ${groups.length}`:'Whole word';
+    focusPrevious.disabled=focusIndex===null||focusIndex===0;focusNext.disabled=focusIndex===null||focusIndex===groups.length-1;wholeButton.disabled=focusIndex===null;
+    [...guideLayer.children].forEach((node,i)=>{node.style.display=!focused||focused.indices.includes(i)?'':'none';});
+    if(focused){const selected=wordContext.children[focusIndex];wordContext.scrollLeft=Math.max(0,selected.offsetLeft-wordContext.offsetLeft-wordContext.clientWidth/2+selected.clientWidth/2);}
+  }
   function paintMarkers() {
     markers.replaceChildren();if(done)return;
-    const starts=item().strokes.map(path=>path[0]),placed=[],radius=set==='words'?30:36;
+    const starts=item().strokes.map(path=>path[0]),placed=[],focused=isWord()&&focusIndex!==null?letterGroups()[focusIndex]:null,radius=focused?focused.box[2]*36:set==='words'?30:36;
     starts.forEach(([x,y],i)=>{
+      if(focused&&!focused.indices.includes(i))return;
       const close=starts.filter(([otherX,otherY])=>Math.hypot(x-otherX,y-otherY)<radius*.0025);
       let cx=x*1000,cy=y*1000;
       if(close.length>1) {
@@ -156,16 +200,16 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       placed.push([cx,cy]);
       if(Math.hypot(cx-x*1000,cy-y*1000)>1)markers.append(svgElement('line',{x1:cx,y1:cy,x2:x*1000,y2:y*1000,stroke:'#8c83c8','stroke-width':4}));
       markers.append(svgElement('circle',{cx,cy,r:radius,fill:'#5754d6',stroke:'white','stroke-width':5}));
-      const label=svgElement('text',{x:cx,y:cy+1,'text-anchor':'middle','dominant-baseline':'central',fill:'white','font-size':set==='words'?38:42,'font-weight':800});label.textContent=String(i+1);markers.append(label);
+      const label=svgElement('text',{x:cx,y:cy+1,'text-anchor':'middle','dominant-baseline':'central',fill:'white','font-size':focused?radius*1.4:set==='words'?38:42,'font-weight':800});label.textContent=String(i+1);markers.append(label);
     });
   }
   function drawInk() {
-    inkLayer.replaceChildren(...ink.map(path=>svgElement('path',{d:pathData(path.length===1?[path[0],[path[0][0]+.0001,path[0][1]]]:path),fill:'none',stroke:'#5754d6','stroke-width':set==='words'?12:profile.tier==='little'?25:19,'stroke-linecap':'round','stroke-linejoin':'round'})));
+    inkLayer.replaceChildren(...ink.map(path=>svgElement('path',{d:pathData(path.length===1?[path[0],[path[0][0]+.0001,path[0][1]]]:path),fill:'none',stroke:'#5754d6','stroke-width':isWord()?traceTolerance()*750:profile.tier==='little'?25:19,'stroke-linecap':'round','stroke-linejoin':'round'})));
   }
   function position(event) {
     const matrix=svg.getScreenCTM();
     if(matrix){const point=svg.createSVGPoint();point.x=event.clientX;point.y=event.clientY;const local=point.matrixTransform(matrix.inverse());return [local.x/1000,local.y/1000];}
-    const rect=svg.getBoundingClientRect(),side=Math.min(rect.width,rect.height),x=(event.clientX-rect.left-(rect.width-side)/2)/side,y=(event.clientY-rect.top-(rect.height-side)/2)/side;
+    const rect=svg.getBoundingClientRect(),view=svg.viewBox.baseVal,scale=Math.min(rect.width/view.width,rect.height/view.height),x=(view.x+(event.clientX-rect.left-(rect.width-view.width*scale)/2)/scale)/1000,y=(view.y+(event.clientY-rect.top-(rect.height-view.height*scale)/2)/scale)/1000;
     // Keep true out-of-board coordinates: clamping would turn an off-canvas
     // scribble into valid edge ink. The SVG clips their visual representation.
     return [x,y];
@@ -199,9 +243,10 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     if(done)return;
     const result=evaluateTrace(item().strokes,ink,{tolerance:traceTolerance(),coverage:profile.traceCoverage,precision:profile.tracePrecision});
     if(result.passed) {
-      done=true;mark(key());paintItem();updateStatus('Beautiful practice! Your paths are complete. Pick another when you’re ready.',true);return;
+      done=true;completeRound();mark(key());paintItem();updateStatus('Beautiful practice! Your paths are complete. Pick another when you’re ready.',true);return;
     }
     if(explicit) {
+      recordMistake();
       if(result.reason==='precision'||result.reason==='extra-ink')updateStatus('Good exploring! Tap Start again, then follow the soft paths slowly.');
       else if(!ink.length||result.reason==='keep-going')updateStatus('You can do it. Start at 1 and follow the path all the way.');
       else {
@@ -212,13 +257,14 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     } else if(result.completed)updateStatus(`${result.completed} of ${item().strokes.length} paths traced. Keep going at your own pace.`);
   }
   function showDemo() {
-    releasePointer();stopDemo();demoRunning=true;showButton.textContent='■ Stop guide';showButton.setAttribute('aria-pressed','true');
-    const paths=item().strokes.map(path=>samplePath(path,.007));
+    recordHint();releasePointer();stopDemo();demoRunning=true;showButton.textContent='■ Stop guide';showButton.setAttribute('aria-pressed','true');delete showButton.dataset.hint;
+    const focused=isWord()&&focusIndex!==null?letterGroups()[focusIndex]:null;
+    const paths=item().strokes.filter((path,i)=>!focused||focused.indices.includes(i)).map(path=>samplePath(path,.007));
     const total=paths.reduce((sum,path)=>sum+pathLength(path),0),duration=Math.max(2500,Math.min(9000,total*2400));
     const start=performance.now(),reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     updateStatus('Watch the glowing path. Start at each number and follow along when you’re ready.');
     if(reduced) {
-      trail.replaceChildren(...paths.map(path=>svgElement('path',{d:pathData(path),fill:'none',stroke:'#159b83','stroke-width':set==='words'?13:22,'stroke-linecap':'round','stroke-linejoin':'round'})));
+      trail.replaceChildren(...paths.map(path=>svgElement('path',{d:pathData(path),fill:'none',stroke:'#159b83','stroke-width':isWord()?traceTolerance()*800:22,'stroke-linecap':'round','stroke-linejoin':'round'})));
       updateStatus('Follow the green paths from each number. Tap Stop guide when you’re ready.');return;
     }
     const tick=now=>{
@@ -229,7 +275,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
         const length=pathLength(path),fraction=Math.max(0,Math.min(1,(progress-used)/length));used+=length;
         if(fraction<=0)continue;
         const partial=path.slice(0,Math.max(2,Math.ceil(path.length*fraction)));
-        trail.append(svgElement('path',{d:pathData(partial),fill:'none',stroke:'#159b83','stroke-width':set==='words'?13:22,'stroke-linecap':'round','stroke-linejoin':'round'}));
+        trail.append(svgElement('path',{d:pathData(partial),fill:'none',stroke:'#159b83','stroke-width':isWord()?traceTolerance()*800:22,'stroke-linecap':'round','stroke-linejoin':'round'}));
         if(fraction<1&&!reduced){const [x,y]=partial.at(-1);trail.append(svgElement('circle',{cx:x*1000,cy:y*1000,r:19,fill:'#ffcb66',stroke:'white','stroke-width':5}));}
       }
       if(amount<1)animation=requestAnimationFrame(tick);else{stopDemo();updateStatus('Your turn! Start at 1. You can watch the guide again any time.');}
@@ -237,19 +283,19 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     animation=requestAnimationFrame(tick);
   }
   function nextCount() {
-    countRound++;countValue=(countValue+1)%(profile.numberMax+1);countAnswered=false;countMarked.clear();render();
+    countRound++;countValue=(countValue+1)%(profile.numberMax+1);countAnswered=false;countMarked.clear();hintMarked.clear();render();
   }
   function renderCount(body) {
     const layout=element('div','learn-count-layout'),card=element('section','learn-count-card'),side=element('aside','learn-count-side');
     if(!managedModes) {
       const modeButtons=element('div','learn-tabs');modeButtons.setAttribute('role','group');modeButtons.setAttribute('aria-label','Choose number challenge');
       for(const [mode,label]of [['count','Count dots'],['add','Add together'],['groups','Equal groups']]) {
-        const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();reportMode();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
+        const choice=button(label,'button learn-tab',()=>{countMode=mode;countAnswered=false;countMarked.clear();hintMarked.clear();reportMode();render();});choice.setAttribute('aria-pressed',String(countMode===mode));modeButtons.append(choice);
       }
       card.append(modeButtons);
     }
     const variant=countRound+(countMode==='groups'?Math.max(0,profile.challengeAge-6)*2+(profile.challengeAge>=9?1:0):0);
-    const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,variant,profile.challengeAge);countQuestion=question;
+    const question=buildQuantityQuestion(countValue,countMode,profile.numberMax,variant,profile.challengeAge);countQuestion=question;startProgress(`${countRound}:${countValue}:${variant}`);
     card.append(element('p','learn-eyebrow',`NUMBER DETECTIVE · ROUND ${countRound+1}`),element('h2','learn-count-prompt',question.prompt));
     const frames=element('div','learn-count-frames');frames.dataset.testid='quantity-frame';frames.dataset.quantity=String(question.answer);
     let dotOffset=0;
@@ -261,7 +307,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
           if(countMarked.has(dotIndex))return;
           countMarked.set(dotIndex,countMarked.size+1);dot.textContent=String(countMarked.size);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${countMarked.size}`);
         });
-        dot.setAttribute('aria-label',countMarked.has(dotIndex)?`Counted ${countMarked.get(dotIndex)}`:`Count dot ${dotIndex+1}`);dot.setAttribute('aria-pressed',String(countMarked.has(dotIndex)));dot.classList.toggle('is-counted',countMarked.has(dotIndex));box.append(dot);
+        dot.dataset.dotIndex=String(dotIndex);dot.setAttribute('aria-label',countMarked.has(dotIndex)?`Counted ${countMarked.get(dotIndex)}`:`Count dot ${dotIndex+1}`);dot.setAttribute('aria-pressed',String(countMarked.has(dotIndex)));dot.classList.toggle('is-counted',countMarked.has(dotIndex));box.append(dot);
       }
       return box;
     };
@@ -299,14 +345,15 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
     countButtons=choices.map(value=>{
       const answer=button(formatAmount(value),'learn-answer',()=>{
         if(countAnswered)return;
-        if(value===question.answer){countAnswered=true;answer.classList.add('is-correct');countButtons.forEach(button=>button.disabled=true);mark(`${countMode}:${question.answer}`);updateStatus(`${formatAmount(value)} — you found it! ${countMode==='add'?`${question.operands.map(formatAmount).join(' + ')} = ${formatAmount(value)}.`:countMode==='groups'?`${question.groups} × ${question.each} = ${value}.`:'You combined the units to find the whole amount.'}`,true);}
-        else{answer.classList.add('is-retry');updateStatus(`You chose ${formatAmount(value)}. That does not fit yet. Try again, or request a hint.`);}
+        if(value===question.answer){countAnswered=true;completeRound();answer.classList.add('is-correct');countButtons.forEach(button=>button.disabled=true);mark(`${countMode}:${question.answer}`);updateStatus(`${formatAmount(value)} — you found it! ${countMode==='add'?`${question.operands.map(formatAmount).join(' + ')} = ${formatAmount(value)}.`:countMode==='groups'?`${question.groups} × ${question.each} = ${value}.`:'You combined the units to find the whole amount.'}`,true);}
+        else{recordMistake();answer.classList.add('is-retry');updateStatus(`You chose ${formatAmount(value)}. That does not fit yet. Try again, or request a hint.`);}
       });answer.dataset.answer=String(value);answer.setAttribute('aria-label',`Answer ${formatAmount(value)}`);if(countAnswered){answer.disabled=true;answer.classList.toggle('is-correct',value===question.answer);}answers.append(answer);return answer;
     });card.append(answers);
     status=element('p','learn-feedback');status.setAttribute('role','status');status.setAttribute('aria-live','polite');card.append(status);
     updateStatus(countAnswered?`${formatAmount(question.answer)} — you found it!`:'Choose a number. There’s plenty of time.',countAnswered);
-    card.append(button('Show counting steps','button learn-count-coach',hint),button('Next puzzle →','button button-primary learn-next-puzzle',nextCount));
+    const countingHint=button('Show counting steps','button learn-count-coach',hint);countingHint.dataset.hint='';card.append(countingHint,button('Next puzzle →','button button-primary learn-next-puzzle',nextCount));
     const help=element('details','learn-help');help.append(element('summary','','Hint · a strategy'),element('p','',question.representation?question.strategy:countMode==='groups'?'Each group has the same number. Try counting by groups, then tap every dot to check your total.':countMode==='add'?question.operands.length===3?'Count the first two groups together. Then count on with the third group. How many are there altogether?':'Count the first group. Count the second group. How many are there altogether?':'Touch one dot for each number you say. The last number tells you how many.'));
+    help.querySelector('summary').dataset.hint='';help.addEventListener('toggle',()=>{if(help.open&&help.isConnected&&opened)recordHint();});
     side.append(help);
     const range=element('div','learn-range');range.append(element('p','learn-eyebrow','YOUR EXPLORING RANGE'),element('strong','',`0–${formatAmount(question.maxValue??profile.numberMax)}`),element('p','',profile.challengeAge<=4?'Explore together: point and count with a grown-up. Every picture and hint is here to help.':`Practice for age ${profile.challengeAge}. A strategy matters more than speed. Use the help or adjust this activity whenever you like.`));side.append(range);
     side.append(button('Try writing a number →','button',()=>{
@@ -317,7 +364,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   }
   function open(requestedKind='letters',options={}) {
     profile=getProfile(getSettings());opened=true;managedModes=Boolean(options.managedModes);kind=requestedKind==='numbers'||requestedKind==='count'?'numbers':'letters';
-    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];countRound=0;countAnswered=false;countMarked.clear();}
+    if(kind==='numbers'){set='nums';index=0;pageMode='count';countMode=profile.tier==='maker'?'groups':'count';countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];countRound=0;countAnswered=false;countMarked.clear();hintMarked.clear();}
     else{set=SETS.some(([value])=>value===profile.defaultSet)?profile.defaultSet:'upper';index=0;pageMode='trace';}
     if(SETS.some(([value])=>value===options.set)){set=options.set;index=0;pageMode='trace';}
     if(kind==='numbers'&&['count','add','groups'].includes(options.mode)){countMode=options.mode;pageMode='count';}
@@ -325,22 +372,48 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
       reportMode();
       if(pageMode==='count')countValue=[0,0,2,3,4,5,6,8,11][profile.challengeAge-2];
     }
-    ink=[];done=false;render();report();
+    countRound=getRoundCursor(progressionMode(),profile.age,profile.challengeAge);
+    ink=[];done=false;activeRoundKey=null;render();report();
   }
   function close() {opened=false;clearTransient();}
   function hint() {
     if(!opened)return;
     if(pageMode==='trace'){showDemo();return;}
     if(countAnswered||!countQuestion)return;
+    recordHint();
     if(countQuestion.representation){container.querySelector('.learn-place-strategy').hidden=false;updateStatus(`${countQuestion.strategy} ${countQuestion.worked}. Combine the parts to find your answer.`);return;}
-    countMarked.clear();container.querySelectorAll('.learn-count-dot').forEach((dot,i)=>{countMarked.set(i,i+1);dot.textContent=String(i+1);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${i+1}`);});
+    container.querySelectorAll('.learn-count-dot').forEach((dot,i)=>{if(!countMarked.has(i)){countMarked.set(i,countMarked.size+1);hintMarked.add(i);}const number=countMarked.get(i);dot.textContent=String(number);dot.classList.add('is-counted');dot.setAttribute('aria-pressed','true');dot.setAttribute('aria-label',`Counted ${number}`);});
     updateStatus(`${countQuestion.strategy} ${countQuestion.answer?`The last dot is ${countQuestion.answer}.`:'Zero means none.'}`);
   }
+  function clearHints() {
+    if(!opened)return;
+    stopDemo();container.querySelectorAll('details.learn-help').forEach(help=>help.open=false);
+    container.querySelectorAll('.learn-place-strategy').forEach(strategy=>strategy.hidden=true);
+    // Remove only numbers supplied by the model. The child's counted dots and
+    // canonical tracing ink survive a change to the parent's hint preference.
+    for(const index of hintMarked)countMarked.delete(index);hintMarked.clear();
+    container.querySelectorAll('.learn-count-dot').forEach(dot=>{const index=Number(dot.dataset.dotIndex),number=countMarked.get(index);dot.textContent=number?String(number):'';dot.classList.toggle('is-counted',Boolean(number));dot.setAttribute('aria-pressed',String(Boolean(number)));dot.setAttribute('aria-label',number?`Counted ${number}`:`Count dot ${index+1}`);});
+    if(pageMode==='trace'){
+      if(guideLayer)[...guideLayer.children].forEach(path=>path.setAttribute('stroke','#e1dffb'));
+      if(!done)updateStatus(tracingHint());
+    }else if(!countAnswered)updateStatus('Choose a number. There’s plenty of time.');
+  }
   function settingsChanged() {
-    const next=getProfile(getSettings()),changed=next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;
-    if(changed){index=Math.min(index,getLearningItems(set,profile.challengeAge).length-1);countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();done=false;render();}
+    const next=getProfile(getSettings()),changed=next.age!==profile.age||next.challengeAge!==profile.challengeAge;profile=next;if(!opened)return;
+    if(changed){ink=[];activeRoundKey=null;index=Math.min(index,getLearningItems(set,profile.challengeAge).length-1);countValue=Math.min(countValue,profile.numberMax);countAnswered=false;countMarked.clear();hintMarked.clear();done=false;render();}
     else container.querySelectorAll('[data-learning-speech]').forEach(node=>node.hidden=!canSpeak());
     
   }
-  return {open,close,settingsChanged,hint};
+  function canStartPracticeSet() {
+    if(!opened||pageMode!=='trace')return false;
+    const progress=getModeProgress(progressionMode(),profile.age,profile.challengeAge);
+    return progress.completed===progress.required;
+  }
+  function startPracticeSet() {
+    if(!canStartPracticeSet())return false;
+    const progress=beginNewAttempt({mode:progressionMode(),age:profile.age,step:profile.challengeAge});
+    if(!progress)return false;
+    clearTransient();activeRoundKey=null;index=0;ink=[];done=false;render();report();return true;
+  }
+  return {open,close,settingsChanged,hint,clearHints,canStartPracticeSet,startPracticeSet};
 }

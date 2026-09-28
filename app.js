@@ -10,18 +10,25 @@ import {coachingFor,coachingText,normalizeAdjustments} from './coaching.js';
 import {activityArt,appearanceBand} from './activity-art.js';
 import {canSpeak,requestSpeech,stopSpeaking} from './speech.js';
 import {openExternalURL} from './parental-gate.js';
+import {createStudioPlay} from './studio-play.js';
+import {createParentControls} from './parent-controls.js';
+import {beginRound,getCurrentRound,getModeProgress,subscribeProgress} from './progression.js';
 
 let settings = normalizeSettings(readStore('settings', null));
-let drawing, learning, discovery, challenges, adventures, listening, activeRoute = 'home', navigationId = 0, noticeTimer, filter = 'all';
+let drawing, learning, discovery, challenges, adventures, listening, studio, activeRoute = 'home', navigationId = 0, noticeTimer, filter = 'all';
 const adjustments = normalizeAdjustments(readStore('activity-support-v1',{}),ACTIVITY_MODES.map(a=>a.id));
 const $ = id => document.getElementById(id);
 const home = $('home-screen'), drawView = $('drawing-view'), learnView = $('learning-view');
 const discoveryView = $('discovery-view'), challengesView = $('challenges-view');
 const adventuresView = $('adventures-view'), listeningView = $('listening-view');
+const studioView=$('studio-view');
 const modeBar = $('activity-mode-bar');
 const settingsDialog = $('grownups-dialog');
 let informationReturn = null, coachSpeechToken=0, coachSpeaking=false;
-const getSettings = () => ({...settings,challengeOffset:adjustments[activeRoute] || 0});
+const rawSteps=readStore('practice-steps-v1',{});
+const practiceSteps=rawSteps&&typeof rawSteps==='object'&&!Array.isArray(rawSteps)?Object.fromEntries(Object.entries(rawSteps).filter(([key,value])=>ACTIVITY_MODES.some(mode=>Array.from({length:9},(_,i)=>`${mode.id}:${i+2}`).includes(key))&&Number.isInteger(value)&&value>=2&&value<=10)):{};
+const getSettings = () => ({...settings,challengeOffset:adjustments[activeRoute] || 0,practiceStep:practiceSteps[`${activeRoute}:${settings.age}`]});
+const parentControls=createParentControls({onNotice:notice,onChange:(next,previous)=>{stopCoachSpeech();if(next.hints!==previous.hints){activeController()?.clearHints?.();$('coach-dialog').close();}renderCoach();},onRelock:()=>{if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();}});
 const getTitle = () => ['letters','numbers'].includes(location.hash.slice(1)) ? null : getFamily(activeRoute)?.title || null;
 function notice(message) {
   if (!message) return;
@@ -44,7 +51,8 @@ function renderProgress(value) {
 function familyCopy(activity,age) {
   const revised={};
   const copy=(id,description,skill)=>revised[id]={description,skill};
-  if(age>=4)copy('beat-studio','Copy short and long gaps at your tempo.','Rhythm & relative timing');
+  if(filter==='create')copy('beat-studio','Make a beat, leave pauses, and play your pattern.','Music & creative composition');
+  else if(age>=4)copy('beat-studio','Copy short and long gaps at your tempo.','Rhythm & relative timing');
   if(age>=5)copy('sound-match','Remember a sound’s place in a sequence.','Listening & sound order');
   if(age>=6) {
     copy('counting','Combine place-value units. Build an amount.','Place value & number structure');
@@ -89,13 +97,14 @@ function familyCopy(activity,age) {
 function renderCatalog() {
   const profile=getProfile(settings),tier=profile.tier;
   $('activity-filters').innerHTML=CATEGORIES.map(category=>`<button class="activity-filter" type="button" data-filter="${category.id}" aria-pressed="${filter===category.id}"><span aria-hidden="true">${({all:'✦',create:'✎',letters:'Aa',numbers:'123',discover:'◇',listen:'♪'})[category.id]}</span>${category.label}</button>`).join('');
-  const homeOrder=settings.age<=4 ? ['draw','sound-match','shape-match','counting','ordering','memory','trails','sorting','picture-sequence','melody-echo'] : settings.age<=7 ? ['draw','melody-echo','patterns','word-build','sharing','make-a-shape','pitch-path','number-stories','beat-studio','maze'] : ['number-stories','patterns','memory','compare','maze','melody-echo','pitch-path','beat-studio','sharing','draw'];
-  const visible=ACTIVITIES.filter(activity=>filter==='all'||activity.category===filter);
+  const homeOrder=settings.age<=4 ? ['draw','mirror-mosaic','shape-match','balance-lab','counting','measure-pour','memory','trails','ordering','sorting','sound-match','picture-sequence'] : settings.age<=7 ? ['draw','mirror-mosaic','balance-lab','measure-pour','word-build','patterns','sharing','beat-studio','maze'] : ['draw','mirror-mosaic','number-stories','balance-lab','patterns','measure-pour','memory','compare','maze','beat-studio'];
+  const visible=ACTIVITIES.filter(activity=>filter==='all'||activity.category===filter||(filter==='create'&&activity.id==='beat-studio'));
+  if(filter==='all'||filter==='create')visible.sort((a,b)=>Number(b.id==='draw')-Number(a.id==='draw'));
   if(filter==='all')visible.sort((a,b)=>(homeOrder.includes(a.id)?homeOrder.indexOf(a.id):99)-(homeOrder.includes(b.id)?homeOrder.indexOf(b.id):99));
   $('activity-count').textContent=`${visible.length} activities`;
-  $('activity-guidance').textContent=tier==='little'?'Big targets, small steps. Explore words and number puzzles together.':tier==='explorer'?'Try a new idea. Hints and practice are always here.':'Try number reasoning, word relationships, rule puzzles and memory challenges. Tracing remains here for handwriting practice.';
+  $('activity-guidance').textContent=tier==='little'?'Big targets, small steps. Explore words and number puzzles together.':tier==='explorer'?'Try a new idea. Create, explore, and learn at your own pace.':'Try number reasoning, word relationships, rule puzzles and memory challenges. Tracing remains here for handwriting practice.';
   const classes={create:'card-draw',letters:'card-letters',numbers:'card-numbers',discover:'card-color',listen:'card-listen'};
-  $('activity-grid').innerHTML=visible.map(activity=>{const copy=familyCopy(activity,profile.challengeAge);return `<a class="activity-card ${classes[activity.category]}" id="card-${activity.id}" href="#${activity.id}" data-engine="${activity.engine}" data-family="${activity.id}"><div class="card-topline"><span class="skill-tag">${CATEGORIES.find(c=>c.id===activity.category).label}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-picture" aria-hidden="true">${activityArt(activity.id,{age:settings.age})}</div><div class="card-bottom"><div><h3>${activity.title}</h3><p>${copy.description}</p></div></div><div class="card-footnote">${copy.skill}${activity.modes.length>1?`<span class="card-mode-count">${activity.modes.length} ways to play</span>`:''}</div></a>`;}).join('');
+  $('activity-grid').innerHTML=visible.map(activity=>{const copy=familyCopy(activity,profile.challengeAge);return `<a class="activity-card ${classes[activity.category]}" id="card-${activity.id}" href="#${filter==='create'&&activity.id==='beat-studio'?'beat-maker':activity.id}" data-engine="${activity.engine}" data-family="${activity.id}"><div class="card-topline"><span class="skill-tag">${CATEGORIES.find(c=>c.id===activity.category).label}</span><span class="card-arrow" aria-hidden="true">↗</span></div><div class="card-picture" aria-hidden="true">${activityArt(activity.id,{age:settings.age})}</div><div class="card-bottom"><div><h3>${activity.title}</h3><p>${copy.description}</p></div></div><div class="card-footnote">${copy.skill}${activity.modes.length>1?`<span class="card-mode-count">${activity.modes.length} ways to play</span>`:''}</div></a>`;}).join('');
 }
 function learningModeChanged({set,mode,pageMode}) {
   const next=pageMode==='trace' ? {shapes:'prewriting',upper:'uppercase',lower:'lowercase',words:'word-tracing',nums:'number-tracing'}[set] : {count:'counting',add:'addition',groups:'equal-groups'}[mode];
@@ -123,7 +132,7 @@ function renderModeBar() {
 }
 // Include responsive and safe-area padding in both observation and measurement.
 new ResizeObserver(()=>document.documentElement.style.setProperty('--activity-nav-height',`${$('activity-navigation').getBoundingClientRect().height}px`)).observe($('activity-navigation'),{box:'border-box'});
-new MutationObserver(()=>{if(document.querySelector('dialog[open]')){stopCoachSpeech();listening?.suspendAudio();adventures?.suspendAudio();}}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
+new MutationObserver(()=>{if(document.querySelector('dialog[open]')){stopCoachSpeech();listening?.suspendAudio();adventures?.suspendAudio();studio?.suspendAudio();}}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
 
 function renderSettings() {
   const profile = getProfile(settings);
@@ -159,9 +168,12 @@ function updateSettings(patch) {
   challenges?.settingsChanged();
   adventures?.settingsChanged();
   listening?.settingsChanged();
+  studio?.settingsChanged();
+  if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();
+  renderJourney();
 }
 function activeController() {
-  return {drawing,learning,discovery,challenges,adventures,listening}[getActivity(activeRoute)?.engine];
+  return {drawing,learning,discovery,challenges,adventures,listening,studio}[getActivity(activeRoute)?.engine];
 }
 function renderCoach() {
   const activity=getActivity(activeRoute), profile=getProfile(getSettings());
@@ -174,21 +186,42 @@ function renderCoach() {
   const foundations=['prewriting','uppercase','lowercase','word-tracing','number-tracing'];
   $('coach-together').textContent=tips.together?'Try this together. A grown-up can read the clues and model the first step.':settings.age>=9&&foundations.includes(activeRoute)?'This is foundation practice at any age. For a bigger thinking challenge, try Number stories, Pattern parade, or Memory garden.':'Take your time. Use a hint whenever it helps.';
   for(const key of ['start','strategy','reflect','offline']) $(`coach-${key}`).textContent=tips[key];
-  const offset=adjustments[activeRoute] || 0;
+  const offset=profile.challengeAge-settings.age;
   $('coach-level').textContent=`Starting age ${settings.age} · practice step ${profile.challengeAge}${offset?' · adjusted for this game':''}`;
-  $('coach-easier').disabled=offset<=-2 || profile.challengeAge<=2;
-  $('coach-harder').disabled=offset>=2 || profile.challengeAge>=10;
+  $('coach-easier').disabled=profile.challengeAge<=2;
+  $('coach-harder').disabled=profile.challengeAge>=10;
   $('coach-reset').hidden=!offset;
   $('coach-hear').disabled=!canSpeak();
   if(!coachSpeaking)$('coach-hear').textContent='Hear these tips';
-  $('coach-hint').hidden=!activeController()?.hint && !['drawing','learning'].includes(activity.engine);
+  const hintsOff=parentControls.preferences.hints==='off';
+  $('coach-hint').hidden=hintsOff||(!activeController()?.hint&&!['drawing','learning'].includes(activity.engine));
+  for(const id of ['coach-strategy','coach-reflect','coach-offline'])$(id).parentElement.closest('.coach-tip,.parent-note').hidden=hintsOff;
+  $('coach-hear').hidden=hintsOff;
+  if(hintsOff)$('coach-together').textContent='Hints are turned off. The instructions are here whenever you need them.';
 }
-function changeChallenge(offset) {
+function changeChallenge(step) {
   stopCoachSpeech();
-  adjustments[activeRoute]=offset;
-  writeStore('activity-support-v1',adjustments);
-  activeController()?.settingsChanged();
-  renderCoach();
+  const key=`${activeRoute}:${settings.age}`;
+  if(step===null){delete practiceSteps[key];delete adjustments[activeRoute];writeStore('activity-support-v1',adjustments);}
+  else practiceSteps[key]=Math.max(2,Math.min(10,step));
+  writeStore('practice-steps-v1',practiceSteps);
+  parentControls.relock();activeController()?.settingsChanged();if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();renderCoach();renderJourney();
+}
+function renderJourney() {
+  const current=getCurrentRound(),visible=current?.scored&&activeRoute!=='home'&&getActivity(activeRoute)?.engine!=='drawing';
+  $('journey-open').hidden=!visible;
+  if(!visible){$('journey-dialog').close();return;}
+  const progress=getModeProgress(current.mode,current.age,current.step),medal=progress.bestMedal;
+  $('journey-open').textContent=medal?`${medal[0].toUpperCase()+medal.slice(1)} · My progress`:`My progress · ${progress.completed}/${progress.required}`;
+  $('journey-title').textContent=getTitle()||getActivity(current.mode)?.title||'Your learning journey';
+  $('journey-level').textContent=`Starting age ${current.age} · practice step ${current.step}. Each set has ${progress.required} rounds.`;
+  $('journey-medal').textContent=({gold:'★',silver:'★',bronze:'★'})[medal]||'◇';$('journey-medal').dataset.medal=medal||'none';
+  $('journey-result').textContent=medal?`Best medal: ${medal[0].toUpperCase()+medal.slice(1)}`:'A little practice, one round at a time.';
+  $('journey-count').textContent=progress.completed===progress.required?`Set complete: ${progress.result?.medal||'well done'}. Your next round starts a fresh set.`:`${progress.completed} of ${progress.required} rounds complete. You can leave and return at any time.`;
+  const fresh=activeController()?.canStartPracticeSet?.()===true;
+  $('journey-fresh').hidden=!fresh;
+  if(fresh)$('journey-count').textContent=`Set complete: ${progress.result?.medal||'well done'}. Start a fresh set to practice these items again.`;
+  $('journey-next').hidden=!progress.nextStep;$('journey-next').dataset.step=String(progress.nextStep||'');
 }
 function goHome() { location.hash='home'; }
 function route() {
@@ -201,11 +234,12 @@ function route() {
   const previous=activeRoute;
   const next=activity?.id || 'home';
   stopCoachSpeech();
-  $('coach-dialog').close();
-  drawing?.close(); learning?.close(); discovery?.close(); challenges?.close(); adventures?.close(); listening?.close();
+  $('coach-dialog').close();$('journey-dialog').close();parentControls.relock();
+  drawing?.close(); learning?.close(); discovery?.close(); challenges?.close(); adventures?.close(); listening?.close(); studio?.close();
   activeRoute=next;
+  if(!activity||activity.engine==='drawing')beginRound({mode:next,age:settings.age,step:settings.age,scored:false});
   home.hidden=next!=='home';
-  for(const view of [drawView,learnView,discoveryView,challengesView,adventuresView,listeningView]) view.hidden=true;
+  for(const view of [drawView,learnView,discoveryView,challengesView,adventuresView,listeningView,studioView]) view.hidden=true;
   document.body.dataset.activity=next;
   document.body.dataset.family=getFamily(next)?.id || '';
   try {
@@ -229,7 +263,9 @@ function route() {
       listening ||= createListening(listeningView,{getSettings,onBack:goHome,onNotice:notice,onProgress:renderProgress});
       listeningView.hidden=false; listening.open(next);
     }
-    renderModeBar();renderCoach();
+    if(activity?.engine==='studio'){studio ||= createStudioPlay(studioView,{getSettings,getTitle,onBack:goHome,onNotice:notice,onProgress:renderProgress});studioView.hidden=false;studio.open(next);}
+    if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();
+    renderModeBar();renderCoach();renderJourney();
     document.title=activity ? `${getTitle() || activity.title} · Doodle Fun` : 'Doodle Fun · Play, create & learn';
     window.scrollTo(0,0);
     if(next==='home') {
@@ -240,7 +276,7 @@ function route() {
     console.error('Activity could not open:',error);
     history.replaceState(null,'','#home');activeRoute='home';document.body.dataset.activity='home';
     home.hidden=false;
-    for(const view of [drawView,learnView,discoveryView,challengesView,adventuresView,listeningView]) view.hidden=true;
+    for(const view of [drawView,learnView,discoveryView,challengesView,adventuresView,listeningView,studioView]) view.hidden=true;
     renderModeBar();renderCoach();
     notice('Something interrupted this activity. Choose it again to retry.');
   }
@@ -252,13 +288,14 @@ $('activity-filters').addEventListener('click',event=>{
   document.querySelector(`[data-filter="${filter}"]`).focus({preventScroll:true});
 });
 
-document.querySelectorAll('.age-option').forEach(button => button.addEventListener('click',() => updateSettings({age:Number(button.dataset.age),level:'auto'})));
-$('grownups-open').addEventListener('click',() => {renderSettings();settingsDialog.showModal();});
+document.querySelectorAll('.age-option').forEach(button=>button.addEventListener('click',()=>parentControls.settingsAction(()=>updateSettings({age:Number(button.dataset.age),level:'auto'}))));
+$('grownups-open').addEventListener('click',()=>parentControls.settingsAction(()=>{renderSettings();settingsDialog.showModal();},{opening:true}));
+settingsDialog.addEventListener('close',()=>parentControls.closeSettings());
 $('settings-done').addEventListener('click',() => settingsDialog.close());
 settingsDialog.addEventListener('click',e => {if(e.target===settingsDialog){const r=settingsDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)settingsDialog.close();}});
-$('age-minus').addEventListener('click',()=>updateSettings({age:settings.age-1}));
-$('age-plus').addEventListener('click',()=>updateSettings({age:settings.age+1}));
-$('support-level').addEventListener('change',e=>updateSettings({level:e.target.value}));
+$('age-minus').addEventListener('click',()=>parentControls.settingsAction(()=>updateSettings({age:settings.age-1})));
+$('age-plus').addEventListener('click',()=>parentControls.settingsAction(()=>updateSettings({age:settings.age+1})));
+$('support-level').addEventListener('change',e=>{const level=e.target.value;renderSettings();parentControls.settingsAction(()=>updateSettings({level}));});
 document.querySelectorAll('[data-open-info]').forEach(button => button.addEventListener('click', () => {
   informationReturn = button;
   $(button.dataset.openInfo + '-dialog').showModal();
@@ -277,11 +314,11 @@ window.addEventListener('doodle-native-external', event => {
   if (event.detail?.status === 'failed') notice('The website could not open. Please try again.');
 });
 window.addEventListener('hashchange',route);
-$('coach-open').addEventListener('click',()=>{listening?.suspendAudio();renderCoach();$('coach-dialog').showModal();});
+$('coach-open').addEventListener('click',()=>{const open=()=>{listening?.suspendAudio();studio?.suspendAudio();renderCoach();$('coach-dialog').showModal();};if(parentControls.preferences.hints==='off')open();else parentControls.requestHint(open);});
 for(const id of ['coach-close','coach-done']) $(id).addEventListener('click',()=>{$('coach-dialog').close();stopSpeaking();});
-$('coach-easier').addEventListener('click',()=>changeChallenge((adjustments[activeRoute] || 0)-1));
-$('coach-harder').addEventListener('click',()=>changeChallenge((adjustments[activeRoute] || 0)+1));
-$('coach-reset').addEventListener('click',()=>changeChallenge(0));
+$('coach-easier').addEventListener('click',()=>parentControls.settingsAction(()=>changeChallenge(getProfile(getSettings()).challengeAge-1)));
+$('coach-harder').addEventListener('click',()=>parentControls.settingsAction(()=>changeChallenge(getProfile(getSettings()).challengeAge+1)));
+$('coach-reset').addEventListener('click',()=>parentControls.settingsAction(()=>changeChallenge(null)));
 function stopCoachSpeech(message='') {
   coachSpeechToken++;coachSpeaking=false;stopSpeaking();
   $('coach-hear').textContent='Hear these tips';$('coach-speech-status').textContent=message;
@@ -305,8 +342,13 @@ $('coach-hint').addEventListener('click',()=>{
   else if(getActivity(activeRoute)?.engine==='learning') learnView.querySelector('.learn-demo, .learn-hint')?.click();
   else notice(coachingFor(activeRoute,getProfile(getSettings()).challengeAge).strategy);
 });
-window.addEventListener('pagehide',()=>{stopSpeaking();drawing?.close();learning?.close();discovery?.close();challenges?.close();adventures?.close();listening?.close();});
+window.addEventListener('pagehide',()=>{studio?.close();stopSpeaking();drawing?.close();learning?.close();discovery?.close();challenges?.close();adventures?.close();listening?.close();});
 window.addEventListener('pageshow',event=>{if(event.persisted)route();});
+subscribeProgress(()=>renderJourney());
+$('journey-open').addEventListener('click',()=>{renderJourney();$('journey-dialog').showModal();});
+for(const id of ['journey-close','journey-done'])$(id).addEventListener('click',()=>$('journey-dialog').close());
+$('journey-fresh').addEventListener('click',()=>{const controller=activeController();if(!controller?.canStartPracticeSet?.())return;$('journey-dialog').close();parentControls.relock();controller.startPracticeSet();renderJourney();});
+$('journey-next').addEventListener('click',()=>parentControls.settingsAction(()=>{const step=Number($('journey-next').dataset.step);$('journey-dialog').close();if(step>=2&&step<=10)changeChallenge(step);}));
 renderSettings();renderProgress();route();
 // The built app includes every activity. This worker also keeps reloads available offline.
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

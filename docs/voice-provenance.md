@@ -1,6 +1,6 @@
 # Bundled coaching voice
 
-Generated September 26, 2026. The app includes 116 short synthetic coaching recordings covering all 34 modes at starting ages 2–10. Their combined duration is 1,149.98 seconds and their AAC payload is 9,878,872 bytes. Identical transcripts reuse one clip. These are a general synthetic voice, not a recording or clone of a named person.
+Updated September 27, 2026. The app includes 120 short synthetic coaching recordings covering all 38 modes at starting ages 2–10. Their combined duration is 1,178.1 seconds and their AAC payload is 10,120,649 bytes. Identical transcripts reuse one clip. These are a general synthetic voice, not a recording or clone of a named person.
 
 ## Source and attribution
 

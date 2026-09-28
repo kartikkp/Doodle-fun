@@ -1,6 +1,6 @@
 # Doodle Fun — App Store Connect and TestFlight worksheet
 
-Updated September 26, 2026. **The current target is TestFlight, not a public App Store submission or release.** Individual membership is active, App Store Connect access is confirmed, and its Terms of Service were accepted with the owner's explicit approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) has been created. A signed Release archive for 2.1.0 (1) was built and its contents audited. App Store distribution export succeeded and correctly re-signed the app; the cached archive profile is no longer a blocker. Exported signing and provisioning passed verification. Upload succeeded on September 26 at 21:15:20 UTC (17:15:20 New York); Apple processing is complete, and build 2.1.0 (1) is assigned to Doodle Fun Internal. The authorized internal tester is Invited. The external group's beta-review submission succeeded and is Waiting for Review; automatic notification is enabled. External approval and physical testing remain pending. The store copy below is prepared for a later public listing; unentered fields remain marked as such.
+Updated September 27, 2026. **This worksheet prepares the unreleased 24-activity / 38-mode revision; it has not been uploaded or submitted.** Individual membership and App Store Connect access are confirmed, and the Terms of Service were accepted with the owner's explicit approval. The [app record](https://appstoreconnect.apple.com/apps/6816519633/distribution) exists. The last verified distribution is **2.1.0 (4)**, uploaded September 27 and shown as Testing in both existing groups. See the [release kit](README.md) for that build's archive, processing and distribution record. The store copy below is prepared for a later public listing; unentered fields remain marked as such. Public submission and physical testing remain separate from TestFlight availability.
 
 ## Listing settings
 
@@ -10,12 +10,12 @@ Updated September 26, 2026. **The current target is TestFlight, not a public App
 | Primary language | English (U.S.) | Set in the created app record |
 | App name | Doodle Fun: Draw & Discover | Created in App Store Connect; 27 characters |
 | Apple ID / SKU | `6816519633` / `doodlefun-ios` | Created in the active account |
-| Bundle identifier | `com.minoli.DoodleFun` | Matches the app record and current archive |
-| Immediate target | TestFlight | Upload/processing and group assignments complete; internal tester invited; external beta review and physical checks pending |
-| TestFlight build | 2.1.0 (1), `d1297f42-0e32-43a6-87cc-a3e7c358629f` | Build Uploads: Complete; external TestFlight beta-review status: Waiting for Review |
+| Bundle identifier | `com.minoli.DoodleFun` | Matches the app record and last verified archive |
+| Immediate target | Next TestFlight revision after merge | Current source is not uploaded; use a new build number and verify the archive and distribution |
+| Last verified TestFlight build | 2.1.0 (4) | Processing Complete and Testing in both existing groups, verified September 27 |
 | TestFlight information | Description, feedback contact, marketing/privacy URLs, private review contact and notes; no sign-in | Saved and verified in App Store Connect |
-| Internal testing group | Doodle Fun Internal | 1 tester / 1 build; authorized tester Invited; build 2.1.0 (1) assigned; automatic distribution off |
-| External testing group | Doodle Fun Beta | 1 tester / 1 build; authorized tester added, no public link; build 2.1.0 (1) submitted for beta review and Waiting for Review; automatic notification on approval enabled |
+| Internal testing group | Doodle Fun Internal | 1 tester; build 2.1.0 (4) Testing. Installation and notification receipt unverified |
+| External testing group | Doodle Fun Beta | 2 testers; build 2.1.0 (4) Testing, automatic notification enabled. No public link created |
 | What to Test | Four sound games; ages, modes and coaching; drawing; offline behavior and layout | Saved on the processed build |
 | Subtitle | Create, explore & listen | 24 characters |
 | Primary category | Education | Selected; not entered in App Store Connect |
@@ -28,10 +28,10 @@ Updated September 26, 2026. **The current target is TestFlight, not a public App
 | Availability | United States only | Selected; no territories have been configured by this document |
 | Release option | Manual release after approval | Selected; public release still requires the owner's launch authorization |
 | Platforms | iPhone and iPad; iOS/iPadOS 17 or later | iOS app record created; match the distribution archive |
-| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | HTTP 200 September 26; bytes match current local policy, including September 20 revision and voluntary email support |
-| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | HTTP 200 September 26; bytes match current local page, including 21 families/34 modes, sound guidance and email link |
+| Privacy Policy URL | https://kartikkp.github.io/Doodle-fun/privacy.html | Historical HTTP 200 and byte-match check on September 26. Source now describes additional local parent controls, medals and beats; deploy and recheck before public submission |
+| Support URL | https://kartikkp.github.io/Doodle-fun/support.html | Historical HTTP 200 check on September 26 covered 21 families/34 modes. Unreleased source now describes 24/38 and parent controls; deploy and recheck before public submission |
 | Public support email | pishahrodi+support@gmail.com | Published address and email link verified September 26; plain text remains available offline |
-| Marketing URL | https://kartikkp.github.io/Doodle-fun/ | HTTP 200 September 26; bytes match current runtime `1668feee4dc43ee0` |
+| Marketing URL | https://kartikkp.github.io/Doodle-fun/ | Historical HTTP 200 check on September 26 covered runtime `1668feee4dc43ee0`; the new source revision is not yet deployed |
 | Privacy Choices URL | Leave blank | Optional; deletion and backup choices are in the privacy policy |
 | Sign-in required | No | No demo account is needed |
 | Custom EULA | None proposed | Use Apple's standard EULA unless the owner supplies another |
@@ -65,27 +65,27 @@ Plain text, below the 4,000-character limit. The promotional-text, keyword, desc
 ```text
 A blank page. A new pattern. A little “I did it.”
 
-Doodle Fun brings 21 activities with 34 practice modes together in one colorful playground for iPhone and iPad. Related activities share one place: draw freely or choose a coloring page in Doodle studio, and find lines, letters, words, and numerals in Trail studio. Count a group, follow a winding path, or listen and play back a tune. Choose a starting age from 2–10 and explore at your own pace.
+Doodle Fun brings 24 activities with 38 practice modes together in one colorful playground for iPhone and iPad. Related activities share one place: draw freely or choose a coloring page in Doodle studio, and find lines, letters, words, and numerals in Trail studio. Count a group, follow a winding path, or listen and play back a tune. Choose a starting age from 2–10 and explore at your own pace.
 
 CREATE SOMETHING YOURS
-Draw with colorful brushes, add playful stamps, or make one of nine coloring pictures your own. Try an idea prompt when you need a spark. Undo and Redo make room for another try, and a grown-up can help save or share a finished picture as a PNG.
+Draw with colorful brushes, add playful stamps, or make one of nine coloring pictures your own. Tools grow with the starting age: try shapes, lines, opacity and mirror drawing. Compose a saved beat or create a reflected mosaic without scores. Try an idea prompt when you need a spark. Undo and Redo make room for another try, and a grown-up can help save or share a finished picture as a PNG.
 
 FOLLOW LETTERS AND NUMBERS
 Trace lines, shapes, uppercase and lowercase letters, familiar words, and numerals. Match letter pairs and build words. Explore counting, addition, subtraction, equal groups, missing numbers, and fair shares with visual activities.
 
 NOTICE, PLAN, AND PLAY
-Match shapes and colors, finish patterns, sort objects, find memory pairs, and guide Bunny through a maze. Arrange sizes, numbers, and story steps; follow arrows and build shape outlines.
+Match shapes and colors, finish patterns, sort objects, find memory pairs, and guide Bunny through a maze. Arrange sizes, numbers, and story steps; follow arrows and build shape outlines. Reflect mosaics, solve mystery weights and plan measured pours with quiet touch activities.
 
 LISTEN AND MAKE MUSIC
 Find sound partners, follow notes higher or lower, play back a melody, and copy drum taps. Replay whenever you want and use picture hints for support. Beat studio begins with tap counting for the youngest starting ages, then adds short and long spaces at your own pace. The sounds are generated on the device without a microphone or downloaded recordings. Device media volume controls game sounds. Tap Hear for optional spoken help.
 
 FIND THE RIGHT STARTING POINT
-The chosen age sets a starting difficulty; it never locks away activities. Open Coach for a first step, a strategy, or something to talk about together. Make each game's practice step easier or harder when it helps. Younger children can explore alongside a grown-up, especially with words and number puzzles.
+The chosen age sets a starting difficulty; it never locks away activities. Open Coach for a first step, a strategy, or something to talk about together. Make each game's practice step easier or harder when it helps. Parents can allow hints, switch them off or require a PIN, and lock age and difficulty changes. Learning sets earn Bronze, Silver or Gold; creative work stays ungraded. Younger children can explore alongside a grown-up, especially with words and number puzzles.
 
 SMALL DETAILS FOR EVERYDAY PLAY
-• All 21 activities, their modes, and generated game sounds work offline in the iPhone and iPad app.
+• All 24 activities, their modes, and generated game sounds work offline in the iPhone and iPad app.
 • Spoken help plays only when requested, with bundled coaching recordings and local device speech for changing questions.
-• Settings, practice progress, and the current picture draft stay on the device.
+• Settings, saved beats, practice medals and the current picture draft stay on the device.
 • No account, ads, subscriptions, or in-app purchases.
 • A grown-up check comes before sharing pictures or opening external websites.
 
@@ -100,7 +100,7 @@ For a first App Store version, this field is not available. If an existing listi
 
 ## App privacy questionnaire recommendations
 
-**Expected label: Data Not Collected. Owner confirmation required.** The native app packages the activities and policy locally. It has no app account, developer backend, advertising SDK, analytics SDK, or cloud-sync integration. Local preferences, including the chosen difficulty age, progress, and the current PNG draft are not sent to the developer. Game sounds are generated locally without microphone input or audio downloads. Spoken help uses bundled synthetic coaching recordings and local device voices after an explicit request; PNG export uses the user's chosen system-sharing destination.
+**Expected label: Data Not Collected. Owner confirmation required.** The native app packages the activities and policy locally. It has no app account, developer backend, advertising SDK, analytics SDK, or cloud-sync integration. Local preferences, including the chosen difficulty age, progress, medal history, beat patterns, optional parent PIN verifiers and the current PNG draft are not sent to the developer. Game sounds are generated locally without microphone input or audio downloads. Spoken help uses bundled synthetic coaching recordings and local device voices after an explicit request; PNG export uses the user's chosen system-sharing destination.
 
 Apple's collection test concerns off-device transmission accessible to the developer or integrated partners beyond servicing a real-time request. Its guidance distinguishes local handling and data collected by Apple itself. These recommendations concern this native build, not all processing by a separately opened website. [Apple: App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/)
 
@@ -152,10 +152,10 @@ Verify the generated result for both current and earlier supported OS versions. 
 The intended notes below describe the prepared release behavior. Confirm the gate, links, sharing, and offline policy on the exact archive selected for review before using them. Notes fit within Apple's 4,000-byte limit.
 
 ```text
-Doodle Fun is an offline creative/practice app for iPhone and iPad. No account, login, subscription, purchase, or server connection is required. All 21 activities and 34 modes are available immediately in Create, Letters, Numbers, Discover, and Listen. Existing activities are grouped as modes rather than removed.
+Doodle Fun is an offline creative/practice app for iPhone and iPad. No account, login, subscription, purchase, or server connection is required. All 24 activities and 38 modes are available immediately in Create, Letters, Numbers, Discover, and Listen. Existing activities are grouped as modes rather than removed.
 
 STARTING SETTINGS
-On the home screen, choose an age from 2 through 10. This changes starting difficulty, not access permissions or verified age. Grown-ups opens preferences. Coach inside an activity offers instructions, hints, and easier/harder practice steps. Younger children are intended to explore together with a grown-up.
+On the home screen, choose an age from 2 through 10. This changes starting difficulty, not access permissions or verified age. Optional local hint/settings PIN protection starts disabled; if enabled, its displayed recovery code resets only parent controls. Grown-ups opens preferences. Coach inside an activity offers instructions, hints, and easier/harder practice steps. Younger children are intended to explore together with a grown-up.
 
 PARENTAL GATE: SHARING
 Open Doodle studio, choose Free draw or Coloring pages, make a mark, and tap Save. The “Ask a grown-up” check displays two randomly chosen integers from 12 through 19 to multiply. Enter their product in the numeric answer field and tap Continue. For example, if the displayed question is 12 × 13, enter 156. There is no fixed answer or demo credential. A correct answer opens the native system share sheet; Cancel or an incorrect answer does not share. Cancelling the share sheet preserves the artwork. Every new share requires a new gate. Sending the app to the background cancels a pending gate.
@@ -167,12 +167,14 @@ LISTENING GAMES
 Choose Listen, then a game. Use device media volume for game sounds; tap Hear for spoken help. Tap Listen for a clue. Sound detective provides separate Hear and Choose buttons; Melody echo has tone pads. Generated tones and percussion work offline with no microphone, recordings, or audio downloads. Check media volume and connected audio devices if needed. Opening Coach or leaving the activity pauses the turn; return and tap Listen again. Picture practice inside Melody echo preserves the earlier visual sequence game.
 
 DATA AND SPEECH
-The native app does not collect personal data or use ads, analytics, tracking SDKs, or a developer backend. Settings, including the chosen difficulty age, practice progress, and the current drawing draft are stored locally. The app has no account-based sync; operating-system backup settings may include local app data. PNG sharing is user-directed. Optional spoken help uses bundled synthetic coaching clips and local device speech for changing questions. It requires an explicit Hear request and does not use the microphone.
+The native app does not collect personal data or use ads, analytics, tracking SDKs, or a developer backend. Settings, including the chosen difficulty age, practice progress, medals, beat patterns, optional parent PIN verifiers and the current drawing draft are stored locally. The app has no account-based sync; operating-system backup settings may include local app data. PNG sharing is user-directed. Optional spoken help uses bundled synthetic coaching clips and local device speech for changing questions. It requires an explicit Hear request and does not use the microphone.
 
 The app is designed for touch in portrait and landscape on iPhone and iPad. Saving a PNG can use Photos, Files, or another destination available in the system share sheet. The app does not import photos or use the camera.
 ```
 
-## Owner and account handoff
+## Historical owner and account handoff
+
+This record describes an earlier upload. See the kit README for the latest verified TestFlight status.
 
 The app record and account access below are verified; unknown legal and questionnaire values must not be guessed. TestFlight upload and Apple processing are complete. Both groups have the build assigned; the internal tester is Invited and the external beta submission is Waiting for Review. Tester emails remain outside repository documentation. PR #6 and audio [PR #7](https://github.com/kartikkp/Doodle-fun/pull/7) are merged; PR #7 merged as `97cd87f`. Source CI [35552079793](https://github.com/kartikkp/Doodle-fun/actions/runs/35552079793) passed its activities and iPhone-build jobs. The current release branch is `codex/testflight-release`.
 

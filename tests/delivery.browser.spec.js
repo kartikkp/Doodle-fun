@@ -6,7 +6,7 @@ import {ACTIVITIES} from '../catalog.js';
 async function openEveryCard(page) {
   for(const activity of ACTIVITIES) {
     await page.locator(`#card-${activity.id}`).click();
-    const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view',listening:'#listening-view'}[activity.engine]);
+    const view=page.locator({drawing:'#drawing-view',learning:'#learning-view',discovery:'#discovery-view',challenges:'#challenges-view',adventures:'#adventures-view',listening:'#listening-view',studio:'#studio-view'}[activity.engine]);
     await expect(view).toBeVisible();
     await expect(view.getByRole('heading',{level:1})).toBeVisible();
     await page.keyboard.press('Escape');
@@ -49,7 +49,7 @@ test('offline cache restores the app after its actual server stops',async({page}
   } finally {if(server.listening){server.close();server.closeAllConnections();}}
 });
 
-test('downloadable standalone HTML launches all 21 families without a server',async({browser})=>{
+test('downloadable standalone HTML launches all 24 families without a server',async({browser})=>{
   test.setTimeout(90000);
   const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
   const page=await context.newPage();
@@ -63,7 +63,7 @@ test('downloadable standalone HTML launches all 21 families without a server',as
 
 test('category filters show the complete library and preserve navigation',async({page})=>{
   await page.goto('/');
-  for(const [category,count] of [['create',1],['letters',3],['numbers',4],['discover',9],['listen',4],['all',21]]) {
+  for(const [category,count] of [['create',3],['letters',3],['numbers',5],['discover',10],['listen',4],['all',24]]) {
     await page.locator(`[data-filter="${category}"]`).click();
     await expect(page.locator('.activity-card')).toHaveCount(count);
     await expect(page.locator('#activity-count')).toHaveText(`${count} activities`);

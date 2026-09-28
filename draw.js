@@ -141,6 +141,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     <header class="activity-header draw-header">
       <button class="icon-button draw-back" aria-label="Back to activities">←</button>
       <div class="draw-heading"><p class="draw-eyebrow">MAKE SOMETHING YOU</p><h1 class="draw-title">Doodle studio</h1></div>
+      <button class="button draw-more" aria-label="More art supplies">Tools</button>
       <button class="button button-primary draw-save"><span aria-hidden="true">↗</span> Save</button>
     </header>
     <div class="draw-prompt"><span class="draw-prompt-icon" aria-hidden="true">✦</span><div><span class="draw-prompt-label">A little inspiration</span><p class="draw-challenge"></p></div><button class="icon-button draw-shuffle" aria-label="Try another drawing idea">↻</button></div>
@@ -166,6 +167,15 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
         </div>
       </aside>
     </div>
+    <dialog class="draw-dialog draw-extra-dialog" aria-labelledby="draw-extra-title"><div class="draw-dialog-heading"><h2 id="draw-extra-title">Your art supplies</h2><button class="icon-button" data-close aria-label="Close art supplies">×</button></div>
+      <div class="draw-extra-tools" data-draw-level="5" role="group" aria-label="More drawing tools">
+        <button class="draw-tool" data-tool="marker" aria-pressed="false">Marker</button><button class="draw-tool" data-tool="ellipse" aria-pressed="false">Oval</button><button class="draw-tool" data-tool="rectangle" aria-pressed="false">Rectangle</button>
+        <button class="draw-tool" data-tool="line" data-draw-level="8" aria-pressed="false">Straight line</button>
+      </div>
+      <div class="draw-studio-options" data-draw-level="8"><label for="draw-opacity">Stroke opacity <output class="draw-opacity-value">100%</output></label><input id="draw-opacity" type="range" min="20" max="100" step="10" value="100" aria-label="Stroke opacity"><button class="button draw-symmetry" aria-pressed="false">Mirror drawing</button></div>
+      <label class="draw-pencil-option"><input type="checkbox" class="draw-pencil-only"> Pencil only on paper</label><p>Keep your palm on the paper without making marks. You can still touch all the tools. Turn this off to draw with a finger.</p>
+      <p class="draw-tool-tip">Pen, Eraser, Fill and Stamps stay on your workbench.</p><button class="button button-primary" data-close>Keep drawing</button>
+    </dialog>
     <dialog class="draw-dialog draw-template-dialog" aria-labelledby="draw-pages-title"><div class="draw-dialog-heading"><div><p class="draw-eyebrow">A PICTURE TO MAKE YOUR OWN</p><h2 id="draw-pages-title">Pick a coloring page</h2></div><button class="icon-button" data-close aria-label="Close coloring pages">×</button></div><p class="draw-dialog-description">Choose any picture. The simplest pages come first for little artists.</p><div class="draw-template-grid"></div></dialog>
     <dialog class="draw-dialog draw-stamp-dialog" aria-labelledby="draw-stamps-title"><div class="draw-dialog-heading"><div><p class="draw-eyebrow">LITTLE EXTRAS, BIG IDEAS</p><h2 id="draw-stamps-title">Pick a stamp</h2></div><button class="icon-button" data-close aria-label="Close stamps">×</button></div><p class="draw-dialog-description">Then tap your paper to place it.</p><div class="draw-stamp-grid"></div></dialog>
     <dialog class="draw-dialog draw-confirm-dialog" aria-labelledby="draw-confirm-title"><h2 id="draw-confirm-title">Start a fresh picture?</h2><p>Your current picture will be replaced. Save it first if you want to keep it. You can also use Undo to bring it back.</p><div class="draw-confirm-actions"><button class="button" data-keep>Keep drawing</button><button class="button button-primary" data-replace>Start fresh</button></div></dialog>
@@ -176,6 +186,9 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   const art = document.createElement('canvas'); art.width = art.height = SIDE;
   const ctx = art.getContext('2d', { willReadFrequently: true });
   const history = createPixelHistory();
+  const strokePaper=document.createElement('canvas');strokePaper.width=strokePaper.height=SIDE;
+  const strokeContext=strokePaper.getContext('2d');
+  let opacity=1,mirrored=false,strokeStart=null,pencilOnly=readStore('drawing-pencil-only',false)===true;
   let coloringMode = false, profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0][0];
   let pointer = null, beforeStroke = null, lastPoint = null, artName = '', hasWork = false;
   let revision = 0, saveTimer, pendingReplacement, challengeIndex = 0, active = false;
@@ -195,6 +208,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     display.clearRect(0, 0, canvas.width, canvas.height);
     display.fillStyle = '#fff'; display.fillRect(0, 0, canvas.width, canvas.height);
     display.drawImage(art, 0, 0, canvas.width, canvas.height);
+    if(mirrored){display.save();display.strokeStyle='#6b8a7e';display.lineWidth=1;display.setLineDash([5,7]);display.beginPath();display.moveTo(canvas.width/2,0);display.lineTo(canvas.width/2,canvas.height);display.stroke();display.restore();}
     $('.draw-paper-name').textContent = artName || 'Your imagination goes here';
   }
   function resize() {
@@ -244,6 +258,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     finishPointer(); tool = next;
     container.querySelectorAll('[data-tool]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.tool === tool)));
     canvas.dataset.tool = tool;
+    $('.draw-more').textContent=({marker:'Marker',ellipse:'Oval',rectangle:'Box',line:'Line'})[tool]||'Tools';
   }
   function point(event) {
     const rect = canvas.getBoundingClientRect();
@@ -251,15 +266,27 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       pressure: event.pointerType === 'pen' && event.pressure > 0 ? .35 + Math.min(1, event.pressure) * 1.2 : 1 };
   }
   function mark(from, to) {
-    ctx.save();
-    ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
-    ctx.strokeStyle = ctx.fillStyle = color;
-    ctx.lineCap = ctx.lineJoin = 'round';
-    const width = brush * SIDE / 600 * to.pressure * (tool === 'eraser' ? 2 : 1);
-    ctx.lineWidth = width;
-    if (from) { ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke(); }
-    else { ctx.beginPath(); ctx.arc(to.x, to.y, width / 2, 0, Math.PI * 2); ctx.fill(); }
-    ctx.restore();
+    const paint=(start,end)=>{
+      const target=strokeContext;target.save();target.strokeStyle=target.fillStyle=color;
+      target.lineCap=tool==='marker'?'square':'round';target.lineJoin='round';
+      const width=brush*SIDE/600*end.pressure*(tool==='eraser'?2:tool==='marker'?1.8:1);target.lineWidth=width;
+      target.beginPath();
+      if(tool==='ellipse'&&start){const rx=Math.abs(end.x-start.x)/2,ry=Math.abs(end.y-start.y)/2;target.ellipse((start.x+end.x)/2,(start.y+end.y)/2,Math.max(.01,rx),Math.max(.01,ry),0,0,Math.PI*2);target.stroke();}
+      else if(tool==='rectangle'&&start){target.strokeRect(start.x,start.y,end.x-start.x,end.y-start.y);}
+      else if(start){target.moveTo(start.x,start.y);target.lineTo(end.x,end.y);target.stroke();}
+      else{target.arc(end.x,end.y,width/2,0,Math.PI*2);target.fill();}
+      target.restore();
+    };
+    paint(from,to);
+    if(mirrored){const reflect=p=>p?{...p,x:SIDE-p.x}:null;paint(reflect(from),reflect(to));}
+  }
+  function previewStroke() {
+    // Composite a stroke once, so translucent paint does not darken at every
+    // pointer sample. Shape previews replace themselves until the gesture ends.
+    ctx.putImageData(beforeStroke,0,0);ctx.save();
+    ctx.globalAlpha=tool==='eraser'?1:opacity;
+    ctx.globalCompositeOperation=tool==='eraser'?'destination-out':'source-over';
+    ctx.drawImage(strokePaper,0,0);ctx.restore();render();
   }
   function finishPointer(event) {
     if (pointer === null || (event && event.pointerId !== pointer)) return;
@@ -274,10 +301,10 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       // A fill or stamp may be held longer than the draft debounce.
       clearTimeout(saveTimer); saveTimer = setTimeout(persist, 650);
     }
-    lastPoint = null;
+    lastPoint = null;strokeStart=null;
   }
   canvas.addEventListener('pointerdown', event => {
-    if (restoring || pointer !== null || (event.pointerType === 'mouse' && event.button !== 0)) return;
+    if (restoring || pointer !== null || (pencilOnly && event.pointerType !== 'pen') || (event.pointerType === 'mouse' && event.button !== 0)) return;
     event.preventDefault();
     const p = point(event);
     if (tool === 'fill') {
@@ -294,7 +321,8 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       pointer = event.pointerId;
       canvas.setPointerCapture(event.pointerId);
       beforeStroke = ctx.getImageData(0, 0, SIDE, SIDE);
-      lastPoint = p; mark(null, p); render();
+      strokeContext.clearRect(0,0,SIDE,SIDE);strokeStart=p;
+      lastPoint = p; mark(null, p); previewStroke();
     }
   });
   canvas.addEventListener('pointermove', event => {
@@ -302,9 +330,12 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     event.preventDefault();
     const events = event.getCoalescedEvents?.() || [];
     for (const sample of events.length ? events : [event]) {
-      const next = point(sample); mark(lastPoint, next); lastPoint = next;
+      const next = point(sample);
+      if(['ellipse','rectangle','line'].includes(tool)){strokeContext.clearRect(0,0,SIDE,SIDE);mark(strokeStart,next);}
+      else mark(lastPoint,next);
+      lastPoint=next;
     }
-    render();
+    previewStroke();
   });
   // A canceled gesture keeps its visible marks as one undoable action.
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => canvas.addEventListener(type, finishPointer));
@@ -317,7 +348,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     dialog.showModal();
   }
   container.querySelectorAll('dialog').forEach(dialog => {
-    dialog.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
+    dialog.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('click', event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close(); } });
   });
   function replacePicture(action) {
@@ -388,8 +419,17 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       const dot = document.createElement('span'); dot.style.width = dot.style.height = `${Math.min(27, Math.max(5, size * .65))}px`; button.append(dot);
       button.addEventListener('click', () => { brush = size; sizesRow.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === button))); }); sizesRow.append(button);
     });
-    updateChallenge(); buildTemplates(); updateHistory();
+    const age=profile.challengeAge||profile.age;
+    container.querySelectorAll('[data-draw-level]').forEach(node=>node.hidden=age<Number(node.dataset.drawLevel));
+    if(age<8){opacity=1;mirrored=false;$('#draw-opacity').value='100';$('.draw-opacity-value').value='100%';$('.draw-symmetry').setAttribute('aria-pressed','false');}
+    if((age<5&&['marker','ellipse','rectangle'].includes(tool))||(age<8&&tool==='line'))setTool('pen');
+    updateChallenge(); buildTemplates(); updateHistory();render();
   }
+  $('.draw-more').addEventListener('click',()=>showDialog($('.draw-extra-dialog')));
+  $('.draw-pencil-only').checked=pencilOnly;
+  $('.draw-pencil-only').addEventListener('change',event=>{finishPointer();pencilOnly=event.target.checked;writeStore('drawing-pencil-only',pencilOnly);canvas.dataset.pencilOnly=String(pencilOnly);tell(pencilOnly?'Pencil only on paper · touch the tools to choose':'Finger or Pencil · make your mark');});
+  $('.draw-symmetry').addEventListener('click',event=>{finishPointer();mirrored=!mirrored;event.currentTarget.setAttribute('aria-pressed',String(mirrored));render();});
+  $('#draw-opacity').addEventListener('input',event=>{finishPointer();opacity=Number(event.target.value)/100;$('.draw-opacity-value').value=`${event.target.value}%`;});
   $('.draw-shuffle').addEventListener('click', () => { challengeIndex++; updateChallenge(); });
   $('.draw-back').addEventListener('click', () => { finishPointer(); persist(); onBack(); });
   $('.draw-undo').addEventListener('click', () => { finishPointer(); applyPatch(history.undo(), true); });
@@ -398,6 +438,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   $('.draw-templates').addEventListener('click', () => showDialog($('.draw-template-dialog')));
   container.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => {
     setTool(button.dataset.tool);
+    if(button.closest('.draw-extra-dialog'))$('.draw-extra-dialog').close();
     if (tool === 'stamp') showDialog($('.draw-stamp-dialog'));
   }));
   function showExport(blob) {

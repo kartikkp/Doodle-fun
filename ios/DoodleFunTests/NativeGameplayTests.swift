@@ -129,6 +129,30 @@ class NativeGameplayCase: XCTestCase {
             let value = try outcome.get()
             guard var report = value as? [String: Any] else { throw GameplayError(message: "\(caseName): invalid fixture report \(value)") }
             report["nativeGeometry"] = geometry
+            if id == "beat-maker", report["status"] as? String == "passed" {
+                let expected = try await evaluate("localStorage.getItem('doodle-fun:v2:beat-maker-pattern-v1:\(age)')", in: controller.webView, label: "\(caseName): saved rhythm before reload") as? String
+                XCTAssertNotNil(expected, "The composer saved a real pattern before reload")
+                try await loadReady(controller, label: "\(caseName): reload saved composer") { controller.webView.reload() }
+                let restored = try await controller.webView.callAsyncJavaScript("""
+                    location.hash = 'beat-maker';
+                    const end = performance.now() + 4000;
+                    while (performance.now() < end && !document.querySelector('#studio-view:not([hidden]) [data-track="0"][data-beat-step="0"]')) {
+                      await new Promise(resolve => setTimeout(resolve, 20));
+                    }
+                    const first = document.querySelector('#studio-view [data-track="0"][data-beat-step="0"]');
+                    return {
+                      patternMatches: localStorage.getItem(`doodle-fun:v2:beat-maker-pattern-v1:${age}`) === expected,
+                      firstNoteRestored: first?.getAttribute('aria-pressed') === 'true',
+                      readyWithoutAutoplay: document.querySelector('.studio-beat-play')?.disabled === false,
+                      ungraded: document.querySelector('.studio-check')?.hidden === true
+                    };
+                    """, arguments: ["age": age, "expected": expected ?? ""], in: nil, contentWorld: .page)
+                guard let recovery = restored as? [String: Bool] else { throw GameplayError(message: "\(caseName): missing composer reload evidence") }
+                report["composerReload"] = recovery
+                for check in ["patternMatches", "firstNoteRestored", "readyWithoutAutoplay", "ungraded"] {
+                    XCTAssertEqual(recovery[check], true, "\(caseName): \(check) after native WKWebView reload")
+                }
+            }
             attachReport(report, name: "Native gameplay age \(age) - \(id)")
             XCTAssertEqual(report["status"] as? String, "passed", "\(caseName): \(report["error"] ?? "No explanatory result")")
             XCTAssertEqual(report["id"] as? String, id, caseName)
@@ -173,6 +197,10 @@ final class NativeGameplayAge02Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 2) }
     func testRhythm() async throws { try await exercise("rhythm", age: 2) }
     func testSharing() async throws { try await exercise("sharing", age: 2) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 2) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 2) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 2) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 2) }
 }
 
 final class NativeGameplayAge03Tests: NativeGameplayCase {
@@ -206,6 +234,10 @@ final class NativeGameplayAge03Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 3) }
     func testRhythm() async throws { try await exercise("rhythm", age: 3) }
     func testSharing() async throws { try await exercise("sharing", age: 3) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 3) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 3) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 3) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 3) }
 }
 
 final class NativeGameplayAge04Tests: NativeGameplayCase {
@@ -239,6 +271,10 @@ final class NativeGameplayAge04Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 4) }
     func testRhythm() async throws { try await exercise("rhythm", age: 4) }
     func testSharing() async throws { try await exercise("sharing", age: 4) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 4) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 4) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 4) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 4) }
 }
 
 final class NativeGameplayAge05Tests: NativeGameplayCase {
@@ -272,6 +308,10 @@ final class NativeGameplayAge05Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 5) }
     func testRhythm() async throws { try await exercise("rhythm", age: 5) }
     func testSharing() async throws { try await exercise("sharing", age: 5) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 5) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 5) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 5) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 5) }
 }
 
 final class NativeGameplayAge06Tests: NativeGameplayCase {
@@ -305,6 +345,10 @@ final class NativeGameplayAge06Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 6) }
     func testRhythm() async throws { try await exercise("rhythm", age: 6) }
     func testSharing() async throws { try await exercise("sharing", age: 6) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 6) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 6) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 6) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 6) }
 }
 
 final class NativeGameplayAge07Tests: NativeGameplayCase {
@@ -338,6 +382,10 @@ final class NativeGameplayAge07Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 7) }
     func testRhythm() async throws { try await exercise("rhythm", age: 7) }
     func testSharing() async throws { try await exercise("sharing", age: 7) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 7) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 7) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 7) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 7) }
 }
 
 final class NativeGameplayAge08Tests: NativeGameplayCase {
@@ -371,6 +419,10 @@ final class NativeGameplayAge08Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 8) }
     func testRhythm() async throws { try await exercise("rhythm", age: 8) }
     func testSharing() async throws { try await exercise("sharing", age: 8) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 8) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 8) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 8) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 8) }
 }
 
 final class NativeGameplayAge09Tests: NativeGameplayCase {
@@ -404,6 +456,10 @@ final class NativeGameplayAge09Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 9) }
     func testRhythm() async throws { try await exercise("rhythm", age: 9) }
     func testSharing() async throws { try await exercise("sharing", age: 9) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 9) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 9) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 9) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 9) }
 }
 
 final class NativeGameplayAge10Tests: NativeGameplayCase {
@@ -437,6 +493,10 @@ final class NativeGameplayAge10Tests: NativeGameplayCase {
     func testMakeAShape() async throws { try await exercise("make-a-shape", age: 10) }
     func testRhythm() async throws { try await exercise("rhythm", age: 10) }
     func testSharing() async throws { try await exercise("sharing", age: 10) }
+    func testMirrorMosaic() async throws { try await exercise("mirror-mosaic", age: 10) }
+    func testBalanceLab() async throws { try await exercise("balance-lab", age: 10) }
+    func testMeasurePour() async throws { try await exercise("measure-pour", age: 10) }
+    func testBeatMaker() async throws { try await exercise("beat-maker", age: 10) }
 }
 
 // Uses UIKit's public geometry request, then measures both native layout and

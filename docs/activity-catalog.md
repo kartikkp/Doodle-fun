@@ -1,8 +1,8 @@
 # Activity families and acceptance checklist
 
-Updated September 13, 2026. The home library has **21 activity families with 34 modes** across Create, Letters, Numbers, Discover, and Listen. All 30 earlier activity routes remain as modes; four new modes use generated game audio. Letters, coloring pictures, and individual rounds are content within a mode, not additional home cards.
+Updated September 27, 2026. The home library has **24 activity families with 38 modes** across Create, Letters, Numbers, Discover, and Listen. All 34 earlier activity routes remain. Three new touch learning activities and a free beat composer add four modes. Letters, coloring pictures, and individual rounds are content within a mode, not additional home cards.
 
-This is the current catalog and a checklist of required behavior, not a claim that the new catalog or listening revision has passed QA. Historical [web QA](qa-report.md) and [iPhone QA](iphone-qa-report.md) reports keep their original dates and tested bundles. The [consolidation and listening review](consolidated-listening-review.md) describes current sound-game settings. The [earlier coached play review](coached-play-review.md) records the preceding catalog's age-fit assessment.
+This is the current catalog and a checklist of required behavior. See the versioned [creative learning QA](creative-play-qa.md) for tested builds and results. Historical [web QA](qa-report.md) and [iPhone QA](iphone-qa-report.md) reports keep their original dates and tested bundles. The [consolidation and listening review](consolidated-listening-review.md) preserves historical sound-game settings. The [earlier coached play review](coached-play-review.md) records the preceding catalog's age-fit assessment.
 
 All families and modes stay available. The age choice sets a starting point; reading, writing, arithmetic, and listening at ages 2–4 can be shared exploration with a grown-up and visible help.
 
@@ -25,12 +25,15 @@ All families and modes stay available. The age choice sets a starting point; rea
 | Pathfinder · `#maze` | Find a path `#maze`; Follow arrows `#directions` | Plan a route through walls or execute an ordered set of directions |
 | Story steps · `#picture-sequence` | Story steps `#picture-sequence` | Order meaningful events and discuss what happens before and after |
 | Shape builder · `#make-a-shape` | Shape builder `#make-a-shape` | Join perimeter corners, close an outline, and distinguish interior decoys |
-| Sound detective · `#sound-match` | Sound detective `#sound-match` | Match generated percussion sounds; older rounds ask for the first or last sound |
+| Sound detective · `#sound-match` | Sound detective `#sound-match` | Match generated percussion sounds; older rounds ask for first, last or middle ordinal positions |
 | Higher or lower · `#pitch-path` | Higher or lower `#pitch-path` | Hear rising, falling, unchanged, or changing pitch contours |
 | Melody echo · `#melody-echo` | Listen & echo `#melody-echo`; Picture practice `#rhythm` | Reproduce heard tone order or practice the retained visual sequence |
-| Beat studio · `#beat-studio` | Beat studio `#beat-studio` | Count drum taps, then reproduce short/long relative gaps at a chosen pace |
+| Beat studio · `#beat-studio` | Copy a rhythm `#beat-studio`, Make a beat `#beat-maker` | Copy rhythms or compose an ungraded saved beat pattern |
+| Mirror mosaic · `#mirror-mosaic` | Mirror mosaic | Construct reflections, or create freely without medals |
+| Balance workshop · `#balance-lab` | Balance workshop | Build equal weights and reason about unknown values |
+| Measure & pour · `#measure-pour` | Measure & pour | Conserve water and plan transfers to a target amount |
 
-Trail studio's family link initially chooses First lines at ages 2–4, ABC at 5–7, and Words at 8–10. Its modes remain selectable. Other family links open their first listed mode. Earlier `#letters` and `#numbers` broad links also remain supported.
+Trail studio's family link initially chooses First lines at ages 2–4, ABC at 5–7, and Words at 8–10. Its modes remain selectable. Other family links open their first listed mode; Create → Beat studio opens free composition. Drawing stays first in All activities and Create at every age. Earlier `#letters` and `#numbers` broad links also remain supported.
 
 ## Completion and recovery criteria
 
@@ -41,14 +44,14 @@ Trail studio's family link initially chooses First lines at ages 2–4, ABC at 5
 - **Adventures:** size labels must not reveal the answer; stories follow the stated order; directions stay on the board; either perimeter direction can build a shape. Picture practice remains a visual, untimed sequence mode. Fair shares require equal amounts and correct leftovers.
 - **Art:** pen, eraser, fill, stamps, all nine coloring pages, bounded undo/redo, reload recovery, and PNG export remain available in one workspace. Free draw and Coloring pages share one current draft; replacement requires the existing recovery flow. Colors are creative choices, never pass/fail criteria.
 - **Listening:** the actual clue must play before answer submission can complete a round. Replay and hints remain available. Sound detective's Hear control must not submit a choice. Melody echo requires every tone in order. Beat studio requires the requested tap count and, from age four, the relative short/long gaps rather than an absolute start time or fixed speed.
-- **Interrupted audio:** leaving, opening a dialog, pausing game sound, or backgrounding must stop scheduled sounds. A cancelled or unavailable playback must not unlock stale answers or award completion. Returning requires explicit playback again.
-- **Audio choices:** Game sound and Game volume are independent from Read aloud and persist locally. Generated game sounds need no microphone, audio download, or network request. Sound-off or unsupported-audio states must explain how to continue. Visual hints support participation; they do not establish unaided listening proficiency.
+- **Interrupted audio:** leaving, opening a dialog, stopping playback, or backgrounding must stop scheduled sounds. A cancelled or unavailable playback must not unlock stale answers or award completion. Returning requires explicit playback again.
+- **Audio choices:** Device media volume controls all sound. Speech requires an explicit Hear action; generated game sounds require an intentional playback or pad action. No microphone, audio download or network request is needed. Unsupported audio explains recovery. Visual hints follow the parent policy and count as supported practice.
 - **Coaching:** every mode has relevant starting, strategy, conversation, and real-object prompts. Support persists separately for the current practice. No completion message should imply a developmental, literacy, or hearing assessment.
 
 ## Launch and device gate
 
-Open every one of the 21 cards from the actual release bundle, reach all 34 modes, and exercise old direct links. Complete meaningful practice, return home, and reopen. Cover ages 2 through 10, manual support changes, and phone/tablet portrait and landscape. Check reachable child controls, scrolling, dialog recovery, and no page-level horizontal overflow.
+Open every one of the 24 cards from the actual release bundle, reach all 38 modes, and exercise old direct links. Complete meaningful practice, return home, and reopen. Cover ages 2 through 10, manual support changes, and phone/tablet portrait and landscape. Check reachable child controls, scrolling, dialog recovery, and no page-level horizontal overflow.
 
-Listening verification needs generated-signal checks and actual playback/interaction checks; animated indicators alone do not prove sound. Check first user-triggered playback, repeated replay, wrong-answer recovery, hints, sound toggles, volume changes, interruptions, and immediate route changes on iPhone/iPad Safari and the native wrapper.
+Listening verification needs generated-signal checks and actual playback/interaction checks; animated indicators alone do not prove sound. Check first user-triggered playback, repeated replay, wrong-answer recovery, hints, system volume changes, interruptions, and immediate route changes on iPhone/iPad Safari and the native wrapper.
 
 Repeat entry with the network disconnected, open the standalone HTML without a server, and reload the installed offline app. Verify generated Pages files, dist files, and native bundled HTML match the intended release. Exercise the Save/share/cancel flow and app relaunch. Physical-device sound, Apple Pencil, VoiceOver, and observation of children are separate from simulator or browser automation.

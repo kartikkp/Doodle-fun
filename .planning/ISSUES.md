@@ -11,3 +11,9 @@
 - Selected activity tabs scroll into view.
 - Older literacy includes age-specific vocabulary, rhymes, affixes and roots; foundational tracing is labeled honestly.
 - Shape/color/classification modes use properties, relationships and fraction/number rules; sharing varies totals and requires older-child remainder interpretation.
+
+## Phase 8 follow-ups
+
+- Physical iPad/Pencil feel, palm behavior and VoiceOver remain direct device acceptance checks; observed child engagement is not established by automated tests.
+- Consider requested per-round spoken instructions for the new studios, independent of hint policy. Ages 2–4 currently remain supported exploration with a grown-up. Never auto-play a solution.
+- Preserve separate free-mosaic and challenge drafts when switching those modes; consider an optional playback-follow page for long beat patterns. These are new creative continuity enhancements, not changes to the preserved Doodle draft.

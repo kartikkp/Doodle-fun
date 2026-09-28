@@ -2,19 +2,21 @@
 
 A friendly creative learning space for ages 2–10, designed for fingers, an Apple Pencil, and a mouse. It remains a lightweight static web app with no runtime dependencies, accounts, advertising, or backend.
 
-## 21 activities, 34 modes
+## 24 activities, 38 modes
 
 Browse **Create, Letters, Numbers, Discover, and Listen**. Related practice now shares a home card:
 
-- **Create (1):** Doodle studio combines Free draw and Coloring pages, with all nine pictures, 20 stamps, undo/redo, one local draft, and PNG export.
+- **Create:** Doodle studio stays first at every age, combining Free draw and Coloring pages with nine pictures, 20 stamps, undo/redo, one local draft and PNG export. Mirror mosaic adds reflection challenges and free creation; Beat studio is also available here for composing music. Drawing supplies expand with age, with optional Pencil-only input.
 - **Letters (3):** Trail studio combines lines, uppercase/lowercase letters, words, and numerals. Letter buddies and Build a word teach recognition and word construction separately.
-- **Numbers (4):** Count & make, Number stories, Groups & sharing, and More/less/same. Their modes retain counting, frames, addition, subtraction, missing parts, equal groups, and fair sharing.
-- **Discover (9):** Put it in order, Shape & color detective, Pattern parade, Sort it out, Spot the difference, Memory garden, Pathfinder, Story steps, and Shape builder. Number ordering and following arrows remain selectable modes.
+- **Numbers (5):** Count & make, Number stories, Groups & sharing, More/less/same, and Balance workshop. Their modes retain counting, frames, addition, subtraction, missing parts, equal groups, and fair sharing.
+- **Discover (10):** Put it in order, Shape & color detective, Pattern parade, Sort it out, Spot the difference, Memory garden, Pathfinder, Story steps, Shape builder, and Measure & pour. Number ordering and following arrows remain selectable modes.
 - **Listen (4):** Sound detective, Higher or lower, Melody echo, and Beat studio. They use generated sounds for sound matching, pitch direction, melody memory, and drum patterns. Melody echo also retains the earlier visual sequence game as Picture practice.
 
-All 30 earlier routes remain available as modes, with four new listening modes. Individual glyphs, coloring pictures, and puzzle rounds are content within these modes. See the [current catalog and acceptance checklist](docs/activity-catalog.md) for every route and learning purpose.
+All 34 earlier modes remain available. Three new tactile learning games and free beat composition bring the total to 38 modes across 24 families. Individual glyphs, coloring pictures, and puzzle rounds are content within these modes. See the [current catalog and acceptance checklist](docs/activity-catalog.md) for every route and learning purpose.
 
-Each age from 2 through 10 has a starting configuration. **Coach** offers a starting step, current-mode hints, strategy, conversation and real-object activities. **A little easier / harder** remembers a separate adjustment for each practice mode. Changing a challenge may begin a fresh round; drawing edits remain recoverable. Young children can explore words and arithmetic with a grown-up. The [educational review](docs/educator-activity-review.md) documents each game’s progression and its limits; the [design review](docs/age-adaptive-design.md) documents individual visual checks. The [earlier coached play review](docs/coached-play-review.md) remains a dated assessment of the previous catalog.
+Each age from 2 through 10 has a starting configuration. **Coach** offers a starting step, current-mode hints, strategy, conversation and real-object activities. **A little easier / harder** remembers a practice step from 2–10 separately for each mode and starting age. Changing a challenge may begin a fresh round; drawing edits remain recoverable. Young children can explore words and arithmetic with a grown-up. The [educational review](docs/educator-activity-review.md) documents each game’s progression and its limits; the [design review](docs/age-adaptive-design.md) documents individual visual checks. The [earlier coached play review](docs/coached-play-review.md) remains a dated assessment of the previous catalog.
+
+Parents can leave hints available, turn them off, or require a local PIN, and optionally lock age/difficulty changes. Keep the displayed recovery code to reset parent controls without losing artwork. Short learning sets earn Bronze, Silver or Gold by starting age and practice step; a perfect independent set earns Gold and suggests an optional next step. Creative activities are ungraded. Trail studio enlarges long words one letter at a time on phones, preserving ink across views.
 
 Sound only starts when requested. Tap **Hear** for spoken help; opening a game, answering, or showing a hint stays quiet. Use your device’s media-volume buttons to adjust game sounds and tap **Listen** to start; Sound detective also offers separate Hear and Choose buttons. Tones and percussion are generated locally without downloaded audio, a microphone, or voice recording. Playback starts through a listening control and pauses when the turn is interrupted. Check device media volume or connected headphones if nothing is audible. Picture hints are available; completed practice is not a hearing or learning assessment.
 
@@ -22,7 +24,7 @@ Coaching recordings use a general synthetic voice, never a cloned person. They a
 
 ## iPhone and iPad app
 
-Open **ios/DoodleFun.xcodeproj** in Xcode and run the **DoodleFun** scheme. The iOS 17+ app includes all activities and generated game sounds offline, 116 bundled, naturally spoken synthetic coaching clips with device speech for changing question text, local progress and the system PNG share sheet. Run `npm run ios:sync` after web changes. A personal device requires your Xcode signing team; no App Store submission is included. See [iPhone build and installation](docs/iphone-app.md).
+Open **ios/DoodleFun.xcodeproj** in Xcode and run the **DoodleFun** scheme. The iOS 17+ app includes all activities and generated game sounds offline, 120 bundled, naturally spoken synthetic coaching clips with device speech for changing question text, local progress and the system PNG share sheet. Run `npm run ios:sync` after web changes. A personal device requires your Xcode signing team; no App Store submission is included. See [iPhone build and installation](docs/iphone-app.md).
 
 ## Run
 
@@ -54,10 +56,10 @@ npx playwright install chromium webkit
 npm run test:browser
 ```
 
-Verify all 21 cards and 34 modes, including legacy links, at phone/tablet sizes and across the nine starting ages. Listening checks must exercise generated audio, replay, interrupted playback, hints, and completion; an animation or DOM pass alone cannot establish audible playback. The [current activity, design and voice QA](docs/challenge-design-voice-qa.md) records versioned results and limits; the [catalog checklist](docs/activity-catalog.md) records acceptance criteria. Historical [web QA](docs/qa-report.md) and [iPhone QA](docs/iphone-qa-report.md) reports retain their earlier bundles and dates. Physical Apple Pencil behavior, VoiceOver, and observation of children remain separate checks.
+Verify all 24 cards and 38 modes, including legacy links, at phone/tablet sizes and across the nine starting ages. Listening checks must exercise generated audio, replay, interrupted playback, hints, and completion; an animation or DOM pass alone cannot establish audible playback. The [current creative learning QA](docs/creative-play-qa.md) records versioned results and limits; the [catalog checklist](docs/activity-catalog.md) records acceptance criteria. Historical [web QA](docs/qa-report.md) and [iPhone QA](docs/iphone-qa-report.md) reports retain their earlier bundles and dates. Physical Apple Pencil behavior, VoiceOver, and observation of children remain separate checks.
 
 ## Local data
 
-Settings (including starting age), per-mode support, the current drawing, and practice stars are saved only on this installation under the `doodle-fun:v2:` prefix. They are not synced across devices. Blocked/full storage falls back to the current session; PNG export is the way to keep important artwork. The offline cache stores the app itself; personal drawings and practice progress stay in local storage.
+Settings (including starting age), per-mode practice steps, optional parent PIN verifiers, the current drawing, beat patterns, practice stars and medals are saved only on this installation under the `doodle-fun:v2:` prefix. They are not synced across devices. When storage is blocked or full, artwork/progress can fall back to the current session; PNG export is the way to keep important pictures. Parent controls report failed saves rather than claiming protection was stored. The offline cache stores the app itself; personal drawings and practice progress stay in local storage.
 
 The previous app did not persist artwork or progress, so there is no legacy saved-data migration. The nine original template drawings and letter paths were retained and revised where necessary.

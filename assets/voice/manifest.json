@@ -2776,6 +2776,206 @@
       "sha256": "680617085f58e48a116e3b3e45d5c62508fc86dd11f9492ebd05192b87915221"
     },
     {
+      "id": "67926cfe5538a957",
+      "text": "Choose a color, then tap the empty side to make a mirror picture. Match both the color and distance from the mirror line.",
+      "uses": [
+        {
+          "mode": "mirror-mosaic",
+          "age": 2
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 3
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 4
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 5
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 6
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 7
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 8
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 9
+        },
+        {
+          "mode": "mirror-mosaic",
+          "age": 10
+        }
+      ],
+      "file": "67926cfe5538a957.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.0493,
+      "sampleRate": 24000,
+      "rms": 0.13226,
+      "peak": 0.85,
+      "bytes": 60855,
+      "sha256": "a1bfb76b1017838ddf97b521df95ec17ff163f843bc033619ba26ff2812620b3"
+    },
+    {
+      "id": "d9f972d4440e7888",
+      "text": "Choose a weight, then tap a pan. Check when it looks level. Different combinations can have the same total weight.",
+      "uses": [
+        {
+          "mode": "balance-lab",
+          "age": 2
+        },
+        {
+          "mode": "balance-lab",
+          "age": 3
+        },
+        {
+          "mode": "balance-lab",
+          "age": 4
+        },
+        {
+          "mode": "balance-lab",
+          "age": 5
+        },
+        {
+          "mode": "balance-lab",
+          "age": 6
+        },
+        {
+          "mode": "balance-lab",
+          "age": 7
+        },
+        {
+          "mode": "balance-lab",
+          "age": 8
+        },
+        {
+          "mode": "balance-lab",
+          "age": 9
+        },
+        {
+          "mode": "balance-lab",
+          "age": 10
+        }
+      ],
+      "file": "d9f972d4440e7888.m4a",
+      "mime": "audio/mp4",
+      "duration": 6.7407,
+      "sampleRate": 24000,
+      "rms": 0.12622,
+      "peak": 0.85,
+      "bytes": 58549,
+      "sha256": "9bb9fbbdb5a700c86bb27cae370651f92f10e4416a1df49b01f72ef636cd37b8"
+    },
+    {
+      "id": "4fa23c43fc21aca0",
+      "text": "Tap a source jug, then a destination. Pour to the marked amount. Water moves between jugs; the total stays the same.",
+      "uses": [
+        {
+          "mode": "measure-pour",
+          "age": 2
+        },
+        {
+          "mode": "measure-pour",
+          "age": 3
+        },
+        {
+          "mode": "measure-pour",
+          "age": 4
+        },
+        {
+          "mode": "measure-pour",
+          "age": 5
+        },
+        {
+          "mode": "measure-pour",
+          "age": 6
+        },
+        {
+          "mode": "measure-pour",
+          "age": 7
+        },
+        {
+          "mode": "measure-pour",
+          "age": 8
+        },
+        {
+          "mode": "measure-pour",
+          "age": 9
+        },
+        {
+          "mode": "measure-pour",
+          "age": 10
+        }
+      ],
+      "file": "4fa23c43fc21aca0.m4a",
+      "mime": "audio/mp4",
+      "duration": 7.6153,
+      "sampleRate": 24000,
+      "rms": 0.136,
+      "peak": 0.85,
+      "bytes": 64955,
+      "sha256": "d90b7337169c7aa83ed07dc38a738616f54a523bc31556f29b5204f23d303823"
+    },
+    {
+      "id": "7beff12a9263071e",
+      "text": "Tap squares to place sounds, then tap Play. Leave empty squares for pauses. Use Stop whenever you like.",
+      "uses": [
+        {
+          "mode": "beat-maker",
+          "age": 2
+        },
+        {
+          "mode": "beat-maker",
+          "age": 3
+        },
+        {
+          "mode": "beat-maker",
+          "age": 4
+        },
+        {
+          "mode": "beat-maker",
+          "age": 5
+        },
+        {
+          "mode": "beat-maker",
+          "age": 6
+        },
+        {
+          "mode": "beat-maker",
+          "age": 7
+        },
+        {
+          "mode": "beat-maker",
+          "age": 8
+        },
+        {
+          "mode": "beat-maker",
+          "age": 9
+        },
+        {
+          "mode": "beat-maker",
+          "age": 10
+        }
+      ],
+      "file": "7beff12a9263071e.m4a",
+      "mime": "audio/mp4",
+      "duration": 6.6953,
+      "sampleRate": 24000,
+      "rms": 0.09541,
+      "peak": 0.85,
+      "bytes": 57418,
+      "sha256": "eee1408ab1c225ac36045245d92ebd74f43c66d38812563b2e7402e4d0ad8494"
+    },
+    {
       "id": "599aeb3a506dd2be",
       "text": "Listen and count the drum taps together. Then tap the same number at any speed. Count one tap at a time. There is no timing check at this starting age.",
       "uses": [

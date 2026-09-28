@@ -391,4 +391,76 @@ final class NativeParentGateTests: XCTestCase {
         let afterNavigation = try await controller.webView.evaluateJavaScript("gateShareResults") as? [String]
         XCTAssertEqual(afterNavigation, ["cancelled", "cancelled"], "Navigation invalidates a pending share.")
     }
+
+    func testOfflineParentPINUsesPBKDF2AndRelocksAfterReload() async throws {
+        let (controller, window) = try await loadedController()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        _ = try await controller.webView.evaluateJavaScript("localStorage.removeItem('doodle-fun:v2:parent-controls-v1'); true")
+        let clean = expectation(description: "Clean offline PIN settings")
+        controller.onContentReady = { [weak controller] in controller?.onContentReady = nil; clean.fulfill() }
+        controller.webView.reload()
+        await fulfillment(of: [clean], timeout: 25)
+        let value = try await controller.webView.callAsyncJavaScript("""
+            const wait = async (condition, label) => {
+              const end = performance.now() + 6000;
+              while (performance.now() < end) { if (condition()) return; await new Promise(resolve => setTimeout(resolve, 20)); }
+              throw new Error(`PIN test timed out: ${label}`);
+            };
+            const $ = id => document.getElementById(id), store = 'doodle-fun:v2:parent-controls-v1';
+            const report = {offlineFile: location.protocol === 'file:', subtleAvailable: Boolean(crypto?.subtle)};
+            if (!report.subtleAvailable) return report;
+            $('grownups-open').click(); await wait(() => $('grownups-dialog').open, 'settings');
+            $('parent-pin-setup').click(); await wait(() => $('parent-pin-dialog').open, 'PIN setup');
+            $('parent-pin-input').value = '4936'; $('parent-pin-confirm').value = '4936';
+            $('parent-pin-form').requestSubmit();
+            await wait(() => document.querySelector('[aria-label="Save your parent recovery code"][open]'), 'saved recovery code');
+            const saved = JSON.parse(localStorage.getItem(store)), credential = saved.credential;
+            const secret = await crypto.subtle.importKey('raw', new TextEncoder().encode('4936'), 'PBKDF2', false, ['deriveBits']);
+            const salt = Uint8Array.from(credential.salt.match(/../g), pair => parseInt(pair,16));
+            const derived = await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:100000,hash:'SHA-256'},secret,256);
+            const hash = Array.from(new Uint8Array(derived),byte=>byte.toString(16).padStart(2,'0')).join('');
+            report.pbkdf2MatchesStoredCredential = hash === credential.hash;
+            report.onlyDerivedCredentialFields = Object.keys(credential).sort().join(',') === 'hash,recoveryHash,salt'
+              && /^[a-f0-9]{32}$/.test(credential.salt) && /^[a-f0-9]{64}$/.test(credential.hash)
+              && /^[a-f0-9]{64}$/.test(credential.recoveryHash);
+            document.querySelector('[aria-label="Save your parent recovery code"] button').click();
+            $('hint-policy').value = 'ask'; $('hint-policy').dispatchEvent(new Event('change',{bubbles:true}));
+            $('settings-done').click(); location.hash = 'mirror-mosaic';
+            await wait(() => document.body.dataset.activity === 'mirror-mosaic', 'mirror game');
+            document.querySelector('.studio-hint').click(); await wait(() => $('parent-pin-dialog').open, 'hint PIN');
+            $('parent-pin-input').value = '0000'; $('parent-pin-form').requestSubmit();
+            await wait(() => $('parent-pin-error').textContent.includes('did not match'), 'wrong PIN feedback');
+            report.wrongPINPreservesGate = $('parent-pin-dialog').open && !document.querySelector('.studio-status').classList.contains('is-hint');
+            $('parent-pin-input').value = '4936'; $('parent-pin-form').requestSubmit();
+            await wait(() => !$('parent-pin-dialog').open && document.querySelector('.studio-status').classList.contains('is-hint'), 'authorized hint');
+            report.correctPINRevealsRequestedHint = true;
+            return report;
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let checks = try XCTUnwrap(value as? [String: Bool])
+        for key in ["offlineFile", "subtleAvailable", "pbkdf2MatchesStoredCredential", "onlyDerivedCredentialFields", "wrongPINPreservesGate", "correctPINRevealsRequestedHint"] {
+            XCTAssertEqual(checks[key], true, "Native file-backed parent PIN: \(key)")
+        }
+        let reloaded = expectation(description: "PIN credentials survive a native reload")
+        controller.onContentReady = { [weak controller] in controller?.onContentReady = nil; reloaded.fulfill() }
+        controller.webView.reload()
+        await fulfillment(of: [reloaded], timeout: 25)
+        let after = try await controller.webView.callAsyncJavaScript("""
+            const store = 'doodle-fun:v2:parent-controls-v1';
+            const saved = JSON.parse(localStorage.getItem(store));
+            document.querySelector('.studio-hint').click();
+            const end = performance.now() + 4000;
+            while (!document.getElementById('parent-pin-dialog').open && performance.now() < end) await new Promise(resolve=>setTimeout(resolve,20));
+            const result = {credentialRetained: Boolean(saved.credential?.hash), policyRetained: saved.hints === 'ask', relocked: document.getElementById('parent-pin-dialog').open};
+            document.querySelector('[data-pin-cancel]').click();
+            localStorage.removeItem(store);
+            return result;
+            """, arguments: [:], in: nil, contentWorld: .page)
+        let recovery = try XCTUnwrap(after as? [String: Bool])
+        for key in ["credentialRetained", "policyRetained", "relocked"] { XCTAssertEqual(recovery[key], true, "Parent PIN reload: \(key)") }
+        let evidence = ["offlinePIN": checks, "reload": recovery]
+        let attachment = XCTAttachment(data: try JSONSerialization.data(withJSONObject: evidence, options: [.sortedKeys]), uniformTypeIdentifier: "public.json")
+        attachment.name = "Offline native parent PIN and PBKDF2"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
 }

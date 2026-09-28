@@ -1,8 +1,12 @@
 # Doodle Fun — release checklist
 
-**Build 3 follow-up:** system media volume replaces all game mute/volume controls, and Beat Studio percussion is stronger. Candidate runtime `38dd5ac3d8d348ae` is archived, but not uploaded. Export reports no available account/distribution certificate; the Mac is locked. Complete native verification and successful export/audit/upload, then verify group assignment. See [current audio QA](../system-volume-audio-qa.md).
+**Current build 4 — Testing September 27:** signed Release 2.1.0 (4) from merge `6a7b13a`, runtime `4df4c6c112b64140`, passes archive and App Store distribution signature/identity/content/privacy checks. All six final native audio checks pass. User reauthentication resolved Xcode signing; upload succeeded at 15:27:13 UTC. After the owner manually authenticated Safari, Apple processing was verified **Complete** for app `6816519633`, build UUID `5c368446-aea8-4f3e-a14b-973e1d4c1d6e`. What to Test was saved and read back. Build 4 was assigned to existing **Doodle Fun Internal** (one tester) and **Doodle Fun Beta** (two testers); Submit for Review was completed with automatic tester notification checked. At approximately **16:13 UTC**, both groups' Builds pages showed **2.1.0 (4) — Testing**, with no pending review status shown.
 
-**Build 2 update — September 26:** 2.1.0 (2), runtime `cf73382cbd44d40f`, passed 95 unit, 702 browser and 289 native cases and distribution-signature checks. Upload and Apple processing are complete. Testing notes are saved, and the internal group is **Testing** build 2. The external group has two authorized testers; build 1 is **In Review**, and Apple blocks assigning build 2 externally until that review finishes. Invitation emails remain pending approval. See the [current release status](README.md) and [audio/difficulty QA](../audio-difficulty-qa.md). The build-1 preparation history below remains version-specific.
+No groups, testers or public links were created, and no public App Store submission occurred. Actual build 4 installation, notification-email delivery and physical acceptance checks remain unverified. Safari and Xcode were released to the authorized other chat after verification. The earlier release records below remain historical.
+
+**Historical build 3 follow-up:** system media volume replaced all game mute/volume controls, and Beat Studio percussion became stronger. Candidate runtime `38dd5ac3d8d348ae` was archived but not uploaded. Export was blocked by account/distribution-certificate availability while the Mac was locked. Build 4 supersedes the remaining verification/export/upload handoff. See [historical audio QA](../system-volume-audio-qa.md).
+
+**Historical build 2 update — September 26:** 2.1.0 (2), runtime `cf73382cbd44d40f`, passed 95 unit, 702 browser and 289 native cases and distribution-signature checks. Upload and Apple processing completed. Testing notes were saved, and the internal group was **Testing** build 2. The external group had two authorized testers; build 1 was **In Review**, and Apple blocked assigning build 2 externally until that review finished. Invitation emails were pending approval at that time. Build 4's status above supersedes that blocked handoff. See the [current release status](README.md) and [build 2 audio/difficulty QA](../audio-difficulty-qa.md). The build-1 preparation history below remains version-specific.
 
 ## Build 1 preparation record
 
@@ -43,13 +47,15 @@ Name, Apple ID, SKU, bundle ID, English (U.S.) and iOS platform are verified in 
 Record device, OS version, app version/build, result, and any defect. Use the intended release build; repeat affected checks after fixes.
 
 - [ ] Open every activity family and its modes; check readable instructions, Coach, easier/harder controls, age selection, portrait/landscape layout, and a recoverable wrong answer or retry where applicable.
-- [ ] Confirm audible Sound detective, Higher or lower, Melody echo, and Beat studio on the installed hotfix. The owner reported silence with Silent mode off; the original cause is unproven and no physical listening reply or activation log has arrived. Check speakers and headphones, media volume and Silent mode, independent Game sound/Read aloud settings, replay, and background/return recovery with a fresh Listen before scoring.
+- [ ] Confirm audible Sound detective, Higher or lower, Melody echo, Beat studio and Make a beat on the intended release. Check speakers and headphones, system media volume, Silent mode, explicit Hear/Listen/Play controls, replay, and background/return recovery. Listening clues require a fresh Listen before scoring; the composer stays stopped until Play. Physical audibility remains distinct from simulator playback checks.
 - [ ] Draw a picture and export a PNG to both Photos and Files. Verify the saved image, cancellation preserving artwork, and a fresh grown-up check for each share or external link.
 - [ ] In airplane mode, open activities, play generated sounds, and read the privacy policy. Relaunch the app and confirm artwork, settings, and progress persist. Optional system speech depends on available device voices.
 - [ ] Check VoiceOver navigation and labels, larger text, and reachable controls on both device sizes. Record limitations honestly; do not select unsupported accessibility claims in the listing.
 - [ ] Recommended product research: observe a supervised child playtest for comprehension, enjoyment, and difficulty. This is optional research, not an Apple submission requirement or evidence of learning outcomes.
 
-## TestFlight handoff
+## Historical build 1 TestFlight handoff
+
+This checklist records the September 26 handoff and its remaining work at that time. Build 4's current status is recorded above.
 
 - [x] Confirm active membership and App Store Connect access; accept Terms of Service with explicit owner approval.
 - [x] Create the iOS app record: Doodle Fun: Draw & Discover, Apple ID `6816519633`, SKU `doodlefun-ios`, English (U.S.), bundle ID `com.minoli.DoodleFun`.
@@ -72,4 +78,4 @@ Record device, OS version, app version/build, result, and any defect. Use the in
 - [ ] Select the verified build and submit the completed listing to App Review. Address any review questions or required fixes.
 - [ ] After approval, release manually when the owner is ready to launch.
 
-The app record exists and distribution export is verified. Upload, processing, both group assignments, the internal invitation and external TestFlight beta-review submission are complete. External approval and physical checks remain pending. No public App Store submission or release has occurred.
+Build 4 upload, processing, saved testing notes and both existing group assignments are verified; both groups show **Testing**. Actual installation, notification-email delivery and physical checks remain unverified. No public App Store submission or release has occurred.

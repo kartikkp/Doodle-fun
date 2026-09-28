@@ -1,3 +1,4 @@
+import {beginRound,recordMistake,recordHint,completeRound,getRoundCursor} from './progression.js';
 import {getProfile,readStore,writeStore} from './core.js';
 import {createSoundEngine,TIMBRES} from './audio.js';
 import {stopSpeaking} from './speech.js';
@@ -98,7 +99,7 @@ function safeProgress() {
   return {version:1,stars};
 }
 export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>{},onNotice=()=>{},onProgress=()=>{}}={}) {
-  let id=null,profile=null,question=null,round=0,epoch=0,heard=false,busy=false,previewBusy=false,complete=false,model=false,sequence=[],taps=[],activePulse=-1;
+  let id=null,profile=null,selectedAge=6,question=null,round=0,epoch=0,heard=false,busy=false,previewBusy=false,complete=false,model=false,sequence=[],taps=[],activePulse=-1;
   let feedback='Tap Listen when you are ready.',helpText='';
   const progress=safeProgress();
   const engine=createSoundEngine({onInterrupt:()=>{if(id)suspendAudio();}});
@@ -109,7 +110,7 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   function failAudio(reason){hideModel();heard=false;busy=false;previewBusy=false;sequence=[];taps=[];feedback=reason||'Sound paused. Tap Listen to try again.';render();}
   function win() {
     if(complete||!heard)return;
-    complete=true;feedback=id==='beat-studio'?(profile.countOnly?'You matched every drum tap!':'You copied the short and long spaces!'):id==='melody-echo'?'You played the whole melody in order!':'You listened and found the sound!';
+    complete=true;completeRound();feedback=id==='beat-studio'?(profile.countOnly?'You matched every drum tap!':'You copied the short and long spaces!'):id==='melody-echo'?'You played the whole melody in order!':'You listened and found the sound!';
     const key=`${id}:${profile.age}:${round}`;
     if(!progress.stars[key]){progress.stars[key]=true;writeStore('listening-progress-v1',progress);onProgress({source:'listening',completedCount:Object.keys(progress.stars).length});}
     render();
@@ -137,14 +138,14 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   function choose(value) {
     if(!heard||busy||previewBusy||complete)return;
     if(value===question.answer){win();return;}
-    hideModel();
+    recordMistake();hideModel();
     feedback=id==='pitch-path'?'Try listening again. Follow each sound up or down with your hand.':'Try comparing the sounds again. Use Hear on a choice before choosing it.';render();
   }
   function melodyPad(pad) {
     if(previewBusy)return;
     preview({kind:'tone',frequency:question.frequencies[pad],duration:.18},()=>{
       if(!heard){feedback='That is this pad’s sound. Tap Listen to hear the melody.';return;}
-      if(pad!==question.sequence[sequence.length]){hideModel();sequence=[];feedback='Let’s try that melody again. Replay it, or use the picture hint. Start with its first sound.';return;}
+      if(pad!==question.sequence[sequence.length]){recordMistake();hideModel();sequence=[];feedback='Let’s try that melody again. Replay it, or use the picture hint. Start with its first sound.';return;}
       sequence.push(pad);feedback=`${sequence.length} of ${question.sequence.length} tones played.`;
       if(sequence.length===question.sequence.length)win();
     });
@@ -156,8 +157,16 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     taps.push(time);feedback=`${taps.length} drum ${taps.length===1?'tap':'taps'}. Check when you are finished.`;
     preview({kind:'drum',duration:.16});render();
   }
-  function checkBeat(){if(!heard||busy||previewBusy||complete)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}hideModel();feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
-  function hint(){if(!id)return;cancel();model=true;helpText=question.help;feedback=heard?'The hint is here. Replay whenever you want.':'The hint is here. Tap Listen to hear it before your turn.';render();}
+  function checkBeat(){if(!heard||busy||previewBusy||complete)return;const result=evaluateBeat(taps,question.gaps,profile);if(result.passed){win();return;}recordMistake();hideModel();feedback=result.reason==='count'?`Listen for ${question.times.length} taps. You made ${taps.length}. Tap Try again for a fresh turn.`:'You have the taps. Listen for the longer spaces, then try a fresh beat at your own speed.';render();}
+  function hint(){if(!id)return;recordHint();cancel();model=true;helpText=question.help;feedback=heard?'The hint is here. Replay whenever you want.':'The hint is here. Tap Listen to hear it before your turn.';render();}
+  function clearHints(){
+    stopSpeaking();if(!id)return;const revealed=model;
+    cancel();hideModel();engine.suspend();
+    // Unlike lifecycle suspension, clearing a model preserves played tones,
+    // drum taps and a fully heard clue. An interrupted clue remains unheard.
+    if(revealed&&!complete)feedback=heard?'Keep going at your own pace.':'Tap Listen when you are ready.';
+    render();
+  }
   function next(){round=(round+1)%10000;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();}
 
   function renderModel(parent) {
@@ -200,7 +209,7 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
     }
   }
   function render() {
-    if(!id)return;
+    if(!id)return;beginRound({mode:id,age:selectedAge,step:profile.age,roundKey:String(round)});
     const screen=el('section','listening-screen');screen.dataset.listeningState=complete?'complete':busy?'playing':heard?'ready':'waiting';screen.dataset.listeningId=id;screen.dataset.listeningPreviewBusy=String(previewBusy);
     const header=el('header','activity-header listening-header'),back=btn('←',onBack);back.setAttribute('aria-label','Back to activities');
     const heading=el('div','listening-heading');heading.append(el('p','listening-eyebrow',LISTENING_INFO[id].skill),el('h1','',LISTENING_INFO[id].title));header.append(back,heading);screen.append(header);
@@ -219,7 +228,7 @@ export function createListening(container,{getSettings=()=>({age:6}),onBack=()=>
   // A rapid native app transition may leave WKWebView's document visible.
   // The shell also delivers this pause on return if background JS was deferred.
   globalThis.addEventListener?.('doodle-native-inactive',suspendAudio);
-  return {open(nextId='sound-match') {cancel();id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
+  return {open(nextId='sound-match') {cancel();id=LISTENING_IDS.includes(nextId)?nextId:'sound-match';profile=soundProfile(getProfile(getSettings()));selectedAge=getSettings().age;round=getRoundCursor(id,selectedAge,profile.age);question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();render();},
     close(){cancel();engine.suspend();id=null;container.replaceChildren();},
-    settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age){profile=nextProfile;round=0;question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,suspendAudio};
+    settingsChanged(){if(!id)return;const nextProfile=soundProfile(getProfile(getSettings()));if(nextProfile.age!==profile.age||getSettings().age!==selectedAge){profile=nextProfile;selectedAge=getSettings().age;round=getRoundCursor(id,selectedAge,profile.age);question=buildListeningRound(id,profile,round);model=profile.modelByDefault;helpText='';reset();}render();},hint,clearHints,suspendAudio};
 }
