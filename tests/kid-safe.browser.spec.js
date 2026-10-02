@@ -20,6 +20,8 @@ async function unlock(page,value=pin){
   await expect(page.locator('#parent-pin-dialog')).toBeHidden();
 }
 async function cancel(page){await page.locator('#parent-pin-dialog [data-pin-cancel]').last().click();}
+// Native narration cleanup is allowed; only export/link messages leave the app.
+async function outsideRequests(page){return page.evaluate(()=>window.outside.filter(item=>Array.isArray(item)||['shareImage','openExternalURL'].includes(item.type)));}
 async function controls(page){return page.evaluate(prefix=>JSON.parse(localStorage.getItem(prefix+'parent-controls-v1')),prefix);}
 
 test.use({viewport:{width:390,height:844}});
@@ -29,7 +31,7 @@ test('first-use setup is optional, can be skipped, and stays available in Grown-
   await page.locator('#kid-safe-skip').click();await page.reload();await expect(page.locator('#kid-safe-onboarding')).toBeHidden();
   await page.locator('#card-draw').click();await page.locator('.draw-back').click();await expect(page.locator('#home-screen')).toBeVisible();await expect(page.locator('#parent-pin-dialog')).toBeHidden();
   await page.locator('#grownups-open').click();await expect(page.locator('#parent-kid-safe')).not.toBeChecked();
-  await page.locator('#parent-kid-safe').check();await cancel(page);await expect(page.locator('#parent-kid-safe')).not.toBeChecked();
+  await page.locator('#parent-kid-safe').click();await cancel(page);await expect(page.locator('#parent-kid-safe')).not.toBeChecked();
 });
 
 test('cancelled setup preserves the offer; successful setup saves PIN and recovery without leaving an adult session unlocked',async({page})=>{
@@ -77,8 +79,8 @@ test('cancelled exits preserve drawing pixels and undo; drawing modes remain usa
 
 for(const native of [false,true]){
   test(`${native?'native':'browser'}: locked exports and websites never leave the app`,async({page})=>{
-    await seed(page,{native});await page.goto('/#draw');await page.locator('.draw-save').click();await expect(page.locator('#app-notice')).toContainText('keeps sharing and websites closed');await expect(page.locator('#parent-gate')).toBeHidden();await expect(page.locator('.draw-export-dialog')).toBeHidden();expect(await page.evaluate(()=>window.outside)).toEqual([]);
-    await page.locator('.draw-back').click();await unlock(page);await page.locator('.home-footer [data-open-info="support"]').click();await page.getByRole('button',{name:'Visit support website'}).click();expect(await page.evaluate(()=>window.outside)).toEqual([]);await expect(page.locator('#parent-gate')).toBeHidden();
+    await seed(page,{native});await page.goto('/#draw');await page.locator('.draw-save').click();await expect(page.locator('#app-notice')).toContainText('keeps sharing and websites closed');await expect(page.locator('#parent-gate')).toBeHidden();await expect(page.locator('.draw-export-dialog')).toBeHidden();expect(await outsideRequests(page)).toEqual([]);
+    await page.locator('.draw-back').click();await unlock(page);await page.locator('.home-footer [data-open-info="support"]').click();await page.getByRole('button',{name:'Visit support website'}).click();expect(await outsideRequests(page)).toEqual([]);await expect(page.locator('#parent-gate')).toBeHidden();
   });
 }
 
