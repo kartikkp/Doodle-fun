@@ -110,3 +110,12 @@ Simulator tests check integration and layout but do not replace trying the app o
 - [Web content process termination](https://developer.apple.com/documentation/webkit/wknavigationdelegate/webviewwebcontentprocessdidterminate(_:)) provides the recovery callback.
 - [UIPopoverPresentationController](https://developer.apple.com/documentation/uikit/uipopoverpresentationcontroller) defines the source view and rectangle needed for iPad presentation.
 - [Speech synthesis](https://developer.apple.com/documentation/avfoundation/speech-synthesis) documents native spoken prompts.
+
+
+## Optional kid-safe setup
+
+The first-use home card offers kid-safe play or **Not now**; Grown-ups always contains the same option. Existing PIN installations are not opted in automatically. The existing salted PIN and recovery verifier are reused. Kid-safe mode requires a PIN for returning to the activity menu, enforces the age/difficulty lock, and prevents the app’s export/external-link actions until a grown-up turns it off. Existing native parent checks remain in place after unlocking.
+
+This is an in-app household control. It does not restrict the Home gesture, app switching, app restart, or system/browser controls. The offline Guided Access guide directs the parent to enable and start it in iOS, keep Touch and Software Keyboards available, and use its separate passcode to end the session. The app does not claim to enable or detect Guided Access. Apple’s programmatic Single App Mode API requires an MDM-supervised device and is deliberately not used.
+
+References: [Apple Guided Access support](https://support.apple.com/en-us/111795), [UIAccessibility requestGuidedAccessSession](https://developer.apple.com/documentation/uikit/uiaccessibility/requestguidedaccesssession(enabled:completionhandler:)).

@@ -78,7 +78,7 @@ export function createLearning(container,{getSettings,onBack=()=>{},onNotice=()=
   function render() {
     clearTransient();container.replaceChildren();container.classList.add('learning-screen');
     const header=element('header','activity-header learn-header');
-    const back=button('← Home','button learn-back',()=>{close();onBack();});back.setAttribute('aria-label','Back to home');
+    const back=button('← Home','button learn-back',onBack);back.setAttribute('aria-label','Back to home');
     const heading=element('div','learn-heading');heading.append(element('p','learn-eyebrow',kind==='numbers'?'COUNT • NOTICE • LEARN':'TRACE • DISCOVER • GROW'),element('h1','',getTitle()||(kind==='numbers'?'Number explorers':'Letter adventures')));
     const support=element('span','learn-support',`Practice ${profile.challengeAge} · No rush`);
     const hear=speechButton('♪',()=>speak(pageMode==='count'?countQuestion.spoken:set==='shapes'?item().word:set==='words'?`The word is ${item().word}. ${[...item().ch].join(', ')}.`:`${item().ch}. ${item().word}.`));hear.setAttribute('aria-label','Hear the question');header.append(back,heading,support,hear);container.append(header);
