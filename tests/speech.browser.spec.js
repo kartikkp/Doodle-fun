@@ -1,7 +1,9 @@
 import {test,expect} from '@playwright/test';
-import {readFile} from 'node:fs/promises';
+import {build} from 'esbuild';
+import {fileURLToPath} from 'node:url';
 
-const source=await readFile(new URL('../speech.js',import.meta.url),'utf8');
+const bundled=await build({entryPoints:[fileURLToPath(new URL('../speech.js',import.meta.url))],bundle:true,write:false,format:'esm'});
+const source=bundled.outputFiles[0].text;
 const moduleURL=`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
 // A known PCM fixture tests real clip decoding/output, not voice naturalness.
 const rate=24000,length=Math.round(rate*.8),wave=Buffer.alloc(44+length*2);
@@ -57,4 +59,30 @@ test('an unreadable bundled clip falls back once after Hear without a remote aud
   expect(await page.evaluate(()=>messages.filter(message=>message.type==='speak'))).toEqual([{type:'speak',text:'Listen to your clue.'}]);
   expect(await page.evaluate(()=>output.every(record=>record.started===0&&record.context.state==='closed'))).toBe(true);
   expect(network.filter(url=>/^https?:/.test(url))).toEqual([]);
+});
+
+test('silent predecode creates no live output or native activation and Hear reuses its buffer',async({page})=>{
+  await setup(page);
+  const prepared=await page.evaluate(async()=>{
+    const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    const decode=Offline.prototype.decodeAudioData;window.decodeCount=0;
+    Offline.prototype.decodeAudioData=function(...args){window.decodeCount++;return decode.apply(this,args);};
+    return (await window.speechPlayer.prepareSpeech('Listen to your clue.')).status;
+  });
+  expect(prepared).toBe('ready');
+  expect(await page.evaluate(()=>({contexts:output.length,messages:messages.length,decodes:decodeCount}))).toEqual({contexts:0,messages:0,decodes:1});
+  await page.locator('#hear').click();await expect.poll(()=>page.evaluate(()=>result),{timeout:5000}).toEqual({status:'played',source:'clip'});
+  expect(await page.evaluate(()=>decodeCount)).toBe(1);expect(await page.evaluate(()=>output[0].peak)).toBeGreaterThan(.05);
+});
+
+test('cold decoding beyond the old five-second deadline preserves ready output and plays the clip once',async({page})=>{
+  await setup(page);
+  await page.evaluate(()=>{
+    const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext,decode=Offline.prototype.decodeAudioData;
+    Offline.prototype.decodeAudioData=function(...args){const decoded=decode.apply(this,args);return new Promise((resolve,reject)=>{decoded.then(buffer=>setTimeout(()=>resolve(buffer),6000),reject);});};
+  });
+  await page.locator('#hear').click();await page.waitForTimeout(5500);
+  expect(await page.evaluate(()=>({result,started:output[0].started,state:output[0].context.state,fallback:messages.filter(message=>message.type==='speak').length}))).toEqual({result:null,started:0,state:'running',fallback:0});
+  await expect.poll(()=>page.evaluate(()=>result),{timeout:5000}).toEqual({status:'played',source:'clip'});
+  expect(await page.evaluate(()=>output[0].started)).toBe(1);expect(await page.evaluate(()=>output[0].peak)).toBeGreaterThan(.05);
 });

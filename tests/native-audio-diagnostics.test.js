@@ -127,14 +127,14 @@ test('diagnostics preserve the existing 5 second deadline, callbacks, arguments 
 
 test('all production Coach statuses map to fixed enums without retaining displayed text', async () => {
   const source=await readFile(path.join(root,'app.js'),'utf8');
-  const statuses=['Playing spoken help…','Spoken help finished.','Spoken help requested.','Spoken help stopped.','Spoken help could not play. Try Hear again.'];
+  const statuses=['Preparing spoken help…','Playing spoken help…','Spoken help finished.','Spoken help requested.','Spoken help stopped.','Spoken help could not play. Try Hear again.'];
   for(const status of statuses)assert.ok(source.includes(status));
   const context=sandbox();
   context.values=statuses;
   vm.runInContext(`documentEvents.DOMContentLoaded(); for(const value of values){statusElement.textContent=value;statusMutation();}
     statusElement.textContent='private child text';statusMutation();globalThis.result=captured;`,context);
   const events=JSON.parse(JSON.stringify(context.result));
-  assert.deepEqual(events.filter(event=>event.event==='coach-status').map(event=>event.status),['playing','finished','requested','stopped','failed','other']);
+  assert.deepEqual(events.filter(event=>event.event==='coach-status').map(event=>event.status),['preparing','playing','finished','requested','stopped','failed','other']);
   assert.doesNotMatch(JSON.stringify(events),/Spoken help|private child text/);
 });
 
@@ -175,7 +175,8 @@ test('runner opt-in preserves source, packaged HTML and existing trusted test wh
     }
     for(const [i,file] of files.entries())assert.deepEqual(await readFile(path.join(root,file)),originals[i]);
     const workflow=await readFile(path.join(root,'.github/workflows/qa.yml'),'utf8');
-    assert.match(workflow,/--without-gameplay --audio-diagnostics/);
+    assert.match(workflow,/--without-gameplay \$\{\{ matrix\.instrumentation \}\}/);
+    assert.match(workflow,/mode: plain/);assert.match(workflow,/mode: diagnostics\s+instrumentation: --audio-diagnostics/);
     assert.match(workflow,/DoodleFun-native-audio-qa\/audio-diagnostics\/\*\*/);
   }finally{await rm(temp,{recursive:true,force:true});}
 });
@@ -196,4 +197,31 @@ test('collection retains per-launch JSONL only from the exact generated QA direc
     assert.deepEqual(await readdir(path.join(output,'audio-diagnostics')),[name]);
     assert.doesNotMatch(JSON.stringify(result),/private/);
   }finally{await rm(temp,{recursive:true,force:true});}
+});
+
+
+test('observer captures all named startup caps and silent offline decoding without creating output',async()=>{
+  const context=sandbox();
+  await vm.runInContext(`(async()=>{
+    for(const delay of [2500,5000,10000,30000]){const id=setTimeout(()=>{},delay);clearTimeout(id);}
+    globalThis.result=captured;
+  })()`,context);
+  const events=JSON.parse(JSON.stringify(context.result));
+  assert.deepEqual(events.filter(event=>event.event==='startup-timer-scheduled').map(event=>event.delay),[2500,5000,10000,30000]);
+  assert.equal(events.some(event=>event.event==='source-start'),false);
+  assert.match(observer,/OfflineAudioContext/);
+});
+
+
+test('observer recognizes phase-separated speech joins without retaining buffer or text',async()=>{
+  const context=sandbox();
+  await vm.runInContext(`(async()=>{
+    const clip={status:'ready',buffer:{duration:9.952,privateText:'private child text'}};
+    const input=[Promise.resolve({status:'ready'}),Promise.resolve(clip)];
+    const joined=Promise.all(input),same=joined===originalAggregate;
+    const result=await joined;await Promise.resolve();globalThis.result={same,sameClip:result[1]===clip,events:captured};
+  })()`,context);
+  const result=JSON.parse(JSON.stringify(context.result));assert.equal(result.same,true);assert.equal(result.sameClip,true);
+  assert.ok(result.events.some(event=>event.event==='startup-join-resolved'&&event.outputStatus==='ready'&&event.decodeStatus==='ready'&&event.duration===9.952));
+  assert.doesNotMatch(JSON.stringify(result),/private child text|privateText/);
 });

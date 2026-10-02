@@ -9,7 +9,7 @@ async function start(page,id,age=6){
   await page.route('**/__studio_qa__/*',async route=>{
     const name=new URL(route.request().url()).pathname.split('/').at(-1);
     if(name==='index.html')return route.fulfill({contentType:'text/html',body:`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="studio-play.css"><main id="studio"></main><script type="module">import {createStudioPlay} from './studio-play.js';import {getModeProgress,getCurrentRound,getProgress} from './progression.js';const query=new URLSearchParams(location.search);window.settings={age:Number(query.get('age')),level:'auto',sound:false};window.controller=createStudioPlay(document.querySelector('#studio'),{getSettings:()=>settings});window.score=()=>getModeProgress(query.get('id'),settings.age,settings.age);window.currentRound=getCurrentRound;window.allProgress=getProgress;controller.open(query.get('id'));</script>`});
-    if(!['studio-play.js','core.js','progression.js','audio.js','studio-play.css','styles.css'].includes(name))return route.abort();
+    if(!['studio-play.js','core.js','progression.js','audio.js','audio-startup.js','studio-play.css','styles.css'].includes(name))return route.abort();
     return route.fulfill({contentType:name.endsWith('.css')?'text/css':'text/javascript',body:await readFile(new URL(`../${name}`,import.meta.url),'utf8')});
   });
   await page.goto(`/__studio_qa__/index.html?id=${id}&age=${age}`);await expect(page.locator('.studio-title')).toBeVisible();

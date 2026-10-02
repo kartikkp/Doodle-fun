@@ -277,12 +277,9 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
             try configureGameAudioSession()
             let session = AVAudioSession.sharedInstance()
             try session.setActive(true)
-            let outputs = session.currentRoute.outputs.map { $0.portType.rawValue }
-            #if DEBUG
-            print("DOODLE_GAME_AUDIO ok=true category=\(session.category.rawValue) mode=\(session.mode.rawValue) outputVolume=\(session.outputVolume) outputs=\(outputs)")
-            #endif
-            replyHandler(["ok": true, "category": session.category.rawValue, "mode": session.mode.rawValue,
-                          "outputVolume": Double(session.outputVolume), "outputs": outputs], nil)
+            // Route and volume queries can synchronously stall the main thread.
+            // Return activation immediately so WebKit can start its output.
+            replyHandler(["ok": true], nil)
         } catch {
             // Codes are diagnostic; never include device names or route identifiers.
             reject("audio-session-\((error as NSError).code)")

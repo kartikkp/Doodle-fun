@@ -1,7 +1,9 @@
 import {test,expect} from '@playwright/test';
-import {readFile} from 'node:fs/promises';
+import {build} from 'esbuild';
+import {fileURLToPath} from 'node:url';
 
-const source=await readFile(new URL('../audio.js',import.meta.url),'utf8');
+const {outputFiles}=await build({entryPoints:[fileURLToPath(new URL('../audio.js',import.meta.url))],bundle:true,format:'esm',write:false});
+const source=outputFiles[0].text;
 const moduleURL=`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
 
 // This is actual browser DSP, independent of host speaker availability. The

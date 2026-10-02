@@ -8,7 +8,7 @@ import {createListening} from './listening.js';
 import {ACTIVITIES,ACTIVITY_MODES,CATEGORIES,getActivity,getFamily} from './catalog.js';
 import {coachingFor,coachingText,normalizeAdjustments} from './coaching.js';
 import {activityArt,appearanceBand} from './activity-art.js';
-import {canSpeak,requestSpeech,stopSpeaking} from './speech.js';
+import {canSpeak,requestSpeech,prepareSpeech,stopSpeaking} from './speech.js';
 import {openExternalURL,setExternalActionGuard,cancelParentAction} from './parental-gate.js';
 import {createStudioPlay} from './studio-play.js';
 import {createParentControls} from './parent-controls.js';
@@ -356,7 +356,7 @@ window.addEventListener('doodle-native-external', event => {
   if (event.detail?.status === 'failed') notice('The website could not open. Please try again.');
 });
 window.addEventListener('hashchange',route);
-$('coach-open').addEventListener('click',()=>{const open=()=>{listening?.suspendAudio();studio?.suspendAudio();renderCoach();$('coach-dialog').showModal();};if(parentControls.preferences.hints==='off')open();else parentControls.requestHint(open);});
+$('coach-open').addEventListener('click',()=>{const open=()=>{listening?.suspendAudio();studio?.suspendAudio();renderCoach();prepareSpeech(coachingText(activeRoute,getProfile(getSettings()).challengeAge));$('coach-dialog').showModal();};if(parentControls.preferences.hints==='off')open();else parentControls.requestHint(open);});
 for(const id of ['coach-close','coach-done']) $(id).addEventListener('click',()=>{$('coach-dialog').close();stopSpeaking();});
 $('coach-easier').addEventListener('click',()=>parentControls.settingsAction(()=>changeChallenge(getProfile(getSettings()).challengeAge-1)));
 $('coach-harder').addEventListener('click',()=>parentControls.settingsAction(()=>changeChallenge(getProfile(getSettings()).challengeAge+1)));
@@ -370,8 +370,8 @@ $('coach-hear').addEventListener('click',()=>{
   if(coachSpeaking){stopCoachSpeech('Spoken help stopped.');return;}
   listening?.suspendAudio();adventures?.suspendAudio();
   const token=++coachSpeechToken;coachSpeaking=true;
-  $('coach-hear').textContent='Stop spoken help';$('coach-speech-status').textContent='Playing spoken help…';
-  requestSpeech(coachingText(activeRoute,getProfile(getSettings()).challengeAge)).then(result=>{
+  $('coach-hear').textContent='Stop spoken help';$('coach-speech-status').textContent='Preparing spoken help…';
+  requestSpeech(coachingText(activeRoute,getProfile(getSettings()).challengeAge),{onStart:()=>{if(token===coachSpeechToken)$('coach-speech-status').textContent='Playing spoken help…';}}).then(result=>{
     if(token!==coachSpeechToken)return;
     coachSpeaking=false;$('coach-hear').textContent='Hear these tips';
     $('coach-speech-status').textContent=result.status==='played'&&result.source==='clip'?'Spoken help finished.':result.status==='requested'?'Spoken help requested.':result.status==='cancelled'?'Spoken help stopped.':'Spoken help could not play. Try Hear again.';

@@ -151,12 +151,14 @@ final class NativeBridgeTests: XCTestCase {
 
         let prepared = try await request("prepareGameAudio")
         XCTAssertEqual(prepared["ok"] as? Bool, true, "Activation must succeed before JavaScript schedules audio: \(prepared)")
-        XCTAssertEqual(prepared["category"] as? String, AVAudioSession.Category.playback.rawValue)
-        XCTAssertEqual(prepared["mode"] as? String, AVAudioSession.Mode.default.rawValue)
+        // Read diagnostics after the bridge reply; they must not delay startup.
+        XCTAssertEqual(session.category, .playback)
+        XCTAssertEqual(session.mode, .default)
         XCTAssertEqual(session.categoryOptions, [.mixWithOthers])
-        let volume = try XCTUnwrap(prepared["outputVolume"] as? Double)
+        let volume = Double(session.outputVolume)
         XCTAssertTrue((0...1).contains(volume))
-        XCTAssertNotNil(prepared["outputs"] as? [String], "Report route types without device names; this does not prove physical audibility.")
+        let outputs = session.currentRoute.outputs.map { $0.portType.rawValue }
+        XCTAssertFalse(outputs.isEmpty, "Activation must select an output route; this does not prove physical audibility.")
 
         // UIKit may still report active while resignation is being delivered.
         // The native lifecycle guard must reject this interval too.

@@ -30,6 +30,6 @@ The build rejects missing, stale or corrupt recordings. It embeds the clips in t
 
 ## What remains device-generated
 
-Coach tips use these bundled recordings. Changing questions and selected tracing items still use local device speech when Hear is explicitly requested. If a clip cannot decode, the same active request may fall back to local speech. Silent navigation, answer feedback, visual hints, Stop, leaving a route and background cancellation are tested separately. An old saved narration preference never enables automatic speech.
+Coach tips use these bundled recordings. Changing questions and selected tracing items still use local device speech when Hear is explicitly requested. If a clip is malformed or unavailable, the same active request may fall back to local speech. Slow or stalled preparation reports a retry state rather than silently replacing a bundled clip with device speech. Coach may silently predecode its selected clip into a bounded, memory-only offline cache; only Hear can activate live output. Silent navigation, answer feedback, visual hints, Stop, leaving a route and background cancellation are tested separately. An old saved narration preference never enables automatic speech.
 
 Generator waveform checks and successful decode/playback establish non-silent digital audio, not subjective naturalness or a physical speaker's loudness. Listening on actual iPhone speakers and child usability remain direct acceptance checks. See the final phase QA report for execution evidence and the candidate fingerprint.

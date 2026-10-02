@@ -83,7 +83,7 @@ function audioLifecycle(t,plans=[]) {
   t.mock.method(performance,'now',()=>now);
   const parameter=()=>({value:0,setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}});
   class ControlledContext {
-    constructor(){this.plan=plans[contexts.length]||{};this.state=this.plan.resume?'suspended':'running';this.createdAt=now;this.destination={};this.listeners=new Set();this.recordedListeners=[];this.sources=[];this.closeCalls=0;this.suspendCalls=0;contexts.push(this);}
+    constructor(){this.plan=plans[contexts.length]||{};this.state=this.plan.resume?'suspended':'running';this.createdAt=now;this.destination={};this.listeners=new Set();this.recordedListeners=[];this.sources=[];this.resumeCalls=0;this.resumeRequests=[];this.closeCalls=0;this.suspendCalls=0;contexts.push(this);}
     get currentTime(){return this.plan.stalled||this.state!=='running'?0:(now-this.createdAt)/1000;}
     addEventListener(type,fn){assert.equal(type,'statechange');this.listeners.add(fn);this.recordedListeners.push(fn);}
     removeEventListener(type,fn){assert.equal(type,'statechange');this.listeners.delete(fn);}
@@ -91,7 +91,7 @@ function audioLifecycle(t,plans=[]) {
     createGain(){return {gain:parameter(),connect(){},disconnect(){}};}
     createWaveShaper(){return {connect(){},disconnect(){}};}
     createOscillator(){const source={frequency:parameter(),connect(){},disconnect(){},start(){},stopCalls:0,stop(){this.stopCalls++;}};this.sources.push(source);return source;}
-    resume(){if(this.plan.resume==='reject')return Promise.reject(new Error('Output unavailable'));if(this.plan.resume==='pending')return new Promise(resolve=>{this.finishResume=()=>{this.state='running';this.emit();resolve();};});this.state='running';return Promise.resolve();}
+    resume(){this.resumeCalls++;if(this.plan.resume==='reject')return Promise.reject(new Error('Output unavailable'));if(this.plan.resume==='pending')return new Promise((resolve,reject)=>{this.finishResume=()=>{this.state='running';this.emit();resolve();};this.resumeRequests.push({finish:this.finishResume,reject});});this.state='running';return Promise.resolve();}
     suspend(){this.suspendCalls++;return new Promise(resolve=>setTimeout(()=>{this.state='suspended';this.emit();resolve();},80));}
     close(){this.closeCalls++;return new Promise(resolve=>setTimeout(()=>{this.state='closed';this.emit();resolve();},80));}
   }
@@ -139,12 +139,65 @@ for(const firstReady of ['native','context'])test(`native preparation and contex
   assert.equal((await result).status,'played');assert.equal(pulses,1);assert.ok(context.sources.length>0);
 });
 
+test('initial suspension and slow native preparation do not retire output; running state alone releases a pending first resume',async t=>{
+  const clock=audioLifecycle(t,[{resume:'pending'}]),requests=nativePreparation(t);let interruptions=0,pulses=0,settled=false;
+  const engine=createSoundEngine({onInterrupt:()=>interruptions++});
+  const result=engine.play(shortTone,{onEvent:()=>pulses++});result.then(()=>{settled=true;});
+  const context=clock.contexts[0];context.emit();
+  await clock.advance(4700);
+  assert.equal(settled,false);assert.equal(context.closeCalls,0);assert.equal(context.sources.length,0);assert.equal(interruptions,0);
+  assert.equal(context.resumeCalls,1);
+  requests[0].resolve({ok:true});await clock.flush();assert.equal(context.resumeCalls,2);
+  context.state='running';context.emit();
+  await clock.advance(200);assert.equal((await result).status,'played');assert.equal(pulses,1);
+  assert.ok(context.sources.length>0);assert.equal(context.closeCalls,0);assert.equal(interruptions,0);
+  assert.equal(context.listeners.size,1,'the engine retains its interruption listener, not a startup listener');
+  context.resumeRequests[0].reject(new Error('Late initial resume failure'));await clock.flush();
+  assert.equal(context.closeCalls,0);assert.equal(interruptions,0);
+});
+
+test('suspension between proven readiness and scheduling cannot start sources',async t=>{
+  const clock=audioLifecycle(t),requests=nativePreparation(t),engine=createSoundEngine();let pulses=0;
+  const result=engine.play(shortTone,{onEvent:()=>pulses++}),context=clock.contexts[0];
+  requests[0].resolve({ok:true});
+  // The native-ready continuation resolves startup before the engine's queued
+  // scheduling continuation executes. An intervening suspension must still fail.
+  await Promise.resolve();context.state='suspended';context.emit();await clock.flush();
+  assert.equal((await result).status,'failed');assert.equal(context.sources.length,0);assert.equal(pulses,0);assert.equal(context.closeCalls,1);
+});
+
+test('suspension after scheduling retires the context and never reports played',async t=>{
+  const clock=audioLifecycle(t);let interruptions=0;
+  const engine=createSoundEngine({onInterrupt:()=>interruptions++}),result=engine.play(shortTone);
+  await clock.flush();const context=clock.contexts[0];assert.ok(context.sources.length>0);
+  context.state='suspended';context.emit();await clock.advance(200);
+  assert.equal((await result).status,'failed');assert.equal(interruptions,1);assert.equal(context.closeCalls,1);
+  assert.ok(context.sources.every(source=>source.stopCalls>0));
+});
+
+test('a hidden document cannot resume or schedule before its delayed lifecycle cancellation arrives',async t=>{
+  const clock=audioLifecycle(t,[{resume:'pending'}]),requests=nativePreparation(t),engine=createSoundEngine();
+  const document={hidden:false};replaceGlobal(t,'document',document);
+  const result=engine.play(shortTone),context=clock.contexts[0];document.hidden=true;
+  requests[0].resolve({ok:true});await clock.flush();
+  assert.equal((await result).status,'cancelled');assert.equal(context.resumeCalls,1);assert.equal(context.sources.length,0);assert.equal(context.closeCalls,1);
+  context.finishResume();await clock.advance(100);assert.equal(context.sources.length,0);assert.equal(context.state,'closed');
+});
+
+test('hiding between proven startup readiness and scheduling still cancels without sources',async t=>{
+  const clock=audioLifecycle(t),requests=nativePreparation(t),engine=createSoundEngine();
+  const document={hidden:false};replaceGlobal(t,'document',document);
+  const result=engine.play(shortTone),context=clock.contexts[0];requests[0].resolve({ok:true});
+  await Promise.resolve();document.hidden=true;await clock.flush();
+  assert.equal((await result).status,'cancelled');assert.equal(context.sources.length,0);assert.equal(context.closeCalls,1);
+});
+
 for(const outcome of ['false','rejected','timeout'])test(`native preparation ${outcome} fails without scheduling and a new tap can recover`,async t=>{
   const clock=audioLifecycle(t),requests=nativePreparation(t),engine=createSoundEngine();let pulses=0;
   const result=engine.play(shortTone,{onEvent:()=>pulses++});
   if(outcome==='false')requests[0].resolve({ok:false,reason:'Output is unavailable'});
   if(outcome==='rejected')requests[0].reject(new Error('Native preparation failed'));
-  await clock.advance(outcome==='timeout'?2600:100);
+  await clock.advance(outcome==='timeout'?10100:100);
   assert.equal((await result).status,'failed');
   const old=clock.contexts[0];assert.equal(old.sources.length,0);assert.equal(pulses,0);
   assert.ok(old.closeCalls>0,'failed preparation retires the context');
