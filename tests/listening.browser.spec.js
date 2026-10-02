@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
-import {readFile} from 'node:fs/promises';
+import {build} from 'esbuild';
+import {fileURLToPath} from 'node:url';
 import {LISTENING_IDS,LISTENING_INFO,buildListeningRound} from '../listening.js';
 import {getProfile} from '../core.js';
 import {OUTPUT_CEILING} from '../audio.js';
@@ -313,7 +314,8 @@ test('legacy muted, low, null, array, primitive and malformed audio preferences 
 
 test('actual OfflineAudioContext rendering has bounded nonzero, distinct voices and all four game signals',async({page})=>{
   await page.goto('/');
-  const source=await readFile(new URL('../audio.js',import.meta.url),'utf8');
+  const {outputFiles}=await build({entryPoints:[fileURLToPath(new URL('../audio.js',import.meta.url))],bundle:true,format:'esm',write:false});
+  const source=outputFiles[0].text;
   const moduleURL=`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
   const cases=[...['drum','bell','shaker','wood'].map(kind=>({name:kind,events:[{kind,time:0,duration:.3}]})),...LISTENING_IDS.flatMap(id=>[2,10].map(age=>({name:`${id}-${age}`,events:buildListeningRound(id,age).events})))];
   const results=await page.evaluate(async({moduleURL,cases})=>{

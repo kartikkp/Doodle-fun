@@ -8,7 +8,7 @@ import {getProfile} from '../core.js';
 // Exercise the controller API directly, independently of modal/lifecycle
 // behavior that deliberately suspends listening rounds in the complete app.
 async function controller(page,engine,mode,age){
-  const allowed=new Set(['challenges.js','discovery.js','adventures.js','listening.js','progression.js','core.js','speech.js','activity-art.js','audio.js']);
+  const allowed=new Set(['challenges.js','discovery.js','adventures.js','listening.js','progression.js','core.js','speech.js','activity-art.js','audio.js','audio-startup.js']);
   await page.route('**/__clear-hints/*',async route=>{
     const file=new URL(route.request().url()).pathname.split('/').at(-1);
     if(file==='index.html')return route.fulfill({contentType:'text/html',body:'<!doctype html><style>[hidden]{display:none!important}button{min-width:48px;min-height:48px}</style><main id="game"></main>'});
