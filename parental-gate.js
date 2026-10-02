@@ -6,6 +6,9 @@ const EXTERNAL_URLS = new Set([
   'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement',
 ]);
 let pending = null, initialized = false;
+let externalActionGuard = () => true;
+export function setExternalActionGuard(guard) { externalActionGuard = guard; }
+export function canOpenOutsideApp() { return externalActionGuard(); }
 const element = id => document.getElementById(id);
 export const nativeBridge = () => globalThis.webkit?.messageHandlers?.doodleNative;
 
@@ -55,10 +58,12 @@ function initialize() {
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) cancelParentAction(); });
   window.addEventListener('pagehide', cancelParentAction);
+  window.addEventListener('doodle-native-inactive', cancelParentAction);
   window.addEventListener('hashchange', cancelParentAction);
 }
 
 export function requestParentAction(action, purpose = 'share a picture outside Doodle Fun') {
+  if (!canOpenOutsideApp()) return Promise.resolve(false);
   initialize();
   if (pending) return Promise.resolve(false);
   return new Promise((resolve, reject) => {
@@ -72,7 +77,7 @@ export function requestParentAction(action, purpose = 'share a picture outside D
 }
 
 export function openExternalURL(url) {
-  if (!EXTERNAL_URLS.has(url)) return Promise.resolve(false);
+  if (!EXTERNAL_URLS.has(url) || !canOpenOutsideApp()) return Promise.resolve(false);
   const native = nativeBridge();
   if (native) {
     native.postMessage({ type: 'openExternalURL', url });

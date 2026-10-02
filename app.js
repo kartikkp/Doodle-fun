@@ -9,7 +9,7 @@ import {ACTIVITIES,ACTIVITY_MODES,CATEGORIES,getActivity,getFamily} from './cata
 import {coachingFor,coachingText,normalizeAdjustments} from './coaching.js';
 import {activityArt,appearanceBand} from './activity-art.js';
 import {canSpeak,requestSpeech,stopSpeaking} from './speech.js';
-import {openExternalURL} from './parental-gate.js';
+import {openExternalURL,setExternalActionGuard,cancelParentAction} from './parental-gate.js';
 import {createStudioPlay} from './studio-play.js';
 import {createParentControls} from './parent-controls.js';
 import {beginRound,getCurrentRound,getModeProgress,subscribeProgress} from './progression.js';
@@ -28,7 +28,40 @@ let informationReturn = null, coachSpeechToken=0, coachSpeaking=false;
 const rawSteps=readStore('practice-steps-v1',{});
 const practiceSteps=rawSteps&&typeof rawSteps==='object'&&!Array.isArray(rawSteps)?Object.fromEntries(Object.entries(rawSteps).filter(([key,value])=>ACTIVITY_MODES.some(mode=>Array.from({length:9},(_,i)=>`${mode.id}:${i+2}`).includes(key))&&Number.isInteger(value)&&value>=2&&value<=10)):{};
 const getSettings = () => ({...settings,challengeOffset:adjustments[activeRoute] || 0,practiceStep:practiceSteps[`${activeRoute}:${settings.age}`]});
-const parentControls=createParentControls({onNotice:notice,onChange:(next,previous)=>{stopCoachSpeech();if(next.hints!==previous.hints){activeController()?.clearHints?.();$('coach-dialog').close();}renderCoach();},onRelock:()=>{if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();}});
+const parentControls=createParentControls({onNotice:notice,onChange:(next,previous)=>{stopCoachSpeech();if(next.kidSafe&&!previous.kidSafe){cancelParentAction();document.querySelector('.draw-export-dialog')?.close();}if(next.hints!==previous.hints){activeController()?.clearHints?.();$('coach-dialog').close();}renderCoach();},onRelock:()=>{if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();}});
+setExternalActionGuard(()=>{
+  if(!parentControls.preferences.kidSafe)return true;
+  notice('Kid-safe play keeps sharing and websites closed. A grown-up can turn it off in Grown-ups with the PIN.');
+  return false;
+});
+const setupCard=$('kid-safe-onboarding');
+setupCard.hidden=readStore('kid-safe-setup-v1',false)===true||Boolean(parentControls.preferences.credential);
+function finishKidSafeSetup() {
+  if(!writeStore('kid-safe-setup-v1',true)){
+    $('kid-safe-setup-status').textContent='This choice could not be saved. You can keep playing; setup may appear next time.';
+    return;
+  }
+  setupCard.hidden=true;
+}
+$('kid-safe-skip').addEventListener('click',finishKidSafeSetup);
+$('kid-safe-setup').addEventListener('click',async()=>{
+  $('kid-safe-setup').disabled=true;
+  try {if(await parentControls.setKidSafe(true)){parentControls.closeSettings();finishKidSafeSetup();}}
+  finally {$('kid-safe-setup').disabled=false;}
+});
+let guidedAccessReturn=null;
+// Delegation also covers the controls inserted by createParentControls.
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('[data-open-guided]');if(!button)return;
+  guidedAccessReturn=button;$('guided-access-dialog').showModal();
+});
+for(const id of ['guided-access-close','guided-access-done'])$(id).addEventListener('click',()=>$('guided-access-dialog').close());
+$('guided-access-dialog').addEventListener('close',()=>{if(guidedAccessReturn?.isConnected)guidedAccessReturn.focus({preventScroll:true});});
+let acceptedHash=location.hash||'#home',approvedHomeNavigation=null;
+const clearHomeApproval=()=>{approvedHomeNavigation=null;};
+window.addEventListener('pagehide',clearHomeApproval);
+window.addEventListener('doodle-native-inactive',clearHomeApproval);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearHomeApproval();});
 const getTitle = () => ['letters','numbers'].includes(location.hash.slice(1)) ? null : getFamily(activeRoute)?.title || null;
 function notice(message) {
   if (!message) return;
@@ -225,14 +258,23 @@ function renderJourney() {
 }
 function goHome() { location.hash='home'; }
 function route() {
+  const requested=location.hash.slice(1)||'home';
+  const activity=getActivity(requested,settings.age);
+  const next=activity?.id||'home';
+  const approved=approvedHomeNavigation?.from===activeRoute&&location.hash==='#home';approvedHomeNavigation=null;
+  if(parentControls.preferences.kidSafe&&activeRoute!=='home'&&next==='home'&&!approved){
+    // Undo the URL change before prompting: no controller is closed, no draft is
+    // reloaded, and replaceState does not trigger a second hashchange/relock.
+    history.replaceState(null,'',acceptedHash);
+    parentControls.requestExit(()=>{approvedHomeNavigation={from:activeRoute};location.hash='home';});
+    return;
+  }
+  acceptedHash=location.hash||'#home';
   const nav = ++navigationId;
   clearTimeout(noticeTimer);
   $('app-notice').hidden = true;
   $('app-notice').textContent = '';
-  const requested = location.hash.slice(1) || 'home';
-  const activity = getActivity(requested,settings.age);
   const previous=activeRoute;
-  const next=activity?.id || 'home';
   stopCoachSpeech();
   $('coach-dialog').close();$('journey-dialog').close();parentControls.relock();
   drawing?.close(); learning?.close(); discovery?.close(); challenges?.close(); adventures?.close(); listening?.close(); studio?.close();

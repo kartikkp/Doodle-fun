@@ -1,7 +1,7 @@
 import { getProfile, readStore, writeStore } from './core.js';
 import { TEMPLATES } from './templates.js';
 import {objectArt} from './activity-art.js';
-import { requestParentAction } from './parental-gate.js';
+import { requestParentAction, canOpenOutsideApp } from './parental-gate.js';
 
 const SIDE = 1536;
 const DRAFT_KEY = 'drawing-draft-v2';
@@ -448,6 +448,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
     showDialog($('.draw-export-dialog'));
   }
   $('.draw-save').addEventListener('click', async () => {
+    if (!canOpenOutsideApp()) return;
     finishPointer();
     const generation = ++exportGeneration;
     const current = () => active && generation === exportGeneration;
@@ -456,7 +457,7 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       const output = document.createElement('canvas'); output.width = output.height = SIDE;
       const out = output.getContext('2d'); out.fillStyle = '#fff'; out.fillRect(0, 0, SIDE, SIDE); out.drawImage(art, 0, 0);
       const blob = await new Promise(resolve => output.toBlob(resolve, 'image/png'));
-      if (!current()) return;
+      if (!current() || !canOpenOutsideApp()) return;
       if (!blob) throw new Error('Could not create picture');
       const native = globalThis.webkit?.messageHandlers?.doodleNative;
       if (native) {

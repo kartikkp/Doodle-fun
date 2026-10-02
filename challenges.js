@@ -190,7 +190,7 @@ export function createChallenges(container,{getSettings,getTitle=()=>null,onBack
     const info=CHALLENGE_INFO[id];container.replaceChildren();container.classList.add('challenges-screen');container.dataset.challengeId=id;
     const header=el('header','activity-header challenge-header'),heading=el('div','challenge-heading');
     heading.append(el('p','challenge-eyebrow',info.skill),el('h1','',getTitle() || info.title));
-    const back=button('← Home','button',()=>{close();onBack();});back.setAttribute('aria-label','Back to activities');
+    const back=button('← Home','button',onBack);back.setAttribute('aria-label','Back to activities');
     header.append(back,heading,el('span','challenge-support',`Practice ${profile.challengeAge} · No rush`));container.append(header);
     const body=el('div','activity-body challenge-body'),card=el('section','challenge-card'),side=el('aside','challenge-side');
     const topline=el('div','challenge-topline');topline.append(el('span','challenge-round',`ROUND ${round+1}`),el('span','challenge-icon',info.icon));card.append(topline);

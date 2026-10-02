@@ -4,7 +4,7 @@ import {normalizeParentControls,makeParentCredential,verifyParentSecret} from '.
 import {getProfile} from '../core.js';
 
 test('parent preferences safely normalize damaged local values',()=>{
-  for(const value of [null,[],false,'oops'])assert.deepEqual(normalizeParentControls(value),{version:1,hints:'on',lockSettings:false,credential:null,failures:0,retryAfter:0});
+  for(const value of [null,[],false,'oops'])assert.deepEqual(normalizeParentControls(value),{version:1,hints:'on',lockSettings:false,kidSafe:false,credential:null,failures:0,retryAfter:0});
   const result=normalizeParentControls({hints:'ask',lockSettings:true,credential:{salt:'bad',hash:'bad'},failures:Infinity,retryAfter:Infinity});
   assert.equal(result.hints,'ask');assert.equal(result.credential,null);assert.equal(result.retryAfter,0);
 });
@@ -25,4 +25,15 @@ test('an explicit practice step spans the curriculum without changing the child 
     const profile=getProfile({age,practiceStep});assert.equal(profile.age,age);assert.equal(profile.challengeAge,practiceStep);
   }
   for(const practiceStep of [0,11,2.5,'8',null,NaN,{},true])assert.equal(getProfile({age:6,practiceStep}).challengeAge,6);
+});
+
+
+test('kid-safe upgrades preserve existing controls and never create a lock without a valid credential',async()=>{
+  const credential=await makeParentCredential('4321','ABCDEF123456');
+  const legacy={version:1,hints:'ask',lockSettings:true,credential,failures:3,retryAfter:Date.now()+20000};
+  assert.deepEqual(normalizeParentControls(legacy),{...legacy,kidSafe:false});
+  assert.equal(normalizeParentControls({...legacy,kidSafe:true}).kidSafe,true);
+  for(const kidSafe of [false,'true',1,null])assert.equal(normalizeParentControls({...legacy,kidSafe}).kidSafe,false);
+  assert.equal(normalizeParentControls({kidSafe:true}).kidSafe,false);
+  assert.equal(normalizeParentControls({...legacy,kidSafe:true,credential:{salt:'bad'}}).kidSafe,false);
 });
