@@ -54,7 +54,7 @@ test('finite tracing sets require an explicit fresh attempt and can improve Bron
   await page.route('**/__trace_qa__/*',async route=>{
     const name=new URL(route.request().url()).pathname.split('/').at(-1);
     if(name==='index.html')return route.fulfill({contentType:'text/html',body:`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="learning.css"><main id="learning"></main><script type="module">import {createLearning} from './learning.js';import {getModeProgress} from './progression.js';window.settings={age:10,level:'auto',practiceStep:10};window.controller=createLearning(document.querySelector('#learning'),{getSettings:()=>settings});window.score=()=>getModeProgress('word-tracing',settings.age,10);controller.open('letters',{set:'words',managedModes:true});</script>`});
-    if(!['learning.js','learning-data.js','core.js','progression.js','speech.js','activity-art.js','learning.css','styles.css'].includes(name))return route.abort();
+    if(!['learning.js','learning-data.js','core.js','progression.js','speech.js','audio-startup.js','activity-art.js','learning.css','styles.css'].includes(name))return route.abort();
     return route.fulfill({contentType:name.endsWith('.css')?'text/css':'text/javascript',body:await readFile(new URL(`../${name}`,import.meta.url),'utf8')});
   });
   await page.goto('/__trace_qa__/index.html');await expect(board(page)).toBeVisible();

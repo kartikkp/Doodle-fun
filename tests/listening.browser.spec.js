@@ -236,6 +236,7 @@ for(const unsupported of [false,true])test(`playback session preference ${unsupp
 });
 
 for(const outcome of ['false','rejected','timeout'])test(`native audio preparation ${outcome} never schedules or unlocks any listening game`,async({page})=>{
+  if(outcome==='timeout')await page.clock.install();
   await page.addInitScript(outcome=>{
     localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:6,level:'auto',sound:false}));
     localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify({enabled:true,volume:.55}));
@@ -269,6 +270,12 @@ for(const outcome of ['false','rejected','timeout'])test(`native audio preparati
     expect(await page.evaluate(()=>window.__failedAudioContexts.length)).toBe(0);
     await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
     await page.locator('[data-listening-listen]').click();
+    if(outcome==='timeout'){
+      // Exercise the native-preparation phase's deadline without ten seconds
+      // of wall time per activity. Unheard answers stay locked before and after.
+      expect(await page.evaluate(()=>window.__scheduledVoices)).toBe(0);
+      await page.clock.fastForward(10001);
+    }
     await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
     await expect(page.locator('[data-listening-listen]')).toBeEnabled();
     await expect(page.getByTestId('listening-feedback')).not.toHaveText('Tap Listen when you are ready.');
