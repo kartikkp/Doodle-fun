@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
-import {readFile} from 'node:fs/promises';
+import {build} from 'esbuild';
+import {fileURLToPath} from 'node:url';
 import {LISTENING_IDS,LISTENING_INFO,buildListeningRound} from '../listening.js';
 import {getProfile} from '../core.js';
 import {OUTPUT_CEILING} from '../audio.js';
@@ -235,6 +236,7 @@ for(const unsupported of [false,true])test(`playback session preference ${unsupp
 });
 
 for(const outcome of ['false','rejected','timeout'])test(`native audio preparation ${outcome} never schedules or unlocks any listening game`,async({page})=>{
+  if(outcome==='timeout')await page.clock.install();
   await page.addInitScript(outcome=>{
     localStorage.setItem('doodle-fun:v2:settings',JSON.stringify({age:6,level:'auto',sound:false}));
     localStorage.setItem('doodle-fun:v2:listening-audio-v1',JSON.stringify({enabled:true,volume:.55}));
@@ -268,6 +270,12 @@ for(const outcome of ['false','rejected','timeout'])test(`native audio preparati
     expect(await page.evaluate(()=>window.__failedAudioContexts.length)).toBe(0);
     await page.locator('[data-listening-hint]').click();await expect(page.locator('[data-listening-model]')).toBeVisible();
     await page.locator('[data-listening-listen]').click();
+    if(outcome==='timeout'){
+      // Exercise the native-preparation phase's deadline without ten seconds
+      // of wall time per activity. Unheard answers stay locked before and after.
+      expect(await page.evaluate(()=>window.__scheduledVoices)).toBe(0);
+      await page.clock.fastForward(10001);
+    }
     await expect(page.locator('.listening-screen')).toHaveAttribute('data-listening-state','waiting');
     await expect(page.locator('[data-listening-listen]')).toBeEnabled();
     await expect(page.getByTestId('listening-feedback')).not.toHaveText('Tap Listen when you are ready.');
@@ -313,7 +321,8 @@ test('legacy muted, low, null, array, primitive and malformed audio preferences 
 
 test('actual OfflineAudioContext rendering has bounded nonzero, distinct voices and all four game signals',async({page})=>{
   await page.goto('/');
-  const source=await readFile(new URL('../audio.js',import.meta.url),'utf8');
+  const {outputFiles}=await build({entryPoints:[fileURLToPath(new URL('../audio.js',import.meta.url))],bundle:true,format:'esm',write:false});
+  const source=outputFiles[0].text;
   const moduleURL=`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`;
   const cases=[...['drum','bell','shaker','wood'].map(kind=>({name:kind,events:[{kind,time:0,duration:.3}]})),...LISTENING_IDS.flatMap(id=>[2,10].map(age=>({name:`${id}-${age}`,events:buildListeningRound(id,age).events})))];
   const results=await page.evaluate(async({moduleURL,cases})=>{

@@ -1,3 +1,4 @@
+import {beginAudioStartup} from './audio-startup.js';
 // Spoken help starts only from a Hear button. Clips are recorded at build time;
 // no child's text or audio is sent to a service while the app is being used.
 const clipPattern=/^data:audio\/(?:wav|x-wav|mpeg|mp4|aac|ogg);base64,([A-Za-z0-9+/=]+)$/;
@@ -8,6 +9,62 @@ export const normalizeSpeechText=text=>String(text??'').trim().replace(/\s+/g,' 
 export function canSpeak() {
   return Boolean(globalThis.webkit?.messageHandlers?.doodleNative || globalThis.speechSynthesis ||
     ((globalThis.AudioContext||globalThis.webkitAudioContext) && Object.values(globalThis.__DOODLE_VOICE_CLIPS__||{}).some(value=>typeof value==='string'&&clipPattern.test(value))));
+}
+
+// Silent resource preparation is independent of output activation. Keep only
+// four decoded clips (at most 16 MiB) in memory; never persist decoded audio.
+const preparedClips=new Map(),MAX_PREPARED_CLIPS=4,MAX_PREPARED_BYTES=16*1024*1024;
+let pendingDecodes=0;const MAX_PENDING_DECODES=2;
+// Cold simulator decoding has taken 14.26s. This is a separate, cancellable UI
+// resource-preparation ceiling, not a larger playback-start watchdog.
+export const CLIP_PREPARATION_LIMIT=30000;
+function clipBytes(data) {
+  const match=typeof data==='string'&&data.match(clipPattern);
+  if(!match)return null;
+  const binary=globalThis.atob(match[1]);return Uint8Array.from(binary,char=>char.charCodeAt(0));
+}
+function decodeClip(context,data,onDecoded=()=>{}) {
+  return new Promise(resolve=>{
+    let settled=false;
+    const complete=result=>{if(settled)return;settled=true;clearTimeout(timer);resolve(result);};
+    const timer=setTimeout(()=>complete({status:'failed',reason:'decode-timeout'}),CLIP_PREPARATION_LIMIT);
+    try {
+      const bytes=clipBytes(data);
+      if(!bytes){onDecoded();complete({status:'failed',reason:'invalid-clip'});return;}
+      Promise.resolve(context.decodeAudioData(bytes.buffer)).then(buffer=>{
+        onDecoded();complete(buffer&&Number.isFinite(buffer.duration)&&buffer.duration>0?{status:'ready',buffer}:{status:'failed',reason:'invalid-clip'});
+      },()=>{onDecoded();complete({status:'failed',reason:'invalid-clip'});});
+    }catch{onDecoded();complete({status:'failed',reason:'invalid-clip'});}
+  });
+}
+function prepareClip(data) {
+  const Offline=globalThis.OfflineAudioContext||globalThis.webkitOfflineAudioContext;
+  if(!Offline)return null;
+  const cached=preparedClips.get(data);
+  if(cached?.decoder===Offline){preparedClips.delete(data);preparedClips.set(data,cached);return cached.promise;}
+  if(pendingDecodes>=MAX_PENDING_DECODES)return Promise.resolve({status:'failed',reason:'decode-busy'});
+  try {
+    // OfflineAudioContext cannot send sound to the speakers. Do not render,
+    // resume, create sources, request native activation, or create a live context.
+    const context=new Offline(1,1,24000),entry={decoder:Offline,promise:null,bytes:0};
+    pendingDecodes++;
+    entry.promise=decodeClip(context,data,()=>{pendingDecodes--;}).then(result=>{
+      if(preparedClips.get(data)!==entry)return result;
+      if(result.status!=='ready'){preparedClips.delete(data);return result;}
+      entry.bytes=(result.buffer.length||Math.ceil(result.buffer.duration*24000))*(result.buffer.numberOfChannels||1)*4;
+      let bytes=[...preparedClips.values()].reduce((total,item)=>total+item.bytes,0);
+      while(preparedClips.size>MAX_PREPARED_CLIPS||bytes>MAX_PREPARED_BYTES){const [key,old]=preparedClips.entries().next().value;preparedClips.delete(key);bytes-=old.bytes;}
+      return result;
+    });
+    preparedClips.set(data,entry);
+    while(preparedClips.size>MAX_PREPARED_CLIPS)preparedClips.delete(preparedClips.keys().next().value);
+    return entry.promise;
+  }catch{return null;}
+}
+export function prepareSpeech(value) {
+  const text=normalizeSpeechText(value).slice(0,2000),data=globalThis.__DOODLE_VOICE_CLIPS__?.[text];
+  if(typeof data!=='string'||!clipPattern.test(data))return Promise.resolve({status:'unavailable'});
+  return prepareClip(data)||Promise.resolve({status:'unavailable'});
 }
 
 function closeContext(context) {
@@ -26,6 +83,7 @@ function closeContext(context) {
 
 function release(job) {
   clearTimeout(job.timer);
+  job.startup?.cancel();job.startup=null;
   job.removeVoiceListener?.();
   if(job.utterance){job.utterance.onend=null;job.utterance.onerror=null;}
   if(job.source){job.source.onended=null;try{job.source.stop();}catch{}try{job.source.disconnect();}catch{}}
@@ -78,41 +136,49 @@ function fallback(job) {
   job.timer=setTimeout(()=>finish(job,{status:'unavailable'}),1000);
 }
 
-export function requestSpeech(value) {
+export function requestSpeech(value,{onStart=()=>{}}={}) {
   const text=normalizeSpeechText(value).slice(0,2000);
   stopSpeaking();
   if(!text||globalThis.document?.hidden)return Promise.resolve({status:'unavailable'});
   const token=generation;
   return new Promise(resolve=>{
-    const job={token,text,resolve,context:null,source:null,output:null,timer:null};current=job;
+    const job={token,text,resolve,context:null,source:null,output:null,timer:null,startup:null};current=job;
     const data=globalThis.__DOODLE_VOICE_CLIPS__?.[text],match=typeof data==='string'&&data.match(clipPattern);
     const Audio=globalThis.AudioContext||globalThis.webkitAudioContext;
     if(!match||!Audio){fallback(job);return;}
+    const owned=()=>current===job&&job.token===generation&&!globalThis.document?.hidden;
     try{
-      const binary=globalThis.atob(match[1]),bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));
-      try{const session=globalThis.navigator?.audioSession;if(session&&session.type!=='playback')session.type='playback';}catch{}
-      const native=globalThis.webkit?.messageHandlers?.doodleAudio;
-      const prepared=Promise.resolve(native?native.postMessage({type:'prepareGameAudio'}):{ok:true}).catch(()=>({ok:false}));
+      // Validate before acquiring output. Invalid resources may use the explicit
+      // Hear request's device-voice fallback, never a remote URL.
+      clipBytes(data);
       const context=new Audio();job.context=context;
-      job.stateListener=()=>{if(current===job&&job.source&&context.state!=='running')finish(job,{status:'cancelled'});};
+      job.stateListener=()=>{if(current===job&&(job.source||job.outputReady)&&context.state!=='running')finish(job,{status:'cancelled'});};
       context.addEventListener('statechange',job.stateListener);
-      // Resume happens in the Hear click stack; decoding and the native reply
-      // may finish later, but neither may revive a cancelled request.
-      const resumed=context.state==='running'?Promise.resolve():context.resume();
-      let decoded;
-      try{decoded=context.decodeAudioData(bytes.buffer);}catch(error){decoded=Promise.reject(error);}
-      job.timer=setTimeout(()=>fallback(job),5000);
-      Promise.all([prepared,resumed,decoded]).then(([preparation,,buffer])=>{
-        if(current!==job||job.token!==generation||job.context!==context)return;
-        if(globalThis.document?.hidden){finish(job,{status:'cancelled'});return;}
-        if(preparation?.ok!==true||context.state!=='running'||!buffer||!Number.isFinite(buffer.duration)||buffer.duration<=0){fallback(job);return;}
-        clearTimeout(job.timer);
-        const source=context.createBufferSource(),output=context.createGain();job.source=source;job.output=output;
+      job.startup=beginAudioStartup(context,{isCurrent:owned,startTimeout:5000});
+      const decoded=prepareClip(data)||decodeClip(context,data);
+      const outputReady=job.startup.ready.then(result=>{
+        if(!owned()){if(current===job)finish(job,{status:'cancelled'});return result;}
+        if(result.status!=='ready')finish(job,{status:'failed',source:'clip'});
+        else job.outputReady=true;
+        return result;
+      });
+      // Decode latency never consumes the output-start deadline. A cold Hear
+      // can wait for the same silent preparation already started by Coach.
+      Promise.all([outputReady,decoded]).then(([startup,clip])=>{
+        if(current!==job||job.context!==context)return;
+        if(!owned()){finish(job,{status:'cancelled'});return;}
+        if(startup.status!=='ready'||context.state!=='running'){finish(job,{status:'failed',source:'clip'});return;}
+        if(clip.status!=='ready'){
+          if(clip.reason==='invalid-clip')fallback(job);
+          else finish(job,{status:'failed',source:'clip'});
+          return;
+        }
+        const buffer=clip.buffer,source=context.createBufferSource(),output=context.createGain();job.source=source;job.output=output;
         source.buffer=buffer;output.gain.value=1;source.connect(output);output.connect(context.destination);
         source.onended=()=>finish(job,{status:'played',source:'clip'});
-        source.start();
+        source.start();onStart();
         job.timer=setTimeout(()=>finish(job,{status:'failed',source:'clip'}),Math.ceil(buffer.duration*1000)+2000);
-      }).catch(()=>{if(job.context===context)fallback(job);});
+      }).catch(()=>{if(current===job)finish(job,{status:'failed',source:'clip'});});
     }catch{fallback(job);}
   });
 }

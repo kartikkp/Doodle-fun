@@ -133,11 +133,19 @@ jobs:
           retention-days: 7
 
   iphone-audio:
-    name: iPhone trusted audio
+    name: iPhone trusted audio (${{ matrix.mode }})
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.release_evidence }}
     runs-on: macos-latest
     # Audio gets its own bounded budget instead of the gameplay job's remainder.
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: plain
+            instrumentation: ""
+          - mode: diagnostics
+            instrumentation: --audio-diagnostics
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -170,7 +178,7 @@ jobs:
           DOODLE_SIMULATOR_UDID: ${{ steps.simulator.outputs.udid }}
         run: |
           caffeinate -di npm run test:iphone -- --device "$DOODLE_SIMULATOR_UDID" \
-            --output "$RUNNER_TEMP/DoodleFun-native-audio-qa" --without-gameplay --audio-diagnostics \
+            --output "$RUNNER_TEMP/DoodleFun-native-audio-qa" --without-gameplay ${{ matrix.instrumentation }} \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedSoundDetectiveRequiresAudioWithSystemVolume \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedPitchPathCanRetryAndChooseTheHeardContour \
             --only DoodleFunUITests/ActivityCatalogUITests/testTrustedMelodyEchoPlaysPadsInOrderAfterRetry \
@@ -188,7 +196,7 @@ jobs:
         if: always()
         timeout-minutes: 3
         with:
-          name: iphone-native-audio-qa-report
+          name: iphone-native-audio-qa-report-${{ matrix.mode }}
           path: |
             ${{ runner.temp }}/DoodleFun-native-audio-qa/*.xcresult/**
             ${{ runner.temp }}/DoodleFun-native-audio-qa/qa-build.json

@@ -21,7 +21,7 @@
     if (promise && typeof promise.then === 'function') promise.then(resolved, rejected);
   };
   const constructors = new Map();
-  for (const name of ['AudioContext', 'webkitAudioContext']) {
+  for (const name of ['AudioContext', 'webkitAudioContext', 'OfflineAudioContext', 'webkitOfflineAudioContext']) {
     const Native = globalThis[name];
     if (!Native) continue;
     let Wrapped = constructors.get(Native);
@@ -82,11 +82,23 @@
         values => record('startup-join-resolved', {...contextFields(context), ok: values[0]?.ok === true, duration: values[2]?.duration}),
         error => record('startup-join-rejected', {...contextFields(context), ...errorFields(error)}));
     }
+    // Phase-separated production speech joins two result objects. These are
+    // recognized only by bounded status/clip metadata; never retain text/data.
+    // Observing the aggregate leaves every original promise and value intact.
+    if (Array.isArray(input) && input.length === 2) observePromise(result, values => {
+      const output=values[0],clip=values[1];
+      if (!['ready','failed','cancelled'].includes(output?.status)) return;
+      if (clip?.status === 'ready' && Number.isFinite(clip.buffer?.duration)) {
+        record('startup-join-resolved', {outputStatus:output.status, decodeStatus:'ready', duration:clip.buffer.duration});
+      } else if (clip?.status === 'failed' && ['invalid-clip','decode-timeout','decode-busy'].includes(clip.reason)) {
+        record('startup-join-resolved', {outputStatus:output.status, decodeStatus:'failed', reason:clip.reason});
+      }
+    }, () => {});
     return result;
   };
   const originalSet = globalThis.setTimeout, originalClear = globalThis.clearTimeout;
   globalThis.setTimeout = function (callback, delay, ...args) {
-    if (Number(delay) !== 5000 || typeof callback !== 'function') return Reflect.apply(originalSet, this, [callback, delay, ...args]);
+    if (![2500, 5000, 10000, 30000].includes(Number(delay)) || typeof callback !== 'function') return Reflect.apply(originalSet, this, [callback, delay, ...args]);
     const timer = ++nextTimer;
     record('startup-timer-scheduled', {timer, delay});
     const observed = function (...values) { record('startup-timer-fired', {timer}); return Reflect.apply(callback, this, values); };
@@ -106,7 +118,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     const status = document.querySelector('#coach-speech-status');
     if (!status) { record('coach-status-missing'); return; }
-    const states = {'Playing spoken help…':'playing', 'Spoken help finished.':'finished', 'Spoken help requested.':'requested', 'Spoken help stopped.':'stopped', 'Spoken help could not play. Try Hear again.':'failed', '':'empty'};
+    const states = {'Preparing spoken help…':'preparing', 'Playing spoken help…':'playing', 'Spoken help finished.':'finished', 'Spoken help requested.':'requested', 'Spoken help stopped.':'stopped', 'Spoken help could not play. Try Hear again.':'failed', '':'empty'};
     new MutationObserver(() => record('coach-status', {status: states[status.textContent] || 'other'})).observe(status, {childList: true, subtree: true, characterData: true});
     record('coach-status-observer-ready');
   });

@@ -1,5 +1,7 @@
 # Bundled coaching voice
 
+The [October 3, 2026 content audit](content-provenance.md) reverified every shipped clip hash and the publisher's current license information, and records the limits of that review. The clips are retained; a permissive model license is not a blanket guarantee about all third-party rights or exclusive ownership of generated output.
+
 Updated September 27, 2026. The app includes 120 short synthetic coaching recordings covering all 38 modes at starting ages 2–10. Their combined duration is 1,178.1 seconds and their AAC payload is 10,120,649 bytes. Identical transcripts reuse one clip. These are a general synthetic voice, not a recording or clone of a named person.
 
 ## Source and attribution
@@ -30,6 +32,6 @@ The build rejects missing, stale or corrupt recordings. It embeds the clips in t
 
 ## What remains device-generated
 
-Coach tips use these bundled recordings. Changing questions and selected tracing items still use local device speech when Hear is explicitly requested. If a clip cannot decode, the same active request may fall back to local speech. Silent navigation, answer feedback, visual hints, Stop, leaving a route and background cancellation are tested separately. An old saved narration preference never enables automatic speech.
+Coach tips use these bundled recordings. Changing questions and selected tracing items still use local device speech when Hear is explicitly requested. If a clip is malformed or unavailable, the same active request may fall back to local speech. Slow or stalled preparation reports a retry state rather than silently replacing a bundled clip with device speech. Coach may silently predecode its selected clip into a bounded, memory-only offline cache; only Hear can activate live output. Silent navigation, answer feedback, visual hints, Stop, leaving a route and background cancellation are tested separately. An old saved narration preference never enables automatic speech.
 
 Generator waveform checks and successful decode/playback establish non-silent digital audio, not subjective naturalness or a physical speaker's loudness. Listening on actual iPhone speakers and child usability remain direct acceptance checks. See the final phase QA report for execution evidence and the candidate fingerprint.
