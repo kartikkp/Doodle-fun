@@ -29,7 +29,7 @@ async function exportPNG(page){
   await expect.poll(()=>page.locator('.draw-export-image').evaluate(img=>img.naturalWidth)).toBe(1536);
 }
 
-test('all 20 vectors match their picker and exported PNG, with exact undo and redo',async({page})=>{
+test('all 20 vectors match their picker and exported PNG, with exact undo and redo',async({page},testInfo)=>{
   test.setTimeout(120000);await start(page);
   await page.getByRole('button',{name:/^Medium brush,/}).click();
   await paper(page).evaluate(node=>{
@@ -50,22 +50,58 @@ test('all 20 vectors match their picker and exported PNG, with exact undo and re
     await page.getByRole('button',{name:'Undo last action',exact:true}).click();expect(await snapshot(page)).toBe(before);
     await page.getByRole('button',{name:'Redo last action',exact:true}).click();expect(await snapshot(page)).toBe(after);
     const point=await page.evaluate(()=>window.stampTestPoints.at(-1));
-    placements.push({svg,...point,size:(brush*2+30)*1536/600});
+    placements.push({name,svg,...point,size:(brush*2+30)*1536/600});
   }
   expect(await snapshot(page)).not.toBe(blank);await exportPNG(page);
   const result=await page.locator('.draw-export-image').evaluate(async(img,placements)=>{
-    const actual=document.createElement('canvas');actual.width=actual.height=1536;
+    const canvas=()=>{const node=document.createElement('canvas');node.width=node.height=1536;return node;};
+    const actual=canvas();
     const ctx=actual.getContext('2d');ctx.drawImage(img,0,0);
-    const expected=document.createElement('canvas');expected.width=expected.height=1536;
-    const want=expected.getContext('2d');want.fillStyle='#fff';want.fillRect(0,0,1536,1536);
-    for(const {svg,x,y,size} of placements){
+    const pixels=ctx.getImageData(0,0,1536,1536).data,images=[];
+    for(const {svg,...placement} of placements){
       const stamp=new Image();await new Promise((yes,no)=>{stamp.onload=yes;stamp.onerror=no;stamp.src=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;});
-      want.drawImage(stamp,x-size/2,y-size/2,size,size);
+      images.push({...placement,stamp});
     }
-    const a=ctx.getImageData(0,0,1536,1536).data,b=want.getImageData(0,0,1536,1536).data;
-    let different=0,max=0;for(let i=0;i<a.length;i++){const d=Math.abs(a[i]-b[i]);if(d)different++;max=Math.max(max,d);}
-    return {max,different};
+    const compare=expected=>{
+      const other=expected.getContext('2d').getImageData(0,0,1536,1536).data;
+      let different=0,max=0,worst=null;
+      for(let i=0;i<pixels.length;i++){
+        const d=Math.abs(pixels[i]-other[i]);if(d)different++;
+        if(d>max){max=d;const pixel=Math.floor(i/4);worst={x:pixel%1536,y:Math.floor(pixel/1536),channel:i%4,actual:pixels[i],expected:other[i]};}
+      }
+      if(worst)worst.stamp=placements.find(({x,y,size})=>Math.abs(x-worst.x)<=size/2+1&&Math.abs(y-worst.y)<=size/2+1)?.name;
+      return {max,different,worst};
+    };
+    const diagnostics=[],attachments={};let result;
+    // The studio rasterizes onto transparent, frequently-read paper. Drawing
+    // SVGs directly onto an opaque/default canvas skips that rendering setup.
+    // Keep the artwork independent: these SVGs came from the picker DOM.
+    // Record the other paths to isolate browser-specific differences in CI.
+    for(const {name,transparent,frequent,history} of [
+      {name:'direct-white',transparent:false,frequent:false,history:false},
+      {name:'transparent-default',transparent:true,frequent:false,history:false},
+      {name:'transparent-frequent',transparent:true,frequent:true,history:false},
+      {name:'expected',transparent:true,frequent:true,history:true},
+    ]){
+      const expectedArt=canvas(),ink=expectedArt.getContext('2d',{willReadFrequently:frequent});
+      if(!transparent){ink.fillStyle='#fff';ink.fillRect(0,0,1536,1536);}
+      for(const {stamp,x,y,size} of images)ink.drawImage(stamp,x-size/2,y-size/2,size,size);
+      // Each non-overlapping stamp was restored from history before export.
+      // Match its unpremultiplied pixel round trip before flattening to white.
+      if(history)ink.putImageData(ink.getImageData(0,0,1536,1536),0,0);
+      const expected=transparent?canvas():expectedArt;
+      if(transparent){const want=expected.getContext('2d');want.fillStyle='#fff';want.fillRect(0,0,1536,1536);want.drawImage(expectedArt,0,0);}
+      const diff=compare(expected);diagnostics.push({name,...diff});
+      if(diff.max>1||diff.different>=30000)attachments[name]=expected.toDataURL();
+      if(name==='expected')result=diff;
+    }
+    if(Object.keys(attachments).length)attachments.actual=actual.toDataURL();
+    return {...result,diagnostics,attachments};
   },placements);
+  await testInfo.attach('stamp-rendering-diagnostics',{body:Buffer.from(JSON.stringify(result.diagnostics,null,2)),contentType:'application/json'});
+  for(const [name,png] of Object.entries(result.attachments)){
+    await testInfo.attach(`${name}-stamp-export`,{body:Buffer.from(png.split(',')[1],'base64'),contentType:'image/png'});
+  }
   // PNG premultiplication can round antialiased channels, but moved/missing
   // shapes and a platform emoji substitution must fail this pixel comparison.
   expect(result.max).toBeLessThanOrEqual(1);expect(result.different).toBeLessThan(30000);
