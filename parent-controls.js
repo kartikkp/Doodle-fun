@@ -30,7 +30,7 @@ export async function verifyParentSecret(credential,secret,recovery=false) {
 
 export const HINT_SELECTOR='[data-hint],.challenge-hint-button,.discover-hint,.adventure-hint,[data-listening-hint],.listening-hint,.learn-hint,.learn-demo,details.challenge-help>summary,details.learn-help>summary,details.adventure-help>summary,details.listening-help>summary';
 
-export function createParentControls({onChange=()=>{},onNotice=()=>{},onRelock=()=>{}}={}) {
+export function createParentControls({onChange=()=>{},onNotice=()=>{},onRelock=()=>{},onKidSafeReady=()=>{}}={}) {
   let preferences=normalizeParentControls(readStore(STORE,null)),pending=null,settingsSession=false,grant=null,epoch=0;
   const bypass=new WeakSet();
   const panel=document.getElementById('parent-controls-panel');
@@ -70,7 +70,7 @@ export function createParentControls({onChange=()=>{},onNotice=()=>{},onRelock=(
     if(preferences.credential&&!settingsSession&&!await authorize('Enter your PIN to change kid-safe play.'))return false;
     if(route!==location.hash||document.hidden)return false;
     if(enabled&&!preferences.credential)return prompt({setup:true,kidSafe:true});
-    try {save({...preferences,kidSafe:enabled});return true;}
+    try {const wasEnabled=preferences.kidSafe;save({...preferences,kidSafe:enabled});if(enabled&&!wasEnabled)onKidSafeReady();return true;}
     catch(error){onNotice(error.message);return false;}
   }
   async function requestHint(action){
@@ -96,7 +96,7 @@ export function createParentControls({onChange=()=>{},onNotice=()=>{},onRelock=(
         const recovery=randomHex(6).toUpperCase(),credential=await makeParentCredential(input,recovery);
         if(pending!==current||token!==epoch)return;
         save({...preferences,credential,lockSettings:true,kidSafe:current.kidSafe||preferences.kidSafe,failures:0,retryAfter:0});settingsSession=true;
-        settle(true);showRecovery(recovery);
+        settle(true);showRecovery(recovery,()=>{if(current.kidSafe&&preferences.kidSafe)onKidSafeReady();});
       } else {
         const correct=await verifyParentSecret(preferences.credential,input,recovering);
         if(pending!==current||token!==epoch)return;
@@ -107,8 +107,8 @@ export function createParentControls({onChange=()=>{},onNotice=()=>{},onRelock=(
     }catch(error){if(pending===current)$('parent-pin-error').textContent=error.message;}
     finally {if(pending===current){current.processing=false;$('parent-pin-submit').disabled=false;$('parent-pin-recover').disabled=false;}}
   });
-  function showRecovery(code){
-    const box=document.createElement('dialog');box.className='settings-dialog';box.setAttribute('aria-label','Save your parent recovery code');box.innerHTML='<h2>Keep your recovery code</h2><p class="settings-intro">Write this down somewhere only a grown-up can find. It resets parent controls without deleting drawings or medals.</p><output class="parent-recovery-code"></output><p class="coach-small">This is a household control. Removing the app or clearing its data also removes local settings.</p><button type="button" class="button button-primary">I saved the code</button>';box.querySelector('output').textContent=code.match(/.{1,4}/g).join('–');box.querySelector('button').onclick=()=>box.close();box.addEventListener('close',()=>box.remove());document.body.append(box);box.showModal();
+  function showRecovery(code,onSaved=()=>{}){
+    const box=document.createElement('dialog');box.className='settings-dialog';box.setAttribute('aria-label','Save your parent recovery code');box.innerHTML='<h2>Keep your recovery code</h2><p class="settings-intro">Write this down somewhere only a grown-up can find. It resets parent controls without deleting drawings or medals.</p><output class="parent-recovery-code"></output><p class="coach-small">This is a household control. Removing the app or clearing its data also removes local settings.</p><button type="button" class="button button-primary">I saved the code</button>';box.querySelector('output').textContent=code.match(/.{1,4}/g).join('–');box.querySelector('button').onclick=()=>{box.close();if(!document.hidden)onSaved();};box.addEventListener('close',()=>box.remove());document.body.append(box);box.showModal();
   }
   dialog.querySelectorAll('[data-pin-cancel]').forEach(button=>button.addEventListener('click',()=>settle(false)));
   dialog.addEventListener('cancel',event=>{event.preventDefault();settle(false);});dialog.addEventListener('close',()=>{if(!dialog.open&&pending)settle(false);});

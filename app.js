@@ -12,6 +12,7 @@ import {canSpeak,requestSpeech,prepareSpeech,stopSpeaking} from './speech.js';
 import {openExternalURL,setExternalActionGuard,cancelParentAction} from './parental-gate.js';
 import {createStudioPlay} from './studio-play.js';
 import {createParentControls} from './parent-controls.js';
+import {createGuidedAccessGuide} from './guided-access.js';
 import {beginRound,getCurrentRound,getModeProgress,subscribeProgress} from './progression.js';
 
 let settings = normalizeSettings(readStore('settings', null));
@@ -28,7 +29,7 @@ let informationReturn = null, coachSpeechToken=0, coachSpeaking=false;
 const rawSteps=readStore('practice-steps-v1',{});
 const practiceSteps=rawSteps&&typeof rawSteps==='object'&&!Array.isArray(rawSteps)?Object.fromEntries(Object.entries(rawSteps).filter(([key,value])=>ACTIVITY_MODES.some(mode=>Array.from({length:9},(_,i)=>`${mode.id}:${i+2}`).includes(key))&&Number.isInteger(value)&&value>=2&&value<=10)):{};
 const getSettings = () => ({...settings,challengeOffset:adjustments[activeRoute] || 0,practiceStep:practiceSteps[`${activeRoute}:${settings.age}`]});
-const parentControls=createParentControls({onNotice:notice,onChange:(next,previous)=>{stopCoachSpeech();if(next.kidSafe&&!previous.kidSafe){cancelParentAction();document.querySelector('.draw-export-dialog')?.close();}if(next.hints!==previous.hints){activeController()?.clearHints?.();$('coach-dialog').close();}renderCoach();},onRelock:()=>{if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();}});
+const parentControls=createParentControls({onKidSafeReady:()=>guidedAccess.openAfterSetup(),onNotice:notice,onChange:(next,previous)=>{stopCoachSpeech();if(next.kidSafe&&!previous.kidSafe){cancelParentAction();document.querySelector('.draw-export-dialog')?.close();}if(next.hints!==previous.hints){activeController()?.clearHints?.();$('coach-dialog').close();}guidedAccess.refresh();renderCoach();},onRelock:()=>{if(parentControls.preferences.hints!=='on')activeController()?.clearHints?.();}});
 setExternalActionGuard(()=>{
   if(!parentControls.preferences.kidSafe)return true;
   notice('Kid-safe play keeps sharing and websites closed. A grown-up can turn it off in Grown-ups with the PIN.');
@@ -49,14 +50,7 @@ $('kid-safe-setup').addEventListener('click',async()=>{
   try {if(await parentControls.setKidSafe(true)){parentControls.closeSettings();finishKidSafeSetup();}}
   finally {$('kid-safe-setup').disabled=false;}
 });
-let guidedAccessReturn=null;
-// Delegation also covers the controls inserted by createParentControls.
-document.addEventListener('click',event=>{
-  const button=event.target.closest?.('[data-open-guided]');if(!button)return;
-  guidedAccessReturn=button;$('guided-access-dialog').showModal();
-});
-for(const id of ['guided-access-close','guided-access-done'])$(id).addEventListener('click',()=>$('guided-access-dialog').close());
-$('guided-access-dialog').addEventListener('close',()=>{if(guidedAccessReturn?.isConnected)guidedAccessReturn.focus({preventScroll:true});});
+const guidedAccess=createGuidedAccessGuide(parentControls);
 let acceptedHash=location.hash||'#home',approvedHomeNavigation=null;
 const clearHomeApproval=()=>{approvedHomeNavigation=null;};
 window.addEventListener('pagehide',clearHomeApproval);

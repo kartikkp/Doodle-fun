@@ -33,10 +33,11 @@
         <div class="little-win" aria-live="polite"><span class="win-star" aria-hidden="true">★</span><div><strong id="home-progress">Every try counts</strong><span id="home-progress-sub">Play at your own pace</span></div></div>
       </section>
       <section id="kid-safe-onboarding" class="kid-safe-onboarding" aria-labelledby="kid-safe-onboarding-title" hidden>
-        <div><span class="eyebrow">OPTIONAL · FOR A GROWN-UP</span><h2 id="kid-safe-onboarding-title">Set up kid-safe play?</h2><p>Add a parent PIN for returning to the menu and changing settings. Sharing and outside websites stay closed while it is on. You can change this later in Grown-ups.</p><p class="coach-small">To stop the iPhone or iPad Home gesture and app switching, also start Apple’s Guided Access.</p></div>
+        <div><span class="eyebrow">OPTIONAL · FOR A GROWN-UP</span><h2 id="kid-safe-onboarding-title">Set up kid-safe play?</h2><p>Add a parent PIN for returning to the menu and changing settings. Sharing and outside websites stay closed while it is on. You can change this later in Grown-ups.</p><p class="coach-small">The PIN works inside Doodle Fun. Next, we will guide you through Apple’s Guided Access to stop leaving the app.</p></div>
         <div class="parent-control-actions"><button id="kid-safe-setup" type="button" class="button button-primary">Set up kid-safe play</button><button id="kid-safe-skip" type="button" class="button">Not now</button><button type="button" class="button" data-open-guided>How to use Guided Access</button></div>
         <p id="kid-safe-setup-status" role="status"></p>
       </section>
+      <section id="guided-access-reminder" class="guided-access-reminder" aria-label="Device lock" hidden><div><strong>Device lock · Guided Access</strong><p id="guided-access-home-status" role="status"></p></div><button type="button" class="button" data-open-guided>Guided Access setup</button></section>
       <section class="age-picker" aria-labelledby="age-picker-title">
         <div class="age-picker-label"><strong id="age-picker-title">Choose your starting point</strong><span id="age-description">A little help, a little challenge.</span></div>
         <div class="age-options" role="group" aria-label="Starting age">
@@ -115,16 +116,33 @@
     </div>
     <button type="button" class="button button-primary information-done" data-close-info="support">Back to play</button>
   </dialog>
-  <dialog id="guided-access-dialog" class="settings-dialog information-dialog" aria-labelledby="guided-access-title">
+  <dialog id="guided-access-dialog" class="settings-dialog information-dialog" aria-labelledby="guided-access-title" aria-describedby="guided-access-intro">
     <div class="dialog-heading"><div><span class="eyebrow">IPHONE & IPAD · FOR A GROWN-UP</span><h2 id="guided-access-title">Keep the device in Doodle Fun</h2></div><button type="button" class="icon-button" id="guided-access-close" aria-label="Close Guided Access help">✕</button></div>
+    <p id="guided-access-intro" class="settings-intro"></p>
+    <p id="guided-access-status" class="guided-access-status" role="status"></p>
+    <p id="guided-access-progress" class="eyebrow">Step 1 of 3</p>
     <div class="policy-content">
-      <p>The Doodle Fun PIN protects controls inside this app. It cannot stop the Home gesture, app switching, browser navigation, or device buttons.</p>
-      <ol><li>In the device’s Settings, open Accessibility → Guided Access and turn it on. In Passcode Settings, choose a Guided Access passcode. This is separate from your Doodle Fun PIN.</li><li>Return to Doodle Fun and choose an activity. Triple-click the side button on iPhone, top button on iPad, or Home button on an older device. Choose Guided Access if a shortcut menu appears.</li><li>Review the options and tap Start if asked. Leave Touch on so drawing works, and leave Software Keyboards on so you can enter the parent PIN.</li></ol>
-      <p>To finish, use the device’s Guided Access shortcut, authenticate with its passcode or enabled Face ID / Touch ID, then tap End. On current iOS and iPadOS, triple-click the same button; older versions can use a double-click with biometric authentication.</p>
-      <p><strong>Important:</strong> Apple says Crash Detection and emergency calls are unavailable during Guided Access. End the session to use them. Keep the device with a grown-up.</p>
-      <p>Doodle Fun cannot turn Guided Access on for you or confirm that you started it. On the web, browser and system controls still work; Guided Access locks Safari itself, not a single website.</p>
+      <section data-guided-step>
+        <h3 id="guided-access-step-title-1" tabindex="-1">1. Set up in Apple Settings</h3>
+        <p>The app PIN cannot stop the Home gesture or app switching. Doodle Fun cannot turn Guided Access on or open its Settings page for you.</p>
+        <div class="guided-settings-path" aria-label="Settings, Accessibility, Guided Access"><strong>Settings</strong><span aria-hidden="true">↓</span><strong>Accessibility</strong><span aria-hidden="true">↓</span><strong>Guided Access → On</strong></div>
+        <p>Open the device’s <strong>Settings</strong> app yourself and follow this path. Under <strong>Passcode Settings → Set Guided Access Passcode</strong>, choose a Guided Access passcode. This is separate from your Doodle Fun PIN and your device unlock passcode. You may also enable Face ID or Touch ID here.</p>
+        <p>If a session is already active, end it using step 3 before opening Settings.</p>
+      </section>
+      <section data-guided-step hidden>
+        <h3 id="guided-access-step-title-2" tabindex="-1">2. Return here and start a session</h3>
+        <ol><li>Return to Doodle Fun, close this guide and choose an activity.</li><li><strong>Triple-click</strong> the side button on iPhone or top button on iPad. On a device with a Home button, triple-click Home instead. Choose <strong>Guided Access</strong> if the Accessibility Shortcuts panel appears.</li><li>In <strong>Session Settings</strong> (or <strong>Options</strong>), leave <strong>Touch on</strong> so drawing works, and leave <strong>Software Keyboards on</strong> so you can enter the parent PIN. Leave Volume Buttons on if you want to adjust the game sound.</li><li>Tap <strong>Start</strong>. If this app has previous Guided Access settings, the session may start immediately.</li></ol>
+        <p>Triple-click does nothing? Check that Guided Access is on in Settings → Accessibility, then return to this app and try again.</p>
+      </section>
+      <section data-guided-step hidden>
+        <h3 id="guided-access-step-title-3" tabindex="-1">3. End the device lock</h3>
+        <p>Triple-click the same side, top, or Home button. On iOS or iPadOS 18 or earlier, double-click instead to pause. Authenticate with the <strong>Guided Access passcode</strong> or enabled Face ID / Touch ID; select Guided Access if a shortcut panel appears. Then tap <strong>End</strong>. Tap Resume to keep playing.</p>
+        <p>The Doodle Fun PIN only opens this app’s grown-up controls. It cannot end Apple’s Guided Access session. If the PIN keyboard is hidden, pause Guided Access and turn Software Keyboards on in Session Settings (or Options).</p>
+        <p>On the web, Guided Access locks Safari itself, not a single website. Browser controls remain separate from the Doodle Fun PIN.</p>
+      </section>
+      <p class="information-small"><strong>Before handing over the device:</strong> Apple says Crash Detection and emergency calls are unavailable during Guided Access. End the session to use them. Keep the device with a grown-up.</p>
     </div>
-    <button id="guided-access-done" type="button" class="button button-primary">Got it</button>
+    <div class="parent-control-actions"><button id="guided-access-back" type="button" class="button" hidden>Back</button><button id="guided-access-next" type="button" class="button button-primary">Next: start in Doodle Fun</button><button id="guided-access-done" type="button" class="button button-primary" hidden>Close guide</button></div>
   </dialog>
   <dialog id="parent-gate" class="settings-dialog parent-gate" aria-labelledby="parent-title" aria-describedby="parent-purpose">
     <form id="parent-form" novalidate>

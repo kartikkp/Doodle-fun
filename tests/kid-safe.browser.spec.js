@@ -37,7 +37,8 @@ test('first-use setup is optional, can be skipped, and stays available in Grown-
 test('cancelled setup preserves the offer; successful setup saves PIN and recovery without leaving an adult session unlocked',async({page})=>{
   await page.goto('/');await page.locator('#kid-safe-setup').click();await cancel(page);await expect(page.locator('#kid-safe-onboarding')).toBeVisible();
   await page.locator('#kid-safe-setup').click();await page.locator('#parent-pin-input').fill(pin);await page.locator('#parent-pin-confirm').fill('1111');await page.locator('#parent-pin-submit').click();await expect(page.locator('#parent-pin-error')).toContainText('do not match');
-  await page.locator('#parent-pin-confirm').fill(pin);await page.locator('#parent-pin-submit').click();await expect(page.locator('.parent-recovery-code')).toBeVisible();await page.getByRole('button',{name:'I saved the code'}).click();
+  await page.locator('#parent-pin-confirm').fill(pin);await page.locator('#parent-pin-submit').click();await expect(page.locator('.parent-recovery-code')).toBeVisible();await expect(page.locator('#guided-access-dialog')).toBeHidden();await page.getByRole('button',{name:'I saved the code'}).click();
+  await expect(page.locator('#guided-access-dialog')).toBeVisible();await expect(page.locator('#guided-access-intro')).toContainText('PIN is saved');await page.locator('#guided-access-close').click();
   expect(await controls(page)).toMatchObject({kidSafe:true,lockSettings:true});await expect(page.locator('#kid-safe-onboarding')).toBeHidden();
   await page.locator('#grownups-open').click();await expect(page.locator('#parent-pin-dialog')).toBeVisible();await cancel(page);
   await page.reload();await expect(page.locator('#kid-safe-onboarding')).toBeHidden();await page.locator('#card-draw').click();await page.locator('.draw-back').click();await expect(page.locator('#parent-pin-dialog')).toBeVisible();
@@ -59,7 +60,7 @@ for(const [route,back] of [['draw','.draw-back'],['uppercase','.learn-back'],['s
 }
 
 test('Back, empty and unknown home hashes cannot bypass the PIN',async({page})=>{
-  await seed(page);await page.goto('/');await page.locator('#card-draw').click();await page.goBack();await expect(page.locator('#parent-pin-dialog')).toBeVisible();await cancel(page);await expect(page.locator('.draw-canvas')).toBeVisible();
+  await seed(page);await page.goto('/');await page.locator('#card-draw').click();await expect(page.locator('body')).toHaveAttribute('data-activity','draw');await page.goBack();await expect(page.locator('#parent-pin-dialog')).toBeVisible();await cancel(page);await expect(page.locator('.draw-canvas')).toBeVisible();
   for(const hash of ['#home','','#unknown','#main-content']){
     await page.evaluate(hash=>{location.hash=hash;},hash);await expect(page.locator('#parent-pin-dialog')).toBeVisible();await cancel(page);await expect(page.locator('.draw-canvas')).toBeVisible();
   }
@@ -103,6 +104,52 @@ test('backgrounding and newer navigation invalidate slow exit validation',async(
 });
 
 test('Guided Access help is offline, honest about device restrictions and fits a small screen',async({page,context})=>{
-  await page.setViewportSize({width:320,height:568});await page.goto('/');await context.setOffline(true);await page.locator('#kid-safe-onboarding [data-open-guided]').click();const help=page.locator('#guided-access-dialog');await expect(help).toBeVisible();await expect(help).toContainText('cannot stop the Home gesture');await expect(help).toContainText('Leave Touch on');await expect(help).toContainText('Crash Detection');expect(await help.evaluate(el=>el.scrollWidth>el.clientWidth+1)).toBe(false);
+  await page.setViewportSize({width:320,height:568});await page.goto('/');await context.setOffline(true);await page.locator('#kid-safe-onboarding [data-open-guided]').click();const help=page.locator('#guided-access-dialog');await expect(help).toBeVisible();await expect(help).toContainText('cannot stop the Home gesture');await expect(help).toContainText('Crash Detection');await expect(page.locator('#guided-access-step-title-1')).toBeFocused();await page.locator('#guided-access-next').click();await expect(page.locator('[data-guided-step]').nth(1)).toContainText('Touch on');expect(await help.evaluate(el=>el.scrollWidth>el.clientWidth+1)).toBe(false);
   await page.locator('#guided-access-close').click();await expect(page.locator('#kid-safe-onboarding [data-open-guided]')).toBeFocused();
 });
+
+
+test('existing PIN owners can reenter the walkthrough; cancellation and returning from Settings relock controls',async({page})=>{
+  await seed(page,{native:true});await page.goto('/');
+  await expect(page.locator('#guided-access-reminder')).toBeVisible();
+  await page.locator('#guided-access-reminder [data-open-guided]').click();await cancel(page);await expect(page.locator('#guided-access-dialog')).toBeHidden();
+  await page.locator('#guided-access-reminder [data-open-guided]').click();await unlock(page);
+  await expect(page.locator('#guided-access-dialog')).toBeVisible();await expect(page.locator('#guided-access-status')).toContainText('status unavailable');
+  await page.evaluate(()=>dispatchEvent(new CustomEvent('doodle-native-guided-access',{detail:{active:false}})));
+  await expect(page.locator('#guided-access-status')).toContainText('session not active');await expect(page.locator('#guided-access-status')).toContainText('may already be set up');
+  await page.locator('#guided-access-next').click();await expect(page.locator('#guided-access-step-title-2')).toBeFocused();
+  await page.locator('#guided-access-next').click();await expect(page.locator('#guided-access-step-title-3')).toBeFocused();
+  await expect(page.locator('[data-guided-step]').nth(2)).toContainText('Guided Access passcode');
+  await page.locator('#guided-access-back').click();await expect(page.locator('#guided-access-progress')).toHaveText('Step 2 of 3');
+  await page.evaluate(()=>dispatchEvent(new Event('doodle-native-inactive')));await expect(page.locator('#guided-access-dialog')).toBeHidden();
+  await page.locator('#guided-access-reminder [data-open-guided]').click();await expect(page.locator('#parent-pin-dialog')).toBeVisible();await unlock(page);
+  await expect(page.locator('#guided-access-progress')).toHaveText('Step 1 of 3');await expect(page.locator('#guided-access-status')).toContainText('status unavailable');
+  await page.evaluate(()=>dispatchEvent(new CustomEvent('doodle-native-guided-access',{detail:{active:true}})));
+  await expect(page.locator('#guided-access-status')).toContainText('session active');await expect(page.locator('#guided-access-status')).toContainText('End the session');
+  expect(await outsideRequests(page)).toEqual([]);
+});
+
+test('enabling kid-safe play with an existing PIN opens the guide without asking for a new recovery code',async({page})=>{
+  await seed(page,{kidSafe:false});await page.goto('/');await page.locator('#grownups-open').click();await unlock(page);
+  await page.locator('#parent-kid-safe').check();await expect(page.locator('#guided-access-dialog')).toBeVisible();await expect(page.locator('.parent-recovery-code')).toHaveCount(0);
+  await page.locator('#guided-access-close').click();await page.locator('#settings-done').click();
+  await page.locator('#guided-access-reminder [data-open-guided]').click();await expect(page.locator('#parent-pin-dialog')).toBeVisible();await cancel(page);
+});
+
+test('an interrupted recovery acknowledgment does not open the guide or leave an adult session unlocked',async({page})=>{
+  await page.goto('/');await page.locator('#kid-safe-setup').click();await page.locator('#parent-pin-input').fill(pin);await page.locator('#parent-pin-confirm').fill(pin);await page.locator('#parent-pin-submit').click();await expect(page.locator('.parent-recovery-code')).toBeVisible();
+  await page.evaluate(()=>dispatchEvent(new Event('doodle-native-inactive')));await expect(page.locator('.parent-recovery-code')).toHaveCount(0);await expect(page.locator('#guided-access-dialog')).toBeHidden();
+  await page.locator('#guided-access-reminder [data-open-guided]').click();await expect(page.locator('#parent-pin-dialog')).toBeVisible();await cancel(page);
+});
+
+for(const size of [{width:320,height:568},{width:844,height:390},{width:768,height:1024}]){
+  test(`Guided Access walkthrough fits ${size.width}x${size.height} with larger text and no unreachable steps`,async({page})=>{
+    await page.setViewportSize(size);await page.goto('/');await page.addStyleTag({content:'html{font-size:22px}'});await page.locator('#kid-safe-onboarding [data-open-guided]').click();
+    for(let step=0;step<3;step++){
+      const help=page.locator('#guided-access-dialog');expect(await help.evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+      await expect(page.locator('#guided-access-step-title-'+(step+1))).toBeFocused();
+      if(step<2)await page.locator('#guided-access-next').click();else await page.locator('#guided-access-done').click();
+    }
+    await expect(page.locator('#kid-safe-onboarding [data-open-guided]')).toBeFocused();
+  });
+}

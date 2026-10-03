@@ -35,7 +35,7 @@ test('hosted native shards cover every integration case once and keep all seven 
       return [...full.get(target).get(suite)].map(test => `${target}/${suite}/${test}`);
     });
   });
-  assert.deepEqual(cases.map(group => group.length), [170, 151]);
+  assert.deepEqual(cases.map(group => group.length), [170, 152]);
   const selected = cases.flat();
   const expected = [...full.get('DoodleFunTests')].flatMap(([suite, methods]) =>
     [...methods].map(method => `DoodleFunTests/${suite}/${method}`));
@@ -79,7 +79,7 @@ test('hosted browser matrix runs every configured browser once and retains cance
 test('real Swift inventory indexes each test under its declared target and class', () => {
   assert.deepEqual([...full.keys()], ['DoodleFunTests', 'DoodleFunUITests']);
   assert.equal(full.get('DoodleFunTests').get('NativeBridgeTests').size, 9);
-  assert.equal(full.get('DoodleFunTests').get('NativeParentGateTests').size, 5);
+  assert.equal(full.get('DoodleFunTests').get('NativeParentGateTests').size, 6);
   for (let age = 2; age <= 10; age++) {
     const methods=full.get('DoodleFunTests').get(`NativeGameplayAge${String(age).padStart(2, '0')}Tests`);
     const gameplayModes=ACTIVITY_MODES.filter(mode=>mode.engine!=='listening');
@@ -153,7 +153,7 @@ test('without gameplay excludes all gameplay and layout filters while keeping bo
   const included = new Set(nativeTestSourcePaths({withoutGameplay:true}));
   const index = indexNativeTests(sources.filter(({file}) => included.has(file)));
   assert.deepEqual([...index.get('DoodleFunTests')].map(([name, methods]) => [name, methods.size]), [
-    ['NativeBridgeTests', 9], ['NativeParentGateTests', 5],
+    ['NativeBridgeTests', 9], ['NativeParentGateTests', 6],
   ]);
   assert.equal(validateNativeTestSelection('DoodleFunTests', index), 'DoodleFunTests');
   assert.equal(validateNativeTestSelection('DoodleFunUITests/ActivityCatalogUITests/testAge6LandscapeCatalog', index),

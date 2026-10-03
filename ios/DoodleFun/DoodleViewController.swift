@@ -179,6 +179,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
     private var recoveryTimes: [Date] = []
     private var backgroundObserver: NSObjectProtocol?
     private var foregroundObserver: NSObjectProtocol?
+    private var guidedAccessObserver: NSObjectProtocol?
     private var pendingListeningPause = false
 
     override func viewDidLoad() {
@@ -236,11 +237,17 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
             self.pauseListening()
         }
         foregroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            guard let self, self.pendingListeningPause else { return }
-            self.pendingListeningPause = false
-            // Background WebKit execution may be deferred, and a quick app
-            // transition need not produce a document visibility change.
-            self.pauseListening()
+            guard let self else { return }
+            if self.pendingListeningPause {
+                self.pendingListeningPause = false
+                // Background WebKit execution may be deferred, and a quick app
+                // transition need not produce a document visibility change.
+                self.pauseListening()
+            }
+            self.publishGuidedAccessStatus()
+        }
+        guidedAccessObserver = NotificationCenter.default.addObserver(forName: UIAccessibility.guidedAccessStatusDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.publishGuidedAccessStatus()
         }
         prepareDocument()
     }
@@ -292,6 +299,16 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         webView.evaluateJavaScript("window.dispatchEvent(new Event('doodle-native-inactive')); true", completionHandler: nil)
     }
 
+    // UIKit reports an active session, not the Settings switch or passcode.
+    // This is a passive status event; there is no system-settings action or
+    // Guided Access request exposed to the packaged page.
+    private func publishGuidedAccessStatus() {
+        guard UIApplication.shared.applicationState == .active,
+              NativeBridgePolicy.allows(webView.url, document: document) else { return }
+        let active = UIAccessibility.isGuidedAccessEnabled ? "true" : "false"
+        webView.evaluateJavaScript("window.dispatchEvent(new CustomEvent('doodle-native-guided-access',{detail:{active:\(active)}})); true", completionHandler: nil)
+    }
+
     private func prepareDocument() {
         // The packaged app needs no remote scripts, media, sockets, or requests.
         let rules = #"[{"trigger":{"url-filter":"^https?://"},"action":{"type":"block"}},{"trigger":{"url-filter":"^wss?://"},"action":{"type":"block"}}]"#
@@ -317,6 +334,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
     deinit {
         if let backgroundObserver { NotificationCenter.default.removeObserver(backgroundObserver) }
         if let foregroundObserver { NotificationCenter.default.removeObserver(foregroundObserver) }
+        if let guidedAccessObserver { NotificationCenter.default.removeObserver(guidedAccessObserver) }
         if let shareDirectory { try? FileManager.default.removeItem(at: shareDirectory) }
     }
 
@@ -398,6 +416,7 @@ final class DoodleViewController: UIViewController, WKNavigationDelegate, WKUIDe
         logWebEvent("navigation-finished")
         recovering = false
         status.isHidden = true
+        publishGuidedAccessStatus()
         onContentReady?()
     }
 
