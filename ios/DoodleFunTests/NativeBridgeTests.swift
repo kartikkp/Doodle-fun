@@ -242,6 +242,33 @@ final class NativeBridgeTests: XCTestCase {
 
 @MainActor
 final class NativeParentGateTests: XCTestCase {
+    func testGuidedAccessStatusReportsUIKitSessionAndRefreshesAfterForeground() async throws {
+        let (controller, window) = try await loadedController()
+        defer { window.isHidden = true; window.rootViewController = nil }
+        let active = UIAccessibility.isGuidedAccessEnabled
+        let initial = try await controller.webView.evaluateJavaScript("document.getElementById('guided-access-status').textContent") as? String
+        XCTAssertTrue(initial?.contains(active ? "session active" : "session not active") == true)
+        if !active { XCTAssertTrue(initial?.contains("may already be set up in Settings") == true) }
+        _ = try await controller.webView.evaluateJavaScript("""
+            window.guidedSessionEvents = [];
+            addEventListener('doodle-native-guided-access', event => guidedSessionEvents.push(event.detail.active));
+            true;
+            """)
+        NotificationCenter.default.post(name: UIApplication.willResignActiveNotification, object: nil)
+        _ = try await controller.webView.evaluateJavaScript("true")
+        let stale = try await controller.webView.evaluateJavaScript("document.getElementById('guided-access-status').textContent") as? String
+        XCTAssertTrue(stale?.contains("status unavailable") == true)
+        NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
+        _ = try await controller.webView.evaluateJavaScript("true")
+        NotificationCenter.default.post(name: UIAccessibility.guidedAccessStatusDidChangeNotification, object: nil)
+        _ = try await controller.webView.evaluateJavaScript("true")
+        let reported = try await controller.webView.evaluateJavaScript("guidedSessionEvents") as? [Bool]
+        XCTAssertEqual(reported, [active, active])
+        let restored = try await controller.webView.evaluateJavaScript("document.getElementById('guided-access-status').textContent") as? String
+        XCTAssertEqual(restored, initial)
+        XCTAssertNil(controller.presentedViewController, "Reading Guided Access status must not present a system or parent action.")
+    }
+
     private func loadedController() async throws -> (DoodleViewController, UIWindow) {
         let controller = DoodleViewController()
         let window: UIWindow
