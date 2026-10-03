@@ -74,6 +74,18 @@ function drawing(id,age){
     case 'shoe':return path('M14 41h29l16 18 29 7c13 5 7 23-4 23H12Z',blue)+path('M12 78h79m-47-23 11-8m-3 17 11-8m-29-3q16-22 22-11M34 53q-4-21-15-14c-7 5 5 13 15 14');
     case 'rocket':return path('M50 8C19 29 28 61 35 73h30C72 56 80 29 50 8Z',cream)+circle(50,38,12,blue)+path('m34 53-16 25 18-6m29-19 17 25-18-6',coral)+path('M42 77 50 96l9-19',gold);
     case 'love':return path('M50 84 16 51C-1 21 27 4 50 28 74 4 103 23 84 52Z',coral);
+    // Project-authored stamp illustrations. Keep exportable artwork independent
+    // of device emoji fonts; the same paths draw the picker and the saved PNG.
+    case 'unicorn':return path('M24 89V62C9 39 32 20 53 24l20 14 14 25-17 12-13-16-5 30Z',cream)+path('M49 25 56 5 64 31Z',gold)+path('M29 29C5 41 13 67 25 77l-5 14h20V58l9-21Z',violet)+path('m40 29-7-16 20 13',cream)+circle(63,45,3,ink)+path('M74 65h8');
+    case 'lollipop':return path('m49 56-8 37','none','stroke="#c89c72" stroke-width="8"')+circle(53,34,27,coral)+path('M40 34c-1-17 26-18 28-2 2 23-35 24-39 4','none','stroke="#fffaf0" stroke-width="6"')+path('M53 26c12 0 11 14 1 14','none','stroke="#efc566" stroke-width="5"');
+    case 'pizza':return path('M18 24Q51 7 85 25L48 91Z',gold)+path('M18 24Q51 7 85 25','none','stroke="#c89c72" stroke-width="12"')+circle(43,35,6,coral)+circle(63,44,6,coral)+circle(46,62,6,coral)+path('m30 30 5 6m21-9 6 3m-7 42 5-8','none','stroke="#65ad9d" stroke-width="3"');
+    case 'celebration':return path('m14 89 13-48 32 32Z',gold)+path('m23 57 24 8m-29 5 16 9','none','stroke="#ed8a70" stroke-width="5"')+path('M41 51c-17-29 19-17 4-39M53 61c31 4 6-28 33-26M59 43l17-20','none','stroke="#65ad9d" stroke-width="4"')+circle(28,17,4,coral)+circle(83,62,5,violet)+path('m65 9 8 4m-9 62 4 8','none','stroke="#77a9cf" stroke-width="5"');
+    case 'shining-star':return star(49,54,27)+path('M49 8v10M11 32l9 5m61-9-8 7M8 70l11-3m60 7 10 4','none','stroke="#efc566" stroke-width="5"');
+    case 'flame':return path('M49 8C58 33 80 38 79 61 81 99 18 100 19 65c0-16 11-20 13-38l10 18C52 34 43 23 49 8Z',coral)+path('M50 48C59 64 66 64 65 76c-1 22-34 18-32 0 1-10 10-13 17-28Z',gold);
+    case 'alien':return path('M20 39h10V26h40v13h10v34H68v13H55V74H45v12H32V73H20Z',violet)+path('M30 26 21 12m49 14 9-14','none','stroke-width="5"')+rect(30,43,13,13,cream,2)+rect(57,43,13,13,cream,2)+path('M40 65h20');
+    case 'ice-cream':return path('m27 51 24 43 22-43Z','#d9ad76')+path('m36 61 26 12M43 78l22-15')+path('M24 49C4 36 28 24 32 22 24 4 58 1 61 18 82 10 99 40 77 49Z',coral)+path('M25 49h51','none','stroke="#fffaf0" stroke-width="6"')+circle(43,16,3,cream);
+    case 'guitar':return path('M40 45C8 33 1 67 24 86c24 20 51-2 34-25L79 33l-12-9Z','#d9ad76')+path('m67 25 13-17 14 11-15 16Z',teal)+circle(39,63,10,ink)+path('m32 69 49-50','none','stroke="#fffaf0" stroke-width="2"')+path('m20 75 13 11','none','stroke-width="5"');
+    case 'wave':return path('M8 80C21 70 22 15 56 13c27-2 37 23 25 39-1-21-23-22-25-6-2 17 25 27 36 21v19H8Z',blue)+path('M37 38c8-28 48-22 47 3C68 28 57 34 56 46','none','stroke="#fffaf0" stroke-width="7"')+path('M14 89h76','none','stroke="#65ad9d" stroke-width="5"');
     default:return '';
   }
 }

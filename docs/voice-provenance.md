@@ -1,5 +1,7 @@
 # Bundled coaching voice
 
+The [October 3, 2026 content audit](content-provenance.md) reverified every shipped clip hash and the publisher's current license information, and records the limits of that review. The clips are retained; a permissive model license is not a blanket guarantee about all third-party rights or exclusive ownership of generated output.
+
 Updated September 27, 2026. The app includes 120 short synthetic coaching recordings covering all 38 modes at starting ages 2–10. Their combined duration is 1,178.1 seconds and their AAC payload is 10,120,649 bytes. Identical transcripts reuse one clip. These are a general synthetic voice, not a recording or clone of a named person.
 
 ## Source and attribution

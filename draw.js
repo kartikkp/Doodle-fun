@@ -1,6 +1,6 @@
 import { getProfile, readStore, writeStore } from './core.js';
 import { TEMPLATES } from './templates.js';
-import {objectArt} from './activity-art.js';
+import {STAMPS, stampArt, prepareStampImages, stampImageReady} from './stamp-art.js';
 import { requestParentAction, canOpenOutsideApp } from './parental-gate.js';
 
 const SIDE = 1536;
@@ -11,13 +11,6 @@ const COLORS = [
   ['#eb8dbc', 'Pink'], ['#25364a', 'Ink'], ['#ffffff', 'White'],
   ['#8c6548', 'Brown'], ['#49b9b4', 'Turquoise'], ['#a5c958', 'Lime'],
   ['#b23f71', 'Berry'], ['#f7b79c', 'Peach'], ['#9aa5b5', 'Gray'],
-];
-const STAMPS = [
-  ['⭐', 'Star'], ['🌈', 'Rainbow'], ['🦄', 'Unicorn'], ['🐶', 'Dog'],
-  ['🐱', 'Cat'], ['🦋', 'Butterfly'], ['🌸', 'Flower'], ['🍭', 'Lollipop'],
-  ['🍕', 'Pizza'], ['🎉', 'Celebration'], ['🚀', 'Rocket'], ['❤️', 'Heart'],
-  ['🌟', 'Shining star'], ['🔥', 'Flame'], ['👾', 'Alien'], ['🦊', 'Fox'],
-  ['🍦', 'Ice cream'], ['🎸', 'Guitar'], ['🌊', 'Wave'], ['🦁', 'Lion'],
 ];
 export const DRAWING_IDEAS = {
   2:['Make a big mark. Try another color beside it.','Tap to make dots, then slide to make a line.','Make a long line and a short line together.'],
@@ -189,7 +182,8 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
   const strokePaper=document.createElement('canvas');strokePaper.width=strokePaper.height=SIDE;
   const strokeContext=strokePaper.getContext('2d');
   let opacity=1,mirrored=false,strokeStart=null,pencilOnly=readStore('drawing-pencil-only',false)===true;
-  let coloringMode = false, profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0][0];
+  const stampImages=prepareStampImages();
+  let coloringMode = false, profile, tool = 'pen', color = COLORS[0][0], brush = 20, stamp = STAMPS[0].id;
   let pointer = null, beforeStroke = null, lastPoint = null, artName = '', hasWork = false;
   let revision = 0, saveTimer, pendingReplacement, challengeIndex = 0, active = false;
   let restoring = false, ready = false, exportURL;
@@ -315,7 +309,12 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       });
       pointer = event.pointerId; canvas.setPointerCapture(event.pointerId);
     } else if (tool === 'stamp') {
-      transaction(() => { ctx.save(); ctx.font = `${(brush * 2 + 30) * SIDE / 600}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(stamp, p.x, p.y); ctx.restore(); });
+      const image=stampImages.get(stamp);
+      // Never queue a late stamp that could land on a different page or after
+      // Undo. An interrupted/failed preparation leaves the paper unchanged.
+      if(!stampImageReady(image)){tell('That stamp is still preparing. Try another stamp or tap again.');return;}
+      const size=(brush*2+30)*SIDE/600;
+      transaction(() => ctx.drawImage(image,p.x-size/2,p.y-size/2,size,size));
       pointer = event.pointerId; canvas.setPointerCapture(event.pointerId);
     } else {
       pointer = event.pointerId;
@@ -381,11 +380,10 @@ export function createDrawing(container, { getSettings, onBack, onNotice = () =>
       button.append(preview, label); button.addEventListener('click', () => selectTemplate(template)); grid.append(button);
     });
   }
-  STAMPS.forEach(([emoji, name]) => {
+  STAMPS.forEach(({id, name}) => {
     const button = document.createElement('button'); button.className = 'draw-stamp-choice';
-    const art=objectArt(({Star:'star',Rainbow:'rainbow',Dog:'dog',Cat:'cat',Butterfly:'butterfly',Flower:'flower',Rocket:'rocket',Heart:'love',Fox:'fox',Lion:'lion'})[name]);
-    if(art)button.innerHTML=art;else button.textContent=emoji; button.setAttribute('aria-label', `${name} stamp`);
-    button.addEventListener('click', () => { stamp = emoji; setTool('stamp'); $('.draw-stamp-dialog').close(); tell(`${name} stamp ready. Tap the paper!`); });
+    button.innerHTML=stampArt(id); button.setAttribute('aria-label', `${name} stamp`);
+    button.addEventListener('click', () => { stamp = id; setTool('stamp'); $('.draw-stamp-dialog').close(); tell(`${name} stamp ready. Tap the paper!`); });
     $('.draw-stamp-grid').append(button);
   });
   function updateChallenge() {
